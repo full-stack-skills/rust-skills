@@ -20,14 +20,34 @@
 
 ## 安装
 
+仅查看全部 15 个可用技能，不执行安装：
+
+```bash
+npx skills add full-stack-skills/rust-skills --list
+```
+
+为当前项目交互选择技能和目标智能体：
+
 ```bash
 npx skills add full-stack-skills/rust-skills
 ```
 
-安装单个技能：
+无交互地为所有已检测智能体安装全部 15 个技能：
 
 ```bash
-npx skills add full-stack-skills/rust-skills --skill rust-web
+npx skills add full-stack-skills/rust-skills --all
+```
+
+无交互地为当前项目安装单个技能：
+
+```bash
+npx skills add full-stack-skills/rust-skills --skill rust-web --yes
+```
+
+将全部技能安装到用户全局范围，而不是当前项目：
+
+```bash
+npx skills add full-stack-skills/rust-skills --global --all
 ```
 
 ## 技能架构

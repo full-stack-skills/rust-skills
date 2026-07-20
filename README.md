@@ -20,14 +20,34 @@ The package contains 15 skills. The `rust-stable` entry skill is currently groun
 
 ## Install
 
+List the 15 available skills without installing them:
+
+```bash
+npx skills add full-stack-skills/rust-skills --list
+```
+
+Choose skills and target agents interactively for the current project:
+
 ```bash
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install one skill:
+Install all 15 skills for all detected agents without prompts:
 
 ```bash
-npx skills add full-stack-skills/rust-skills --skill rust-web
+npx skills add full-stack-skills/rust-skills --all
+```
+
+Install one skill for the current project without prompts:
+
+```bash
+npx skills add full-stack-skills/rust-skills --skill rust-web --yes
+```
+
+Install all skills globally instead of into the current project:
+
+```bash
+npx skills add full-stack-skills/rust-skills --global --all
 ```
 
 ## Skill Architecture
