@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Testing"
+  short_description: "设计 Rust 单元、集成、文档、基准和覆盖率测试"
+  default_prompt: "Use $rust-testing to build and run an appropriate Rust test strategy for this code."

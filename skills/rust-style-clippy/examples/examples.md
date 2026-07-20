@@ -6,7 +6,7 @@
 max_width = 100
 tab_spaces = 4
 edition = "2024"
-imports_granularity = "Module"
+use_field_init_shorthand = true
 ```
 
 ## Clippy control

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Web"
+  short_description: "构建 axum、serde、sqlx 和 reqwest Web 服务"
+  default_prompt: "Use $rust-web to design, implement, and test this Rust HTTP service."

@@ -14,7 +14,7 @@ assert_eq!(x, 100);
 ```rust
 use std::ffi::CString;
 
-extern "C" { fn strlen(s: *const i8) -> usize; }
+unsafe extern "C" { fn strlen(s: *const i8) -> usize; }
 
 fn safe_len(s: &str) -> usize {
     let c = CString::new(s).unwrap();

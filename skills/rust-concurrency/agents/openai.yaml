@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Concurrency"
+  short_description: "设计、实现并验证 Rust 线程、同步原语、通道和异步任务"
+  default_prompt: "Use $rust-concurrency to design and verify this threaded or asynchronous Rust workflow."

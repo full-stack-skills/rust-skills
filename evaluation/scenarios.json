@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "stable-ownership",
+      "prompt": "修复这个返回局部 String 引用的生命周期错误，不要用 clone 掩盖问题。",
+      "expected_skills": ["rust-stable"],
+      "assertions": ["checks_toolchain_and_msrv", "explains_ownership", "runs_cargo_check"]
+    },
+    {
+      "id": "stable-handoff-async",
+      "prompt": "为什么这个 Tokio 任务跨 await 持有锁会卡住？",
+      "expected_skills": ["rust-concurrency", "rust-stable"],
+      "assertions": ["hands_off_to_concurrency", "checks_lock_scope"]
+    },
+    {
+      "id": "project-layout",
+      "prompt": "把单 crate Rust 项目重构成 core、api、adapter 三个 workspace members。",
+      "expected_skills": ["rust-project-structure", "rust-cargo-build"],
+      "assertions": ["designs_public_boundaries", "validates_workspace"]
+    },
+    {
+      "id": "project-visibility",
+      "prompt": "设计 lib.rs 的 re-export，隐藏内部模块但公开稳定 API。",
+      "expected_skills": ["rust-project-structure"],
+      "assertions": ["uses_minimal_visibility", "runs_cargo_check"]
+    },
+    {
+      "id": "cargo-resolver",
+      "prompt": "解释 resolver 2 和 3，并为 Edition 2024 virtual workspace 配置正确值。",
+      "expected_skills": ["rust-cargo-build"],
+      "assertions": ["resolver_three_is_msrv_aware", "resolver_is_workspace_global"]
+    },
+    {
+      "id": "cargo-publish",
+      "prompt": "检查这个 crate 发布前的 Cargo.toml 和最终 package 内容。",
+      "expected_skills": ["rust-cargo-build", "rust-testing"],
+      "assertions": ["runs_package_list", "does_not_publish_without_authorization"]
+    },
+    {
+      "id": "concurrency-threads",
+      "prompt": "用 scoped threads 并行处理借用的切片，并解释 Send 和 Sync。",
+      "expected_skills": ["rust-concurrency", "rust-stable"],
+      "assertions": ["joins_workers", "explains_send_sync"]
+    },
+    {
+      "id": "concurrency-tokio",
+      "prompt": "实现可取消、有超时、不会泄漏任务的 Tokio 并发请求。",
+      "expected_skills": ["rust-concurrency"],
+      "assertions": ["handles_cancellation", "tests_async_failure_paths"]
+    },
+    {
+      "id": "testing-strategy",
+      "prompt": "为 Rust 库设计单元、集成、doctest 和覆盖率门禁。",
+      "expected_skills": ["rust-testing"],
+      "assertions": ["separates_test_levels", "uses_stable_coverage_tooling"]
+    },
+    {
+      "id": "testing-benchmark",
+      "prompt": "在 stable Rust 上添加可靠的性能基准，避免使用不稳定 #[bench]。",
+      "expected_skills": ["rust-testing"],
+      "assertions": ["does_not_claim_libtest_bench_is_stable", "controls_noise"]
+    },
+    {
+      "id": "unsafe-wrapper",
+      "prompt": "为裸指针读取封装安全 API，并写清楚 SAFETY 不变量。",
+      "expected_skills": ["rust-unsafe-ffi", "rust-code-review"],
+      "assertions": ["minimizes_unsafe_block", "runs_miri_when_available"]
+    },
+    {
+      "id": "ffi-edition-2024",
+      "prompt": "把 C FFI 声明迁移到 Rust 2024，并处理 unsafe extern block 和 unsafe attributes。",
+      "expected_skills": ["rust-unsafe-ffi", "rust-style-clippy"],
+      "assertions": ["uses_edition_2024_unsafe_syntax", "checks_abi_types"]
+    },
+    {
+      "id": "macro-declarative",
+      "prompt": "用 macro_rules 实现支持尾逗号的重复参数 DSL，并测试展开结果。",
+      "expected_skills": ["rust-macros"],
+      "assertions": ["handles_repetition", "uses_crate_qualified_paths"]
+    },
+    {
+      "id": "macro-procedural",
+      "prompt": "实现 derive 过程宏，并使用 trybuild 覆盖错误诊断。",
+      "expected_skills": ["rust-macros", "rust-testing"],
+      "assertions": ["uses_proc_macro_crate", "tests_compile_fail_cases"]
+    },
+    {
+      "id": "cli-errors",
+      "prompt": "构建支持子命令和管道输入的 CLI，错误写 stderr 并返回正确退出码。",
+      "expected_skills": ["rust-cli"],
+      "assertions": ["separates_stdout_stderr", "tests_exit_codes"]
+    },
+    {
+      "id": "cli-test",
+      "prompt": "用 assert_cmd 测试 CLI 参数、文件输出和失败场景。",
+      "expected_skills": ["rust-cli", "rust-testing"],
+      "assertions": ["tests_success_and_failure", "isolates_filesystem"]
+    },
+    {
+      "id": "web-axum",
+      "prompt": "使用 axum 设计带状态、统一错误和超时中间件的 REST API。",
+      "expected_skills": ["rust-web", "rust-concurrency"],
+      "assertions": ["keeps_handlers_thin", "maps_errors_to_responses"]
+    },
+    {
+      "id": "web-sqlx",
+      "prompt": "实现 sqlx 事务接口，保证失败时回滚并测试 HTTP 边界。",
+      "expected_skills": ["rust-web", "rust-testing"],
+      "assertions": ["uses_transaction_boundary", "tests_failure_paths"]
+    },
+    {
+      "id": "embedded-hal",
+      "prompt": "用 embedded-hal 1.0 trait 编写可测试的 no_std GPIO 驱动。",
+      "expected_skills": ["rust-embedded"],
+      "assertions": ["uses_embedded_hal_one", "separates_hal_from_pac"]
+    },
+    {
+      "id": "embedded-interrupt",
+      "prompt": "审查中断处理程序里的共享状态和临界区是否安全。",
+      "expected_skills": ["rust-embedded", "rust-unsafe-ffi"],
+      "assertions": ["bounds_interrupt_work", "documents_shared_state_invariants"]
+    },
+    {
+      "id": "review-safety",
+      "prompt": "审查这次 Rust 变更，按严重级别报告正确性、安全和回归问题。",
+      "expected_skills": ["rust-code-review"],
+      "assertions": ["findings_first", "cites_tight_locations", "avoids_style_only_noise"]
+    },
+    {
+      "id": "review-quality-tools",
+      "prompt": "检查这个 PR 的 clone、unwrap、锁范围和依赖漏洞。",
+      "expected_skills": ["rust-code-review", "rust-style-clippy"],
+      "assertions": ["runs_clippy", "checks_dependency_risk"]
+    },
+    {
+      "id": "style-edition",
+      "prompt": "把项目从 Edition 2021 迁移到 2024，并保持 MSRV 声明准确。",
+      "expected_skills": ["rust-style-clippy", "rust-cargo-build"],
+      "assertions": ["uses_cargo_fix_edition", "validates_msrv"]
+    },
+    {
+      "id": "style-diagnostics",
+      "prompt": "解释 E0502 并修复借用冲突，然后运行 fmt 和 Clippy。",
+      "expected_skills": ["rust-style-clippy", "rust-stable"],
+      "assertions": ["explains_root_cause", "runs_quality_gates"]
+    }
+  ]
+}

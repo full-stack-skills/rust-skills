@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Stable"
+  short_description: "基于实际工具链和 MSRV 编写、调试及迁移稳定版 Rust"
+  default_prompt: "Use $rust-stable to solve this Rust language or standard-library task against the project toolchain and MSRV."

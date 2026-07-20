@@ -1,6 +1,6 @@
 ---
 name: rust-unsafe-ffi
-description: Rust 不安全代码与 FFI 技能 — unsafe 五种超能力（裸指针、unsafe fn、可变静态变量、unsafe trait、union）、裸指针操作与 NonNull、FFI 外部函数接口（extern "C"、#[link]、#[no_mangle]）、内存操作（MaybeUninit、ManuallyDrop、transmute、offset_of!）、类型布局控制（#[repr]）、Pin、全局分配器。基于 The Book ch 19 与 The Rustonomicon。当用户需要与 C 交互、编写 unsafe 代码或操作裸内存时激活。
+description: Rust unsafe 与 FFI 技能 — 裸指针、安全不变量、unsafe fn/trait、union、MaybeUninit、布局、Pin、分配器、C ABI，以及 Edition 2024 的 unsafe extern block 和 unsafe attributes。Use when implementing or auditing raw-memory and foreign-function boundaries; require minimal unsafe blocks, SAFETY documentation, ABI validation, and Miri or platform tests where applicable.
 ---
 
 # Rust 不安全代码与 FFI
@@ -12,7 +12,7 @@ description: Rust 不安全代码与 FFI 技能 — unsafe 五种超能力（裸
 ### ✅ 强项
 1. unsafe 五种超能力（裸指针解引用、unsafe fn/方法、可变静态变量、unsafe trait、union 字段）
 2. 裸指针（*const T、*mut T、NonNull<T>、偏移运算 add/offset、地址运算）
-3. FFI（extern "C" ABI、#[link]、#[no_mangle]、C 类型映射、回调函数）
+3. FFI（`unsafe extern "C"`、`#[link]`、`#[unsafe(no_mangle)]`、C 类型映射、回调函数）
 4. 内存操作（MaybeUninit<T>、ManuallyDrop<T>、transmute、offset_of!、size_of/align_of）
 5. 类型布局控制（#[repr(C)]、#[repr(transparent)]、#[repr(align)]、#[repr(packed)]、#[repr(i32)]）
 6. Pin<T>（自引用类型安全约束、Pin<Box<T>>、Pin<&mut T>）
@@ -20,10 +20,10 @@ description: Rust 不安全代码与 FFI 技能 — unsafe 五种超能力（裸
 8. 不安全 trait 手动实现（Send、Sync）
 
 ### ⚠️ 前置要求
-1. 深入理解 Rust 所有权与借用规则（rust-1.93）
+1. 深入理解 Rust 所有权与借用规则（`rust-stable`）
 
 ### ❌ 不适用范围
-1. 常规 Rust 编程 → 使用 `rust-1.93` 技能
+1. 常规 Rust 编程 → 使用 `rust-stable` 技能
 2. 并发 unsafe 使用 → 使用 `rust-concurrency` 技能
 
 ## 何时使用
@@ -102,13 +102,13 @@ use std::os::raw::{c_char, c_int, c_void};
 
 // 调用 C 函数
 #[link(name = "c")]
-extern "C" {
+unsafe extern "C" {
     fn strlen(s: *const c_char) -> usize;
     fn malloc(size: usize) -> *mut c_void;
 }
 
 // 导出函数给 C
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn add(a: i32, b: i32) -> i32 { a + b }
 
 // C 字符串安全封装
@@ -235,9 +235,15 @@ Step 6. 测试验证 — 用 Miri（cargo miri test）检测 UB
 1. transmute 不检查类型大小 - 源和目标类型大小不同导致 UB
 2. MaybeUninit::assume_init() 前必须初始化 - 未初始化内存读取是 UB
 3. extern C 函数必须在 unsafe 中调用 - 即使函数签名不包含 unsafe
-4. #[no_mangle] 禁用了 name mangling - 同名函数导致链接错误
+4. Edition 2024 要求 extern block 标为 unsafe，并把 `no_mangle`、`export_name`、`link_section` 写成 unsafe attributes
 5. Pin<Box<T>> 只对 !Unpin 类型有实际约束 - Unpin 类型可被移动
 
+
+## 按需资源
+
+- [Unsafe 与 FFI 示例](examples/examples.md)
+- [内存类型速查](references/references.md)
+- `examples/golden-unsafe/`：CI 编译的最小 unsafe 封装
 
 ## 官方参考
 

@@ -1,6 +1,6 @@
 ---
 name: rust-embedded
-description: Rust 嵌入式开发技能 — no_std 环境、panic_handler、Cortex-M 启动（cortex-m-rt）、嵌入式 HAL（OutputPin、I2C、SPI）、外设访问（PAC、寄存器读写）、GPIO/定时器/PWM/ADC/UART、中断处理（NVIC）、RTIC 实时框架（硬件任务、资源共享）、链接脚本。基于 Embedded Rust Book、embedded-hal、RTIC 文档。当用户需要为微控制器编写 Rust 代码时激活。
+description: Rust 嵌入式开发技能 — no_std、panic、Cortex-M、embedded-hal 1.0、PAC、GPIO、总线、中断、RTIC 2 和链接脚本。Use when building or reviewing microcontroller firmware and portable HAL drivers; require the exact chip, target, HAL/PAC versions and hardware validation, and hand raw-memory invariants to rust-unsafe-ffi.
 ---
 
 # Rust 嵌入式开发
@@ -13,17 +13,17 @@ description: Rust 嵌入式开发技能 — no_std 环境、panic_handler、Cort
 1. no_std 环境配置（#![no_std]、#![no_main]、extern crate alloc）
 2. panic_handler 定义
 3. Cortex-M 启动（cortex-m-rt：#[entry]、#[interrupt]、异常向量、startup）
-4. 嵌入式 HAL（embedded-hal trait：OutputPin、InputPin、DelayMs、I2c、Spi）
+4. embedded-hal 1.0 trait（`OutputPin`、`InputPin`、`DelayNs`、`I2c`、`SpiBus`、`SpiDevice`）
 5. 外设访问（PAC：Peripherals::take、寄存器读写、VolatileCell）
 6. GPIO 控制（输入/输出/推挽/开漏/上拉/下拉）
 7. 定时器/PWM/ADC/UART 外设控制
 8. 中断处理（NVIC 配置、enable/disable、优先级、#[interrupt]）
-9. RTIC（app! 宏、硬件/软件任务、shared/local 资源、spawn、消息传递）
+9. RTIC 2 属性宏（`#[rtic::app]`、硬件/软件任务、shared/local 资源、spawn）
 10. 链接脚本配置（memory.x）
 
 ### ⚠️ 前置要求
 1. 了解目标微控制器架构（Cortex-M、RISC-V 等）
-2. Rust 基础（rust-1.93）
+2. Rust 基础（`rust-stable`）
 
 ### ❌ 不适用范围
 1. Web 服务器 → 使用 `rust-web` 技能
@@ -158,9 +158,7 @@ fn TIM2() {
 #![no_std]
 #![no_main]
 
-use rtic::app;
-
-#[app(device = rp2040_pac, peripherals = true)]
+#[rtic::app(device = rp2040_pac, peripherals = true)]
 mod app {
     #[shared]
     struct Shared {
@@ -233,6 +231,12 @@ Step 6. 部署与调试 — 使用 probe-rs/OpenOCD 烧录和调试固件
 4. cortex_m::Peripherals::take() 只能成功一次 - 第二次返回 None
 5. RTIC spawn 在硬件任务中需用 spawn_after - 普通 spawn 不可用
 
+
+## 按需资源
+
+- [嵌入式示例](examples/examples.md)
+- [常用 crate 速查](references/references.md)
+- `examples/golden-no-std/`：CI 在宿主工具链上编译的 no_std trait 示例
 
 ## 官方参考
 

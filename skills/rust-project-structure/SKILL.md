@@ -1,6 +1,6 @@
 ---
 name: rust-project-structure
-description: Rust 项目结构与脚手架技能 — 包（package）与 crate 组织、模块系统深度（文件模块树、mod 声明、pub 可见性体系）、use 路径模式、工作空间布局、项目模板。基于 The Book ch 7 与 The Reference ch 7。当用户需要组织项目结构、管理模块关系、搭建多包项目时激活。
+description: Rust 项目结构与脚手架技能 — package、crate、模块树、可见性、re-export 和 workspace 布局。Use when creating or reorganizing Rust projects, public module boundaries, multi-crate workspaces, or file layouts; hand manifest, dependency, feature, and build settings to rust-cargo-build.
 ---
 
 # Rust 项目结构与脚手架
@@ -21,11 +21,11 @@ description: Rust 项目结构与脚手架技能 — 包（package）与 crate �
 9. 项目模板与脚手架（cargo new、cargo-generate）
 
 ### ⚠️ 前置要求
-1. 理解 Rust 所有权与模块基础（可参考 rust-1.93 技能）
+1. 理解 Rust 所有权与模块基础（可参考 `rust-stable` 技能）
 
 ### ❌ 不适用范围
 1. Cargo.toml 配置 → 使用 `rust-cargo-build` 技能
-2. Rust 语法基础 → 使用 `rust-1.93` 技能
+2. Rust 语法基础 → 使用 `rust-stable` 技能
 3. 测试组织 → 使用 `rust-testing` 技能
 
 ## 何时使用
@@ -200,9 +200,15 @@ Step 6. 验证 — cargo check 确认编译通过，检查 IDE 模块导航正�
 1. crate:: vs ::crate_name:: - crate:: 引用当前 crate 根；::other_crate:: 是绝对路径引用外部 crate
 2. pub(crate) 在 2015 edition 中不可用 - 需要 edition 2018+
 3. mod.rs 已弃用 - 2018 edition 起推荐 module_name.rs 而非 module_name/mod.rs
-4. workspace resolver 版本影响特性解析 - edition 2021+ 自动选 resolver 3
+4. workspace resolver 是全局设置；Edition 2021 默认 resolver 2，Edition 2024 默认 resolver 3
 5. #[path] 属性绕过文件系统约定 - 使用后模块路径不再遵循默认文件树
 
+
+## 按需资源
+
+- [布局示例](examples/examples.md)
+- [概念速查](references/references.md)
+- `examples/golden-layout/`：CI 编译的模块边界示例
 
 ## 官方参考
 

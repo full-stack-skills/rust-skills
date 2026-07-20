@@ -1,6 +1,6 @@
 ---
 name: rust-style-clippy
-description: Rust 风格格式化与静态分析技能 — rustfmt 配置（缩进、换行、导入组织）、Clippy lint 体系（allow/warn/deny、clippy.toml、关键 lint 群组）、Edition 迁移指南（2015→2018→2021→2024，cargo fix --edition）、编译器错误码解读（rustc --explain、常见 E0277/E0308/E0502/E0597/E0432）。基于 rustfmt Book、Clippy Book、Edition Guide、Error Code Index。当用户需要格式化代码、运行静态分析、迁移 edition 或解读编译器错误时激活。
+description: Rust 格式化与静态分析技能 — stable rustfmt、Clippy lint 与配置、Edition 2015/2018/2021/2024 迁移、cargo fix 和 rustc 错误码。Use when formatting, linting, migrating editions, configuring CI quality gates, or diagnosing compiler errors; hand semantic code-review findings to rust-code-review.
 ---
 
 # Rust 风格格式化与静态分析
@@ -10,7 +10,7 @@ description: Rust 风格格式化与静态分析技能 — rustfmt 配置（缩�
 ## Capability Boundaries
 
 ### ✅ 强项
-1. rustfmt 配置（.rustfmt.toml：indent、line_width、imports_granularity、fn_args_layout）
+1. 稳定版 rustfmt 配置（edition、max_width、tab_spaces、use_field_init_shorthand 等）
 2. Clippy lint 体系（cargo clippy、lint 等级、clippy.toml 配置）
 3. 关键 Clippy lint 群组（correctness、style、complexity、perf、pedantic、nursery、restriction）
 4. Edition 迁移（2015→2018→2021→2024，各版关键变化与 cargo fix）
@@ -20,7 +20,7 @@ description: Rust 风格格式化与静态分析技能 — rustfmt 配置（缩�
 1. Rust 工具链安装完成
 
 ### ❌ 不适用范围
-1. Rust 语法基础 → 使用 `rust-1.93` 技能
+1. Rust 语法基础 → 使用 `rust-stable` 技能
 2. 代码审查 → 使用 `rust-code-review` 技能
 
 ## 何时使用
@@ -43,12 +43,9 @@ description: Rust 风格格式化与静态分析技能 — rustfmt 配置（缩�
 max_width = 100                    # 行宽（默认 100）
 tab_spaces = 4                     # 缩进空格
 edition = "2024"                   # Rust edition
-fn_args_layout = "Tall"            # 参数布局
-imports_granularity = "Module"     # 导入粒度
-imports_layout = "Horizontal"      # 导入布局
 merge_derives = true               # 合并 derive
 use_field_init_shorthand = true    # 字段初始化简写
-reorder_impl_items = true          # 重排 impl 项
+use_try_shorthand = true            # 使用 ? 简写
 ```
 
 ```bash
@@ -56,6 +53,8 @@ cargo fmt                           # 格式化所有文件
 cargo fmt --check                   # 检查格式（CI 使用）
 cargo fmt -- --config max_width=80  # 使用特定配置
 ```
+
+`imports_granularity`、`group_imports`、`reorder_impl_items` 等选项可能仍要求 nightly rustfmt；不要把它们放进必须由 stable CI 通过的默认配置。
 
 ## 二、Clippy
 
@@ -153,6 +152,12 @@ rustc --explain E0277
 3. Edition 迁移后可能出新的 warning - 特别是 2024 的 unsafe_op_in_unsafe_fn
 4. cargo fix --edition 不会修复所有问题 - 迁移后仍需手动检查
 
+
+## 按需资源
+
+- [格式与 Clippy 示例](examples/examples.md)
+- [Lint 群组速查](references/references.md)
+- `examples/golden-style/`：CI 通过 rustfmt 与 Clippy 的黄金示例
 
 ## 官方参考
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Style and Clippy"
+  short_description: "执行 rustfmt、Clippy、Edition 迁移和诊断修复"
+  default_prompt: "Use $rust-style-clippy to format, lint, migrate, and diagnose this Rust project."

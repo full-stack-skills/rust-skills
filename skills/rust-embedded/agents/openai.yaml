@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Embedded"
+  short_description: "开发 no_std、HAL、中断和实时嵌入式 Rust"
+  default_prompt: "Use $rust-embedded to implement and validate this no_std or embedded Rust task."

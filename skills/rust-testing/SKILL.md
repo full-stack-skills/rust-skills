@@ -1,6 +1,6 @@
 ---
 name: rust-testing
-description: Rust 测试与基准测试技能 — 单元测试（#[test]、#[cfg(test)]）、断言宏、测试属性（#[should_panic]、#[ignore]）、集成测试（tests/）、文档测试（doctest）、cargo test 运行器、基准测试（#[bench]、cargo bench）、代码覆盖率。基于 The Book ch 11 与 Rustdoc Book。当用户需要编写测试、运行基准测试或保证代码质量时激活。
+description: Rust 测试与基准测试技能 — 单元测试、集成测试、doctest、cargo test、稳定版 Criterion 基准、覆盖率与失败路径设计。Use when users ask to design, write, run, debug, or assess Rust tests and benchmarks; distinguish stable Criterion from the nightly-only libtest bench attribute, and hand project layout to rust-project-structure.
 ---
 
 # Rust 测试与基准测试
@@ -16,7 +16,7 @@ description: Rust 测试与基准测试技能 — 单元测试（#[test]、#[cfg
 4. 集成测试（tests/ 目录与共享模块）
 5. 文档测试（```rust 代码块、# 隐藏行、should_panic、no_run、ignore）
 6. cargo test 运行器（过滤、--nocapture、--test-threads、--include-ignored）
-7. 基准测试（#[bench]、cargo bench、Bencher、criterion）
+7. 稳定版 Criterion 基准，以及明确标注为 nightly-only 的 libtest `#[bench]`
 8. 代码覆盖率（cargo-llvm-cov 的使用）
 
 ### ⚠️ 前置要求
@@ -25,7 +25,7 @@ description: Rust 测试与基准测试技能 — 单元测试（#[test]、#[cfg
 ### ❌ 不适用范围
 1. 属性测试（proptest）→ 暂不涉及
 2. Mock 对象 → 暂不涉及
-3. Rust 语法基础 → 使用 `rust-1.93` 技能
+3. Rust 语法基础 → 使用 `rust-stable` 技能
 
 ## 何时使用
 
@@ -140,8 +140,10 @@ cargo test -p my-crate        # 特定包
 
 ## 五、基准测试
 
+稳定版项目优先使用 Criterion。内置 libtest `#[bench]` 仍依赖 nightly 的 `#![feature(test)]`，不能写成 stable 默认方案。
+
 ```rust
-// nightly 内置（需 #![feature(test)]）
+// nightly-only 内置方案（不要用于 stable 门禁）
 #![feature(test)]
 extern crate test;
 
@@ -197,6 +199,12 @@ Step 6. 覆盖率检查 — cargo llvm-cov 检查测试覆盖范围
 4. cargo test 默认并行运行 - 共享状态时需要 --test-threads=1
 5. #[bench] 需要 #![feature(test)] - stable Rust 需使用 criterion
 
+
+## 按需资源
+
+- [测试示例](examples/examples.md)
+- [测试宏与命令速查](references/references.md)
+- `examples/golden-tests/`：CI 编译并运行 doctest 的黄金示例
 
 ## 官方参考
 

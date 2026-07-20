@@ -2,135 +2,111 @@
 
 # rust-skills
 
-**Rust 语言技能 — 1.93、并发、测试、Web、嵌入式、CLI、宏、代码审查**
+**可验证、按需加载的 Rust Stable Agent Skills**
 
-[![GitHub](https://img.shields.io/badge/github-full--stack--skills%2Frust-skills-green.svg)](https://github.com/full-stack-skills/rust-skills)
+[![GitHub](https://img.shields.io/badge/github-full--stack--skills%2Frust--skills-green.svg)](https://github.com/full-stack-skills/rust-skills)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-兼容-purple.svg)](https://agentskills.io)
+[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-purple.svg)](https://agentskills.io)
 
 [English](./README.md) | 简体中文
 
-[简介](#-简介) · [安装](#-安装) · [技能列表](#-技能列表-12) · [仓库布局](#-仓库布局) · [官方来源](#-官方来源) · [支持的智能体](#-支持的智能体) · [生态](#-生态)
-
 </div>
 
----
+## 项目定位
 
-## 📖 简介
+`rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-**Rust 技能** 是一组面向 Rust 编程语言及其生态的 AI 编码智能体技能，属于 [Full Stack Skills](https://github.com/partme-ai/full-stack-skills) 生态，由 [PartMe.AI](https://github.com/partme-ai) 维护。
+本包包含 12 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
-本包包含 **12 个技能**，按四个层级组织：**核心语法**、**项目工程**、**领域专项**、**质量风格**。每个技能是独立的 `SKILL.md` 文件，AI 智能体按需加载。
-
-## 📦 安装
+## 安装
 
 ```bash
 npx skills add full-stack-skills/rust-skills
 ```
 
-或安装特定技能：`npx skills add full-stack-skills/rust-skills --skill <skill-name>`
+安装单个技能：
 
-## 🎯 技能列表 (12) 按层级
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│              Layer 1: 核心语法 (Core Language)                 │
-│                                                              │
-│  rust-1.93 ←─────── 主技能，语言 + 全标准库综合                 │
-├──────────────────────────────────────────────────────────────┤
-│              Layer 2: 项目工程 (Project Engineering)           │
-│                                                              │
-│  rust-project-structure  项目脚手架、模块、布局                  │
-│  rust-cargo-build ←────── Cargo.toml、依赖、特性、构建            │
-├──────────────────────────────────────────────────────────────┤
-│              Layer 3: 领域专项 (Domain Specialized)            │
-│                                                              │
-│  并发     rust-concurrency ←─ 线程、async、同步原语             │
-│  测试     rust-testing ←────── 单元测试、集成测试、基准测试      │
-│  不安全   rust-unsafe-ffi ←─── 不安全代码、C 互操作              │
-│  宏       rust-macros ←─────── macro_rules!、过程宏             │
-│  CLI      rust-cli ←────────── CLI 应用、参数解析、文件 I/O     │
-│  Web      rust-web ←────────── axum、serde、数据库             │
-│  嵌入式   rust-embedded ←───── no_std、HAL、Cortex-M           │
-├──────────────────────────────────────────────────────────────┤
-│              Layer 4: 质量风格 (Quality & Style)               │
-│                                                              │
-│  rust-code-review  Rust 代码审查（风格与正确性）                  │
-│  rust-style-clippy Rustfmt、Clippy、命名规范                    │
-└──────────────────────────────────────────────────────────────┘
+```bash
+npx skills add full-stack-skills/rust-skills --skill rust-web
 ```
 
-## 📚 仓库布局
+## 技能架构
+
+```mermaid
+flowchart TB
+    S["rust-stable<br/>语言与标准库入口"]
+    P["项目工程<br/>project-structure / cargo-build"]
+    D["领域专项<br/>concurrency / testing / unsafe-ffi / macros<br/>cli / web / embedded"]
+    Q["质量门禁<br/>code-review / style-clippy"]
+
+    S --> P
+    S --> D
+    P --> D
+    D --> Q
+```
+
+| 层级 | 技能 | 主要职责 |
+|---|---|---|
+| 核心 | `rust-stable` | 所有权、trait、集合、错误处理、标准库、版本判断 |
+| 工程 | `rust-project-structure` | package、crate、模块树、workspace 布局 |
+| 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、构建与发布 |
+| 领域 | `rust-concurrency` | 线程、同步、原子、channel、Tokio |
+| 领域 | `rust-testing` | 单元、集成、doctest、基准与覆盖率 |
+| 领域 | `rust-unsafe-ffi` | unsafe、裸指针、内存布局、FFI、Miri |
+| 领域 | `rust-macros` | 声明宏与过程宏 |
+| 领域 | `rust-cli` | CLI、参数、I/O、日志和退出码 |
+| 领域 | `rust-web` | axum、serde、sqlx、reqwest、中间件 |
+| 领域 | `rust-embedded` | no_std、HAL、中断与 RTIC |
+| 质量 | `rust-code-review` | 正确性、安全、性能、API 与依赖审查 |
+| 质量 | `rust-style-clippy` | rustfmt、Clippy、Edition 迁移和错误码 |
+
+## 仓库结构
 
 ```text
 rust-skills/
+├── .claude-plugin/plugin.json   # 插件元数据和 12 个技能的发布清单
+├── .github/workflows/quality.yml
+├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
-│   ├── rust-1.93/                   # 主技能（1.93.1）
-│   │   ├── examples/                # 离线示例代码
-│   │   └── references/              # 语言 + std lib 参考
-│   ├── rust-project-structure/      # 模块与项目布局
-│   ├── rust-cargo-build/            # Cargo 构建系统
-│   ├── rust-concurrency/            # 并发与异步
-│   ├── rust-testing/                # 测试与基准测试
-│   ├── rust-unsafe-ffi/             # 不安全代码与 FFI
-│   ├── rust-macros/                 # 宏系统
-│   ├── rust-cli/                    # CLI 应用开发
-│   ├── rust-web/                    # Web 开发
-│   ├── rust-embedded/               # 嵌入式与 no_std
-│   ├── rust-code-review/            # 代码审查
-│   └── rust-style-clippy/           # 风格与静态分析
-├── README.md
-└── README.zh-CN.md
+│   └── <skill-name>/
+│       ├── SKILL.md             # 精简工作流与资料路由
+│       ├── agents/openai.yaml   # Codex UI 元数据
+│       ├── references/          # 按需加载的详细知识
+│       └── examples/            # 示例与可编译黄金工程
+├── TRACE-REPORT.md              # 当前评测与验证基线
+└── LICENSE
 ```
 
-## 📖 官方来源
-
-`rust-1.93` 主技能基于以下官方文档：
-
-- [Rust 程序设计语言（The Book）](https://doc.rust-lang.org/book/)
-- [Rust 标准库 API](https://doc.rust-lang.org/std/index.html)
-- [Rust 例程 (RBE)](https://doc.rust-lang.org/rust-by-example/)
-- [Cargo 手册](https://doc.rust-lang.org/cargo/index.html)
-- [Rust 参考手册](https://doc.rust-lang.org/reference/index.html)
-- [Rustonomicon（不安全 Rust）](https://doc.rust-lang.org/nomicon/index.html)
-- [Rust 版本指南](https://doc.rust-lang.org/edition-guide/index.html)
-- [rustc 手册](https://doc.rust-lang.org/rustc/index.html)
-- [rustdoc 手册](https://doc.rust-lang.org/rustdoc/index.html)
-- [Clippy 手册](https://doc.rust-lang.org/clippy/index.html)
-- [嵌入式 Rust 手册](https://doc.rust-lang.org/embedded-book)
-- [命令行应用手册](https://rust-cli.github.io/book/index.html)
-- [Async Book](https://rust-lang.github.io/async-book/)
-
-## 🤖 支持的智能体
-
-兼容 [Claude Code](https://code.claude.com)、[Codex](https://developers.openai.com/codex)、[Cursor](https://cursor.com)、[OpenCode](https://opencode.ai)、[Gemini CLI](https://geminicli.com)、[GitHub Copilot](https://github.com/features/copilot)、[Windsurf](https://codeium.com/windsurf) 及 [70+ 其他](https://agentskills.io/clients)。
-
-### Claude Code 安装
-
-**方式 1：npx skills CLI（推荐）**
+## 质量验证
 
 ```bash
-npx skills add full-stack-skills/rust-skills
+python3 scripts/validate_skills.py
+python3 scripts/validate_skills.py --check-examples
 ```
 
-**方式 2：手动安装**
+校验覆盖：
 
-```bash
-git clone https://github.com/full-stack-skills/rust-skills.git
-cp -r rust-skills/skills/* .claude/skills/
-```
+- 插件清单与技能目录双向一致。
+- frontmatter 名称、描述和目录名一致。
+- `SKILL.md` 不超过 500 行。
+- Markdown 相对链接和代码围栏有效。
+- `agents/openai.yaml` 存在且默认提示显式引用对应技能。
+- 黄金示例通过 `cargo fmt`、`cargo check` 和 `cargo test`。
 
-更多详情请参考 [Claude Code 技能指南](https://code.claude.com/docs/en/skills) 和 [Agent Skills 规范](https://agentskills.io/)。
+## v2.0 迁移
 
-## 🌐 生态
+`rust-1.93` 已替换为 `rust-stable`。旧名称是固定版本快照，却使用了“最新”描述，容易把历史 API 信息误用于新项目。请把显式调用更新为 `$rust-stable`。
 
-| 资源 | 链接 |
-|------|------|
-| **Full Stack Skills** | [github.com/partme-ai/full-stack-skills](https://github.com/partme-ai/full-stack-skills) |
-| **所有技能组** | [github.com/full-stack-skills](https://github.com/full-stack-skills) |
-| **Agent Skills 规范** | [agentskills.io](https://agentskills.io) |
-| **Skills CLI** | [github.com/vercel-labs/skills](https://github.com/vercel-labs/skills) |
+## 官方来源
 
-## 📄 许可证
+- [Rust Release Notes](https://doc.rust-lang.org/stable/releases.html)
+- [The Rust Programming Language](https://doc.rust-lang.org/book/)
+- [Rust Standard Library](https://doc.rust-lang.org/std/)
+- [Rust Reference](https://doc.rust-lang.org/reference/)
+- [Cargo Book](https://doc.rust-lang.org/cargo/)
+- [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
+- [Rustonomicon](https://doc.rust-lang.org/nomicon/)
 
-Apache 2.0 — 参见 [LICENSE](LICENSE).
+## 许可证
+
+Apache License 2.0，参见 [LICENSE](LICENSE)。

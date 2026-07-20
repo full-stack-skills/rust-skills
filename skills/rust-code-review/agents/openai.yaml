@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Code Review"
+  short_description: "审查 Rust 正确性、安全、性能、API 和依赖风险"
+  default_prompt: "Use $rust-code-review to review this Rust change and report actionable findings."

@@ -1,6 +1,6 @@
 ---
 name: rust-concurrency
-description: Rust 并发编程技能 — 线程（thread::spawn、scoped threads）、同步原语（Mutex、RwLock、Barrier、Condvar、OnceLock、LazyLock）、原子操作（AtomicBool/I32/Usize、Ordering）、通道（mpsc）、async/await（Future、Tokio 运行时）、Send/Sync trait。基于 std::thread、std::sync、std::sync::atomic 与 Async Book。当用户需要多线程编程、异步 I/O 或使用 Tokio 时激活。
+description: Rust 并发编程技能 — scoped threads、Mutex/RwLock、原子、channel、Send/Sync、Future 和 Tokio。Use when designing, debugging, or testing threaded and async Rust, cancellation, task lifetimes, lock scope, atomics, or message passing; hand basic ownership to rust-stable and unsafe invariants to rust-unsafe-ffi.
 ---
 
 # Rust 并发编程
@@ -20,11 +20,11 @@ description: Rust 并发编程技能 — 线程（thread::spawn、scoped threads
 8. 异步 I/O 基础（tokio::fs、tokio::net、tokio::io）
 
 ### ⚠️ 前置要求
-1. 理解 Rust 所有权模型（rust-1.93）
+1. 理解 Rust 所有权模型（`rust-stable`）
 
 ### ❌ 不适用范围
 1. 不安全代码并发 → 使用 `rust-unsafe-ffi` 技能
-2. 基础所有权/借用 → 使用 `rust-1.93` 技能
+2. 基础所有权/借用 → 使用 `rust-stable` 技能
 
 ## 何时使用
 
@@ -199,6 +199,12 @@ Step 6. 测试验证 — cargo test -- --test-threads=1 测试并发代码
 4. select! 中取消的 Future 不会执行清理 - 分支被取消后 Future 直接 drop
 5. Atomic Ordering 不是关系型的 - 滥用 Relaxed 可能导致意外 memory ordering 问题
 
+
+## 按需资源
+
+- [并发示例](examples/examples.md)
+- [类型与工具速查](references/references.md)
+- `examples/golden-threads/`：CI 编译的 scoped thread 示例
 
 ## 官方参考
 

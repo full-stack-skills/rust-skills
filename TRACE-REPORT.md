@@ -1,78 +1,64 @@
-# rust-skills TRACE 评测总报告
+# rust-skills 评测与验证基线
 
-评测时间：2026-06-17 | 评测体系：SkillHub TRACE
+基线日期：2026-07-20
 
----
+插件版本：2.0.0
 
-## 综合评分
+Rust 验证工具链：1.97.1
 
-| Skill | T | R | A | C | E | 综合 |
-|-------|---|---|---|---|---|---|
-| rust-1.93 | 4.2 | 4.58 | 4.38 | 4.5 | 4.65 | **4.46** |
-| rust-cargo-build | 4.88 | 3.8 | 4.45 | 3.75 | 3.9 | **4.16** |
-| rust-cli | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-code-review | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-concurrency | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-embedded | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-macros | 4.88 | 3.83 | 4.33 | 3.75 | 3.75 | **4.11** |
-| rust-project-structure | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-style-clippy | 4.88 | 3.8 | 4.45 | 3.75 | 3.9 | **4.16** |
-| rust-testing | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-unsafe-ffi | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
-| rust-web | 4.88 | 3.75 | 4.33 | 3.75 | 3.75 | **4.09** |
+## 评测定位
 
----
+旧版静态 TRACE HTML 在技能补充 examples/references 前生成，不能代表当前内容，因此不再随技能目录发布。本版本把质量证据拆成三个可重复验证的层次：
 
-## 五维分析
+1. **结构与规范**：由 `scripts/validate_skills.py` 自动检查。
+2. **代码有效性**：每个技能至少一个黄金示例，执行 fmt、check、test、Clippy。
+3. **触发与交接**：由 `evaluation/scenarios.json` 保存独立 Agent forward-test 输入和断言。
 
-"
-"### T · Trust（可信任度）
-"
-"- rust-1.93 因全英文 T2=2.0，其余 11 中文技能 T2=5.0
-"
-"- 所有技能无密钥/无脚本/有安全声明（T1/T4=5.0）
+## 自动门禁
 
-"
-"### R · Reliability（可靠性）
-"
-"- rust-1.93 优秀（4.58）：有 Workflow + 56 项 Gotchas + validation
-"
-"- 其余 11 技能偏低（3.75-3.83）：缺 Gotchas/Workflow/examples
+| 门禁 | 覆盖范围 | 当前状态 |
+|---|---|---|
+| Manifest parity | `plugin.json` 与 `skills/*` 双向一致 | 通过 |
+| Frontmatter | name、description、目录名、唯一性 | 通过 |
+| Progressive disclosure | 所有 `SKILL.md` 不超过 500 行 | 通过，最长 271 行 |
+| Local links | README、SKILL、references、examples | 通过 |
+| Markdown fences | 所有 Markdown 代码围栏闭合 | 通过 |
+| Agent metadata | 12 份 `agents/openai.yaml` 与默认提示 | 通过 |
+| Golden examples | 12 个示例的 fmt/check/test/Clippy | 12/12 通过 |
+| Trigger scenarios | 24 个中英文场景覆盖全部 12 个技能 | 结构通过，待独立 Agent forward-test |
 
-"
-"### A · Adaptability（适用性）
-"
-"- 触发方式满分（A2=5.0），中文覆盖国内（A3=4.3）
-"
-"- 扣分：缺 When to Use 章节（A1=4.0），缺 examples/refs（A4=4.0）
+执行命令：
 
-"
-"### C · Convention（规范性）
-"
-"- 结构清晰（C3=4.7），但缺 examples（C1=3.5）、缺 refs（C2=3.0）
+```bash
+python3 scripts/validate_skills.py
+python3 scripts/validate_skills.py --check-examples
+```
 
-"
-"### E · Effectiveness（有效性）
-"
-"- rust-1.93 优秀（4.65），其余 11 偏低（3.75-3.9）
-"
-"- 缺 Workflow/validation/examples 是主要扣分原因
+## Forward-test 规则
 
-"
-"---
+对 `evaluation/scenarios.json` 中的每个 case 使用全新 Agent 上下文：
 
-## 各 Skill HTML 报告
+1. 只提供用户 prompt 和已安装技能，不提供期望技能或 assertions。
+2. 记录实际加载技能、输出、命令、测试日志和产物。
+3. 评估触发准确率、错误交接、事实正确性和验证完成度。
+4. 只有原始证据满足全部 assertions 才判定通过。
+5. 修改技能后重新运行受影响 case；版本升级时运行全量 case。
 
-"
-- [rust-1.93](skills/rust-1.93/evaluation-report.html)
-- [rust-cargo-build](skills/rust-cargo-build/evaluation-report.html)
-- [rust-cli](skills/rust-cli/evaluation-report.html)
-- [rust-code-review](skills/rust-code-review/evaluation-report.html)
-- [rust-concurrency](skills/rust-concurrency/evaluation-report.html)
-- [rust-embedded](skills/rust-embedded/evaluation-report.html)
-- [rust-macros](skills/rust-macros/evaluation-report.html)
-- [rust-project-structure](skills/rust-project-structure/evaluation-report.html)
-- [rust-style-clippy](skills/rust-style-clippy/evaluation-report.html)
-- [rust-testing](skills/rust-testing/evaluation-report.html)
-- [rust-unsafe-ffi](skills/rust-unsafe-ffi/evaluation-report.html)
-- [rust-web](skills/rust-web/evaluation-report.html)
+## 成功标准
+
+- 结构门禁零错误。
+- 12/12 黄金示例通过全部命令。
+- 每个技能至少两个触发或交接场景。
+- 不使用当前项目 MSRV 尚未稳定的 API。
+- 不把历史版本快照描述为自动更新的 stable 事实。
+- 发布、删除、凭据和外部系统操作必须保留授权边界。
+
+## 维护要求
+
+Rust stable 发布后：
+
+1. 更新 `rust-stable/references/release-current.md`。
+2. 审查 Language、Library、Cargo、Clippy、Rustdoc 和 Compatibility Notes。
+3. 更新版本敏感示例和错误说明。
+4. 在新 stable 与声明的最低 MSRV 上运行验证。
+5. 更新插件版本和本报告日期。

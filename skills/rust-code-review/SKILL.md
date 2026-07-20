@@ -1,6 +1,6 @@
 ---
 name: rust-code-review
-description: Rust 代码审查技能 — 命名规范（PascalCase/snake_case/SCREAMING_CASE）、常见反模式（冗余 clone、unwrap 滥用、大锁范围、String 循环拼接、裸指针泄漏）、unsafe 审查清单（safety 文档、不变条件、指针寿命）、性能热点识别、API 设计审查（类型安全、错误处理暴露、trait 对象安全）、依赖安全（cargo-audit）。基于 Rust 社区最佳实践与官方风格指南。当需要对 Rust 代码进行审查、发现潜在问题或检查代码质量时激活。
+description: Rust 代码审查技能 — 按严重级别检查正确性、unsafe 不变量、错误处理、clone 与分配、锁范围、API 兼容性、测试缺口和依赖风险。Use when reviewing Rust diffs, pull requests, libraries, or unsafe boundaries; report actionable findings before summaries and combine with rust-style-clippy for automated lint gates.
 ---
 
 # Rust 代码审查
@@ -23,7 +23,7 @@ description: Rust 代码审查技能 — 命名规范（PascalCase/snake_case/SC
 1. 代码可通过 `cargo check` 编译
 
 ### ❌ 不适用范围
-1. 语法教学 → 使用 `rust-1.93` 技能
+1. 语法教学 → 使用 `rust-stable` 技能
 2. 格式化与 Clippy 配置 → 使用 `rust-style-clippy` 技能
 
 ## 何时使用
@@ -153,11 +153,17 @@ Step 6. 工具检查 — cargo clippy + cargo fmt --check + cargo audit
 
 ## Gotchas
 
-1. #![deny(unsafe_op_in_unsafe_fn)] 是 Rust 1.93 硬错误 - 所有 unsafe 操作需显式包裹
+1. `unsafe_op_in_unsafe_fn` 默认 lint 等级取决于 edition；在 crate 根显式 `#![deny(unsafe_op_in_unsafe_fn)]` 并为每个操作使用最小 `unsafe {}`
 2. expect() 比 unwrap() 稍好但仍有 panic 风险 - 推荐用 ? 运算符
 3. cargo audit 只检查 Cargo.lock - 锁文件过期时结果不准确
 4. 潜在数据竞争不总是在编译期暴露 - Mutex 只保证互斥不保证逻辑顺序
 
+
+## 按需资源
+
+- [审查示例](examples/examples.md)
+- [工具与清单速查](references/references.md)
+- `examples/golden-review/`：CI 编译的显式错误处理示例
 
 ## 官方参考
 

@@ -1,6 +1,6 @@
 ---
 name: rust-web
-description: Rust Web 开发技能 — axum 框架（路由、提取器、状态、响应体、中间件）、serde 序列化/反序列化、HTTP 客户端（reqwest）、数据库集成（sqlx：POSTGRESQL/MySQL/SQLite、查询、连接池、迁移）、WebSocket、CORS、认证（JWT）、RESTful API 设计模式。基于社区 crate 文档（axum、tokio、serde、sqlx、reqwest）。当用户需要构建 Web 服务或 HTTP 应用时激活。
+description: Rust Web 开发技能 — axum 路由和提取器、serde、tower 中间件、reqwest、sqlx、事务、WebSocket、CORS 和认证边界。Use when designing, implementing, debugging, or testing Rust HTTP services and clients; combine with rust-concurrency for async lifecycle and rust-testing for endpoint and database tests.
 ---
 
 # Rust Web 开发
@@ -25,7 +25,7 @@ description: Rust Web 开发技能 — axum 框架（路由、提取器、状态
 
 ### ⚠️ 前置要求
 1. 理解 async/await（rust-concurrency）
-2. Rust 基础（rust-1.93）
+2. Rust 基础（`rust-stable`）
 
 ### ❌ 不适用范围
 1. CLI 应用 → 使用 `rust-cli` 技能
@@ -246,6 +246,12 @@ Step 6. 测试 — 编写集成测试，使用 axum::test 或 reqwest 测试端�
 4. serde #[serde(flatten)] 性能开销 - 创建临时 Value 中间表示
 5. axum WebSocket::recv() 返回 None 表示连接已关闭
 
+
+## 按需资源
+
+- [Web 示例](examples/examples.md)
+- [Web crate 速查](references/references.md)
+- `examples/golden-handler/`：CI 编译的纯 handler 边界示例
 
 ## 官方参考
 

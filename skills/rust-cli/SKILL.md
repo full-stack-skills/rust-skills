@@ -1,6 +1,6 @@
 ---
 name: rust-cli
-description: Rust CLI 应用开发技能 — 命令行参数解析（clap：派生式/构建式）、标准 I/O（stdin/stdout/stderr、Read/Write）、文件 I/O（File、BufReader/BufWriter、Seek）、路径操作（Path/PathBuf）、配置文件（toml/json/env、serde）、日志（log + env_logger/tracing）、终端输出（colored/indicatif 进度条）、退出码、错误输出模式（anyhow + 友好错误）。基于 Command Line Book 与社区实践。当用户需要构建命令行工具时激活。
+description: Rust CLI 应用开发技能 — clap 参数与子命令、stdin/stdout/stderr、文件和路径、配置、日志、终端交互、错误与退出码。Use when building or testing command-line programs, filters, batch tools, or terminal UX; hand test harness design to rust-testing and general I/O semantics to rust-stable.
 ---
 
 # Rust CLI 应用开发
@@ -22,7 +22,7 @@ description: Rust CLI 应用开发技能 — 命令行参数解析（clap：派�
 10. 常用 CLI 模式（管道处理、循环读取、信号处理、进度提示）
 
 ### ⚠️ 前置要求
-1. 理解 Rust 基础 I/O（rust-1.93）
+1. 理解 Rust 基础 I/O（`rust-stable`）
 
 ### ❌ 不适用范围
 1. Web 服务 → 使用 `rust-web` 技能
@@ -256,6 +256,12 @@ Step 6. 测试验证 — 用 assert_cmd 测试 CLI 输出，用 assert_fs 测试
 4. Path::new('') 是空路径 - path.join('') 返回 path 本身
 5. env_logger::init() 只能调用一次 - 测试中需用 env_logger::try_init()
 
+
+## 按需资源
+
+- [CLI 示例](examples/examples.md)
+- [常用 crate 速查](references/references.md)
+- `examples/golden-cli/`：CI 编译并测试参数错误的黄金示例
 
 ## 官方参考
 

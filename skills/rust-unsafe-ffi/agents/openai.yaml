@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Unsafe and FFI"
+  short_description: "隔离、实现并验证 unsafe、内存布局和外部函数接口边界"
+  default_prompt: "Use $rust-unsafe-ffi to implement and audit this unsafe Rust or FFI boundary."

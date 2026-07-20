@@ -1,7 +1,7 @@
 {
   "name": "rust-skills",
-  "version": "1.0.0",
-  "description": "Rust language skills",
+  "version": "2.0.0",
+  "description": "Stable Rust language and engineering skills",
   "author": {
     "name": "PartMeAI",
     "email": "partmeai@gmail.com"
@@ -10,7 +10,7 @@
   "repository": "https://github.com/full-stack-skills/rust-skills",
   "source": "./",
   "skills": [
-    "./skills/rust-1.93",
+    "./skills/rust-stable",
     "./skills/rust-project-structure",
     "./skills/rust-cargo-build",
     "./skills/rust-concurrency",
