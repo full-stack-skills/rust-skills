@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Macros"
-  short_description: "设计、实现、测试和调试声明宏、派生宏、属性宏以及过程宏"
+  short_description: "Design, test, and debug declarative and procedural macros"
   default_prompt: "Use $rust-macros to design, implement, and test this Rust macro."

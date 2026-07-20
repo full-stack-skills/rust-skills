@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Performance"
+  short_description: "Measure and optimize Rust CPU, memory, and size"
+  default_prompt: "Use $rust-performance to benchmark, profile, and optimize this Rust workload."

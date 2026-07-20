@@ -2,7 +2,7 @@
 
 基线日期：2026-07-20
 
-插件版本：2.3.0
+插件版本：3.0.0
 
 Rust 验证工具链：1.97.1
 
@@ -22,12 +22,14 @@ Rust 源码核验：`rust-lang/rust` main `9f36de775bc636c8e88c31a173c2bcb699595
 |---|---|---|
 | Manifest parity | `plugin.json` 与 `skills/*` 双向一致 | 通过 |
 | Frontmatter | name、description、目录名、唯一性 | 通过 |
-| Progressive disclosure | 所有 `SKILL.md` 不超过 500 行 | 通过，最长 253 行；Concurrency/CLI/Embedded/Web/Database/Web Security/Lombok Macros 分别为 222/150/168/169/144/137/139 行 |
+| Progressive disclosure | 所有 `SKILL.md` 不超过 500 行 | 通过，最长 251 行；新增 Documentation/HTTP Client/Observability/Performance 分别为 121/97/98/95 行 |
 | Local links | README、SKILL、references、examples | 通过 |
 | Markdown fences | 所有 Markdown 代码围栏闭合 | 通过 |
-| Agent metadata | 15 份 `agents/openai.yaml` 与默认提示 | 通过 |
-| Golden examples | 15 个示例的 fmt/check/test/Clippy | 15/15 通过；三方宏示例按 `Cargo.lock` 预取后离线验证 |
-| Trigger scenarios | 34 个中英文场景覆盖全部 15 个技能 | 结构通过，待独立 Agent forward-test |
+| Agent metadata | 19 份 `agents/openai.yaml` 与默认提示 | 通过 |
+| Golden examples | 19 个示例的 fmt/check/test/Clippy | 19/19 通过；三方依赖示例按 `Cargo.lock` 预取后离线验证 |
+| Trigger scenarios | 44 个中英文场景覆盖全部 19 个技能 | 结构通过，待独立 Agent forward-test |
+| Skill language | `skills/**` 中不含中文技能正文或代理元数据 | 通过，19 个技能均为英文 |
+| Phase 2 scope | RPC、消息、数据格式、WebAssembly、底层网络协议 | 已完成边界与优先级评估，见 `PHASE-2-EVALUATION.md` |
 
 执行命令：
 
@@ -49,7 +51,7 @@ python3 scripts/validate_skills.py --check-examples
 ## 成功标准
 
 - 结构门禁零错误。
-- 15/15 黄金示例通过全部命令。
+- 19/19 黄金示例通过全部命令。
 - 每个技能至少两个触发或交接场景。
 - 不使用当前项目 MSRV 尚未稳定的 API。
 - 不把历史版本快照描述为自动更新的 stable 事实。

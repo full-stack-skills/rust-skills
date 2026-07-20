@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust HTTP Client"
+  short_description: "Build resilient and secure Rust HTTP clients"
+  default_prompt: "Use $rust-http-client to design and test this Rust outbound HTTP integration."

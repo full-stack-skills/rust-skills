@@ -1,9 +1,9 @@
 ---
 name: rust-concurrency
-description: Design, implement, diagnose, and test Rust concurrency with threads, Send and Sync, mutexes, atomics, channels, async runtimes, cancellation, bounded backpressure, actor ownership, task supervision, graceful shutdown, and overload control. Use when users ask about shared state, deadlocks, async tasks, Tokio, high concurrency, daemon resource budgets, slow consumers, worker pools, or concurrent correctness.
+description: Design, implement, diagnose, and test Rust concurrency and parallelism with threads, Send and Sync, locks, atomics, channels, Tokio, Rayon, Crossbeam, bounded backpressure, actor ownership, task supervision, graceful shutdown, runtime diagnostics, and Loom model tests. Use when users ask about shared state, deadlocks, async tasks, CPU parallelism, high concurrency, daemon resource budgets, slow consumers, worker pools, lock-free structures, or concurrent correctness.
 ---
 
-# Rust Concurrency Programming
+# Rust Concurrency
 
 > Based on the standard library `std::thread`, `std::sync`, and `std::sync::atomic` modules, along with the Async Book. Use when designing, debugging, load-testing, or reviewing threaded and async Rust code; cancellation, task ownership, lock scope, runtime sizing, queues, overload management, message passing, hand basic ownership to rust-stable and unsafe invariants to rust-unsafe-ffi.
 
@@ -20,6 +20,10 @@ description: Design, implement, diagnose, and test Rust concurrency with threads
 8. Async I/O foundations (`tokio::fs`, `tokio::net`, `tokio::io`)
 9. Bounded queues, backpressure, slow consumers, concurrency limits and overload strategies
 10. Task supervision, connection lifecycles, cancellation safety and graceful shutdown
+11. CPU-bound data parallelism and dedicated Rayon pools
+12. Crossbeam channels, queues, work-stealing deques, and scoped threads
+13. Read-heavy snapshots, sharded maps, caches, and alternative locks when measurements justify them
+14. Loom model checking and Tokio runtime diagnostics
 
 ### ⚠️ Prerequisites
 1. Understanding Rust ownership model (`rust-stable`)
@@ -89,8 +93,11 @@ for _ in 0..10 {
 
 // RwLock (read-write lock)
 let data = Arc::new(RwLock::new(vec![1, 2, 3]));
-let read = data.read().unwrap();
-let write = data.write().unwrap();
+{
+    let read = data.read().unwrap();
+    assert_eq!(read.len(), 3);
+} // Drop the read guard before taking the write lock.
+data.write().unwrap().push(4);
 
 // OnceLock (thread-safe lazy initialization)
 static CONFIG: OnceLock<String> = OnceLock::new();
@@ -179,21 +186,35 @@ async fn main() {
 // !Send types: Rc<T>, *const T
 // !Sync types: RefCell<T>, Cell<T>
 
-// Manual implementation (requires unsafe)
-struct MyType(*const u8);
-unsafe impl Send for MyType {}
-unsafe impl Sync for MyType {}
+// Manual implementations are unsafe contracts. Do not add them merely to
+// satisfy a compiler error; prove aliasing, lifetime, and thread-safety first.
 ```
+
+## VII. Select the Execution Model
+
+| Workload | Default starting point | Avoid |
+|---|---|---|
+| Many readiness-driven network operations | Tokio tasks with bounded admission | One task or buffer per unbounded input |
+| CPU-heavy independent items | Rayon parallel iterators or a dedicated pool | Running long CPU work on Tokio workers |
+| Blocking filesystem, FFI, or legacy APIs | Bounded `spawn_blocking` submissions or a dedicated pool | Treating Tokio's blocking queue as backpressure |
+| Synchronous MPMC messaging or work stealing | Crossbeam channels, queues, or deques | Selecting lock-free structures without measurement |
+| Small shared state with short critical sections | `std::sync` locks | Holding guards across `.await` or callbacks |
+| Read-mostly immutable snapshots | `ArcSwap` after profiling | A concurrent map for every read-heavy value |
+| Shared keyed mutable state | Sharded ownership or `DashMap` after contention tests | Multi-key operations without an atomicity design |
+| Expiring concurrent cache | Moka with explicit capacity and eviction policy | An unbounded map called a cache |
+
+Tokio is primarily for I/O concurrency; Rayon is for CPU parallelism. Mixing them requires an explicit handoff, independent concurrency limits, and shutdown ownership. Read [Concurrency Tool Selection](references/concurrency-tool-selection.md) before introducing a third-party primitive.
 
 ## Workflow
 
-1. **Write concurrency budget** — define maximum connections, in-flight tasks, queue capacity, per-item timeouts, memory budgets, and shutdown timelines.
-2. **Determine state ownership priorities** — prefer single-writer/actor patterns; if sharing is required, split locks by responsibility while distinguishing between synchronous locks, asynchronous locks, and atomic states.
-3. **Select communication semantics** — use bounded `mpsc + oneshot` for requests/responses, `watch` for latest status updates, reserve `broadcast` only when multiple subscribers are allowed to lose events; clearly specify queue fullness, shutdown strategies, lag handling.
-4. **Supervise tasks** — save `JoinHandle`s or `JoinSet`, define how subtasks fail, panic, and respond to caller cancellation and parent task exit without orphaned spawns.
-5. **Design graceful shutdown sequence** — stop accepting new work, broadcast closure signals, cancel pending tasks, wait for bounded duration, release resources, and aggregate errors.
-6. **Measure runtime after adjustments** — determine worker count based on ready drivers, CPU utilization, blocking call counts, and wake costs; isolate blocking work to `spawn_blocking` or dedicated thread pools with individual submission limits.
-7. **Validate failure paths** — cover full queue saturation, slow consumers, out-of-order completion, partial failures, peer disconnection, timeouts, cancellation scenarios, race conditions during shutdown, task leaks.
+1. **Classify the workload** — separate readiness-driven I/O, CPU parallelism, blocking calls, synchronization, and durable messaging before selecting a runtime or primitive.
+2. **Write concurrency budgets** — define maximum connections, in-flight tasks, queue capacity, item size, timeouts, memory, CPU pools, and shutdown deadlines.
+3. **Determine state ownership** — prefer partitioned or single-writer ownership; share state only with an explicit atomicity and lock-ordering contract.
+4. **Select communication semantics** — choose bounded point-to-point, request/reply, latest-value, lossy broadcast, or durable replay deliberately; specify queue-full and receiver-lag behavior.
+5. **Supervise execution** — retain task or thread handles, propagate failure, contain panic, prevent orphan work, and define caller-cancellation behavior.
+6. **Design graceful shutdown** — stop admission, close producers, publish cancellation, join within a deadline, flush required state, and return unresolved failures.
+7. **Measure before tuning** — record throughput, p50/p95/p99 latency, queue depth, saturation, task poll time, wakeups, lock wait, CPU, allocations, and RSS.
+8. **Verify the model** — test overload and cancellation, use Loom for small synchronization state machines, and use tokio-console or tracing for runtime stalls. Read [Concurrency Testing and Diagnostics](references/concurrency-testing-and-diagnostics.md).
 
 ## Gotchas
 
@@ -205,11 +226,16 @@ unsafe impl Sync for MyType {}
 6. broadcast lag is distinct from normal success paths; must choose between discarding, rebuilding snapshots, disconnecting slow consumers, or persistently replaying events
 7. max_blocking_threads limits only the number of blocking threads and does not provide backpressure for submission queues; high-cost tasks require Semaphore or bounded queues
 8. JoinSet returns results in completion order; if API requires input ordering, carry indices through to restore sequence during aggregation
+9. `DashMap`, `parking_lot`, `ArcSwap`, and lock-free queues change semantics as well as performance; benchmarks do not replace invariant review
+10. Loom sees only synchronization performed through Loom-aware types and can suffer state-space explosion; keep models small and deterministic
+11. Rayon work may outlive the async caller unless cancellation and pool ownership are designed explicitly
 
 ## On-Demand Resources
 
 - [Concurrency Examples](examples/examples.md)
 - [Type & Tool Quick Reference](references/references.md)
+- [Concurrency Tool Selection](references/concurrency-tool-selection.md): Read when choosing Tokio, Rayon, Crossbeam, locks, sharded maps, snapshots, or caches.
+- [Concurrency Testing and Diagnostics](references/concurrency-testing-and-diagnostics.md): Read when proving synchronization correctness, diagnosing runtime stalls, or load-testing overload and shutdown.
 - [Production Async Service Patterns](references/production-async-services.md): Read when designing actors, backpressure, slow consumers, task supervision, runtime configuration, and shutdown protocols.
 - `examples/golden-threads/`: CI-built scoped thread examples
 
@@ -220,3 +246,6 @@ unsafe impl Sync for MyType {}
 - [std::sync::atomic Documentation](https://doc.rust-lang.org/std/sync/atomic/)
 - [Async Book](https://rust-lang.github.io/async-book/)
 - [Tokio Guide](https://tokio.rs/tokio/tutorial)
+- [Rayon](https://docs.rs/rayon/)
+- [Crossbeam](https://docs.rs/crossbeam/)
+- [Loom](https://docs.rs/loom/)

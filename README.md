@@ -16,11 +16,11 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 15 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 19 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
-List the 15 available skills without installing them:
+List the 19 available skills without installing them:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ Choose skills and target agents interactively for the current project:
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install all 15 skills for all detected agents without prompts:
+Install all 19 skills for all detected agents without prompts:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -55,14 +55,16 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>language and std entry"]
-    P["project engineering<br/>project-structure / cargo-build"]
-    D["specialized domains<br/>concurrency / testing / unsafe-ffi / macros / lombok-macros<br/>cli / web / database / web-security / embedded"]
+    P["project engineering<br/>project-structure / cargo-build / documentation"]
+    D["specialized domains<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
+    O["operational evidence<br/>testing / performance / observability"]
     Q["quality gates<br/>code-review / style-clippy"]
 
     S --> P
     S --> D
     P --> D
-    D --> Q
+    D --> O
+    O --> Q
 ```
 
 | Layer | Skill | Responsibility |
@@ -70,13 +72,17 @@ flowchart TB
 | Core | `rust-stable` | Ownership, traits, collections, errors, std, version checks |
 | Engineering | `rust-project-structure` | Packages, crates, modules, workspace layout |
 | Engineering | `rust-cargo-build` | Manifests, dependencies, features, resolver, build and publish |
-| Domain | `rust-concurrency` | Threads, synchronization, atomics, channels, Tokio |
+| Engineering | `rust-documentation` | Rustdoc API contracts, doctests, mdBook guides and documentation release gates |
+| Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
+| Domain | `rust-performance` | Measurement plans, Criterion benchmarks, CPU/latency/memory profiling and regression proof |
+| Domain | `rust-observability` | Structured tracing, metrics, OpenTelemetry context and runtime diagnostics |
 | Domain | `rust-unsafe-ffi` | Unsafe, raw pointers, layout, FFI and Miri |
 | Domain | `rust-macros` | Declarative and procedural macros |
 | Domain | `rust-lombok-macros` | Controlled `lombok-macros` accessors, constructors and debug formatting |
 | Domain | `rust-cli` | End-to-end CLI contracts, standard streams, exit codes and process tests |
 | Domain | `rust-web` | Server-side HTTP APIs, handler boundaries, middleware and lifecycle |
+| Domain | `rust-http-client` | Reusable outbound HTTP clients, transport policy, bounded responses, retries and test servers |
 | Domain | `rust-database` | SQL/ORM, schema migrations, transactions, pools and real database verification |
 | Domain | `rust-web-security` | Threat modeling, authentication, authorization, sessions, tokens and browser security |
 | Domain | `rust-embedded` | Bare-metal firmware, portable no_std drivers and hardware validation |
@@ -108,6 +114,15 @@ python3 scripts/validate_skills.py --check-examples
 ```
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
+
+## v3.0 Engineering Tooling
+
+- Adds `rust-documentation` for rustdoc contracts, doctests, mdBook guides, link checking, and documentation release quality.
+- Adds `rust-http-client` for reusable clients, TLS/proxy/redirect policy, timeouts, bounded bodies, retry safety, and deterministic local-server tests.
+- Adds `rust-observability` for `tracing`, bounded-cardinality metrics, OpenTelemetry context propagation, and runtime diagnostics.
+- Adds `rust-performance` for hypothesis-driven benchmarks, CPU/latency/memory/size/compile-time profiling, and regression evidence.
+- Expands `rust-concurrency` with Tokio-versus-Rayon selection, Crossbeam and concurrent-state tools, bounded backpressure, task supervision, Loom model tests, and runtime diagnostics.
+- Records the next-stage RPC, messaging, data-format, WebAssembly, and lower-level networking decisions in [PHASE-2-EVALUATION.md](PHASE-2-EVALUATION.md).
 
 ## v2.3 Lombok Macros
 
@@ -142,7 +157,9 @@ Validation covers manifest/directory parity, frontmatter, the 500-line limit, re
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
 - [lombok-macros on crates.io](https://crates.io/crates/lombok-macros) and [versioned docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)
-- [Tokio](https://tokio.rs/), [clap](https://docs.rs/clap/), [cargo-deny](https://embarkstudios.github.io/cargo-deny/), and [cargo-nextest](https://nexte.st/)
+- [Rustdoc](https://doc.rust-lang.org/rustdoc/), [mdBook](https://rust-lang.github.io/mdBook/), [Tokio](https://tokio.rs/), and [Rayon](https://docs.rs/rayon/)
+- [reqwest](https://docs.rs/reqwest/), [Tower](https://docs.rs/tower/), [tracing](https://docs.rs/tracing/), and [OpenTelemetry Rust](https://opentelemetry.io/docs/languages/rust/)
+- [Criterion.rs](https://bheisler.github.io/criterion.rs/book/), [cargo-flamegraph](https://github.com/flamegraph-rs/flamegraph), [Samply](https://github.com/mstange/samply), [clap](https://docs.rs/clap/), [cargo-deny](https://embarkstudios.github.io/cargo-deny/), and [cargo-nextest](https://nexte.st/)
 - [SQLx](https://docs.rs/sqlx/), [Diesel](https://diesel.rs/guides/), and [SeaORM](https://www.sea-ql.org/SeaORM/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) and [RFC 8725](https://datatracker.ietf.org/doc/html/rfc8725)
 

@@ -204,6 +204,66 @@
       "prompt": "把账户实体的校验构造器和 debit/credit 方法删掉，直接 derive Data、New、DisplayDebug；余额、状态和 access_token 都开放 setter，越省代码越好。",
       "expected_skills": ["rust-lombok-macros", "rust-code-review"],
       "assertions": ["rejects_generated_api_that_bypasses_invariants", "keeps_validated_constructor_and_domain_actions", "does_not_expose_mutable_secret_fields", "does_not_use_debug_as_user_display", "adds_negative_regression_tests"]
+    },
+    {
+      "id": "documentation-public-api",
+      "prompt": "Document this public Rust library with runnable examples, intra-doc links, missing-doc enforcement, and a release gate that fails on rustdoc warnings.",
+      "expected_skills": ["rust-documentation", "rust-testing"],
+      "assertions": ["documents_contracts_not_implementation", "uses_runnable_doctests", "enables_missing_docs_and_broken_link_gates", "runs_rustdoc_with_warnings_denied"]
+    },
+    {
+      "id": "documentation-mdbook",
+      "prompt": "Build an mdBook guide for a multi-crate workspace, keep API details in rustdoc, validate code snippets, and check internal and external links in CI.",
+      "expected_skills": ["rust-documentation", "rust-project-structure"],
+      "assertions": ["separates_api_and_guide_content", "defines_information_architecture", "tests_code_examples", "adds_link_validation"]
+    },
+    {
+      "id": "http-client-resilience",
+      "prompt": "Implement a reusable reqwest client for an idempotent JSON API with connect/request timeouts, bounded concurrency, safe retries, status mapping, and deterministic tests.",
+      "expected_skills": ["rust-http-client", "rust-concurrency", "rust-testing"],
+      "assertions": ["reuses_configured_client", "separates_timeout_and_concurrency_budgets", "retries_only_safe_failures", "tests_with_local_server"]
+    },
+    {
+      "id": "http-client-untrusted-url",
+      "prompt": "Review an outbound HTTP fetch endpoint that accepts user URLs and follows redirects through the system proxy. Prevent SSRF, credential leakage, and unbounded response bodies.",
+      "expected_skills": ["rust-http-client", "rust-web-security"],
+      "assertions": ["validates_each_redirect_target", "defines_proxy_and_dns_policy", "does_not_forward_credentials_cross_origin", "bounds_response_body"]
+    },
+    {
+      "id": "observability-context",
+      "prompt": "Instrument a Tokio request path so traces, structured logs, and metrics share request context across spawned tasks without recording secrets.",
+      "expected_skills": ["rust-observability", "rust-concurrency"],
+      "assertions": ["propagates_context_across_tasks", "uses_structured_fields", "redacts_sensitive_data", "tests_instrumentation_contract"]
+    },
+    {
+      "id": "observability-cardinality",
+      "prompt": "Our Prometheus bill exploded after adding user_id and raw URL labels. Redesign the Rust metrics and define operational dashboards and alerts.",
+      "expected_skills": ["rust-observability"],
+      "assertions": ["removes_unbounded_labels", "uses_route_templates", "defines_sli_aligned_metrics", "validates_cardinality_budget"]
+    },
+    {
+      "id": "performance-cpu-regression",
+      "prompt": "A parser became 20% slower. Establish a reproducible Criterion benchmark, profile CPU time, identify the hot path, optimize it, and prove the regression is fixed.",
+      "expected_skills": ["rust-performance", "rust-testing"],
+      "assertions": ["records_baseline_and_hypothesis", "controls_benchmark_noise", "profiles_before_optimizing", "reports_before_after_evidence"]
+    },
+    {
+      "id": "performance-memory-size",
+      "prompt": "Reduce peak memory and release binary size for this Rust daemon without changing behavior or MSRV; include measurement commands and regression gates.",
+      "expected_skills": ["rust-performance", "rust-cargo-build"],
+      "assertions": ["separates_peak_memory_from_binary_size", "measures_representative_workload", "checks_profile_and_feature_tradeoffs", "preserves_behavior_and_msrv"]
+    },
+    {
+      "id": "concurrency-cpu-parallelism",
+      "prompt": "This Tokio service performs CPU-heavy image transforms inside async tasks. Choose an execution model that preserves I/O responsiveness and enforces an overload budget.",
+      "expected_skills": ["rust-concurrency", "rust-performance"],
+      "assertions": ["distinguishes_io_concurrency_from_cpu_parallelism", "selects_bounded_cpu_execution", "defines_backpressure", "measures_runtime_impact"]
+    },
+    {
+      "id": "concurrency-model-checking",
+      "prompt": "A small lock-free state machine fails once a month. Add deterministic concurrency verification and explain what Loom can and cannot prove.",
+      "expected_skills": ["rust-concurrency", "rust-testing"],
+      "assertions": ["builds_bounded_loom_model", "avoids_real_io_and_time_in_model", "states_model_limits", "keeps_stress_and_integration_tests"]
     }
   ]
 }

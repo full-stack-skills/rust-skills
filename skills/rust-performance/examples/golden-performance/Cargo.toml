@@ -1,0 +1,16 @@
+[package]
+name = "rust-performance-golden"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.86"
+publish = false
+
+[dev-dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "sum"
+harness = false
+
+[lib]
+path = "src/lib.rs"

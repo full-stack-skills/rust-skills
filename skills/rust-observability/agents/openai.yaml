@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Observability"
+  short_description: "Instrument Rust logs, traces, metrics, and runtimes"
+  default_prompt: "Use $rust-observability to instrument and validate this Rust service."

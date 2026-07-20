@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 15 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 19 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 15 个可用技能，不执行安装：
+仅查看全部 19 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 15 个技能：
+无交互地为所有已检测智能体安装全部 19 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -55,14 +55,16 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>语言与标准库入口"]
-    P["项目工程<br/>project-structure / cargo-build"]
-    D["领域专项<br/>concurrency / testing / unsafe-ffi / macros / lombok-macros<br/>cli / web / database / web-security / embedded"]
+    P["项目工程<br/>project-structure / cargo-build / documentation"]
+    D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
+    O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
 
     S --> P
     S --> D
     P --> D
-    D --> Q
+    D --> O
+    O --> Q
 ```
 
 | 层级 | 技能 | 主要职责 |
@@ -70,13 +72,17 @@ flowchart TB
 | 核心 | `rust-stable` | 所有权、trait、集合、错误处理、标准库、版本判断 |
 | 工程 | `rust-project-structure` | package、crate、模块树、workspace 布局 |
 | 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、构建与发布 |
-| 领域 | `rust-concurrency` | 线程、同步、原子、channel、Tokio |
+| 工程 | `rust-documentation` | rustdoc API 契约、doctest、mdBook 指南和文档发布门禁 |
+| 领域 | `rust-concurrency` | 线程、异步运行时、CPU 并行、同步、背压、任务监督和模型测试 |
 | 领域 | `rust-testing` | 单元、集成、doctest、基准与覆盖率 |
+| 领域 | `rust-performance` | 测量方案、Criterion 基准、CPU/延迟/内存分析和回归证明 |
+| 领域 | `rust-observability` | 结构化 tracing、指标、OpenTelemetry 上下文和运行时诊断 |
 | 领域 | `rust-unsafe-ffi` | unsafe、裸指针、内存布局、FFI、Miri |
 | 领域 | `rust-macros` | 声明宏与过程宏 |
 | 领域 | `rust-lombok-macros` | 受控生成 `lombok-macros` 访问器、构造器和调试格式 |
 | 领域 | `rust-cli` | CLI 契约、标准流、退出码、真实进程测试和发布验证 |
 | 领域 | `rust-web` | 服务端 HTTP API、handler 边界、中间件和生命周期 |
+| 领域 | `rust-http-client` | 可复用出站 HTTP 客户端、传输策略、有界响应、重试和测试服务 |
 | 领域 | `rust-database` | SQL/ORM、schema migration、事务、连接池和真实数据库验证 |
 | 领域 | `rust-web-security` | 威胁模型、认证、授权、session/token 和浏览器安全 |
 | 领域 | `rust-embedded` | 裸机固件、可移植 no_std 驱动和真实硬件验收 |
@@ -87,7 +93,7 @@ flowchart TB
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 15 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 19 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
@@ -115,6 +121,15 @@ python3 scripts/validate_skills.py --check-examples
 - Markdown 相对链接和代码围栏有效。
 - `agents/openai.yaml` 存在且默认提示显式引用对应技能。
 - 黄金示例通过 `cargo fmt`、`cargo check`、`cargo test` 和 `cargo clippy -D warnings`。
+
+## v3.0 工程工具补强
+
+- 新增 `rust-documentation`，覆盖 rustdoc 契约、doctest、mdBook、链接检查和文档发布质量。
+- 新增 `rust-http-client`，覆盖可复用客户端、TLS/proxy/redirect 策略、超时、响应体上限、安全重试和本地测试服务。
+- 新增 `rust-observability`，覆盖 `tracing`、低基数指标、OpenTelemetry 上下文传播和运行时诊断。
+- 新增 `rust-performance`，覆盖假设驱动的基准、CPU/延迟/内存/体积/编译时间分析和回归证据。
+- 强化 `rust-concurrency`，增加 Tokio 与 Rayon 选型、Crossbeam 与并发状态工具、有界背压、任务监督、Loom 模型测试和运行时诊断。
+- 在 [PHASE-2-EVALUATION.md](PHASE-2-EVALUATION.md) 中固化 RPC、消息、数据格式、WebAssembly 和底层网络协议的下一阶段决策。
 
 ## v2.3 Lombok Macros
 
@@ -149,7 +164,9 @@ python3 scripts/validate_skills.py --check-examples
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
 - [crates.io 上的 lombok-macros](https://crates.io/crates/lombok-macros) 与 [2.0.32 版本化 docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)
-- [Tokio](https://tokio.rs/)、[clap](https://docs.rs/clap/)、[cargo-deny](https://embarkstudios.github.io/cargo-deny/)、[cargo-nextest](https://nexte.st/)
+- [Rustdoc](https://doc.rust-lang.org/rustdoc/)、[mdBook](https://rust-lang.github.io/mdBook/)、[Tokio](https://tokio.rs/)、[Rayon](https://docs.rs/rayon/)
+- [reqwest](https://docs.rs/reqwest/)、[Tower](https://docs.rs/tower/)、[tracing](https://docs.rs/tracing/)、[OpenTelemetry Rust](https://opentelemetry.io/docs/languages/rust/)
+- [Criterion.rs](https://bheisler.github.io/criterion.rs/book/)、[cargo-flamegraph](https://github.com/flamegraph-rs/flamegraph)、[Samply](https://github.com/mstange/samply)、[clap](https://docs.rs/clap/)、[cargo-deny](https://embarkstudios.github.io/cargo-deny/)、[cargo-nextest](https://nexte.st/)
 - [SQLx](https://docs.rs/sqlx/)、[Diesel](https://diesel.rs/guides/)、[SeaORM](https://www.sea-ql.org/SeaORM/)
 - [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)、[RFC 8725](https://datatracker.ietf.org/doc/html/rfc8725)
 
