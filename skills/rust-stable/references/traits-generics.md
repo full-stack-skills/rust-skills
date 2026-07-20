@@ -1,23 +1,23 @@
-# Trait 与泛型
+# Traits and Generics
 
-## 选择模型
+## Model Selection
 
-- 编译期多态和性能优先：泛型 `T: Trait`。
-- 运行时异构集合或插件边界：`dyn Trait`。
-- 调用者只需一种关联结果类型：associated type。
-- 同一实现需要多种结果类型：泛型参数。
-- 需要组合多个独立能力：小 trait + blanket impl。
+- Compile-time polymorphism with performance priority: use generic `T: Trait`.
+- Runtime heterogeneous collections or plugin boundaries: use `dyn Trait`.
+- Callers require a single associated result type.
+- Multiple result types are needed for the same implementation: use generic parameters.
+- Composing multiple independent capabilities requires small traits + blanket impls.
 
-## API 规则
+## API Rules
 
-- 把约束放在最接近使用点的位置，避免无意义的宽泛 bounds。
-- 公共 trait 保持最小；便利方法可提供默认实现。
-- 公开 `impl Trait` 前考虑它对 SemVer 和可表达能力的影响。
-- 使用 newtype 遵守 orphan rule，并封装外部类型语义。
-- trait object 需要对象安全；含泛型方法或返回 `Self` 的方法通常需要 `where Self: Sized` 或重构。
-- 不稳定语言特性必须显式转到 nightly 场景，不能写进 stable 示例。
+- Place constraints as close to their usage points as possible, avoiding overly broad bounds.
+- Keep public traits minimal; utility methods can provide default implementations.
+- Consider impacts on SemVer and expressiveness before exposing `impl Trait`.
+- Use newtypes to comply with the orphan rule and encapsulate external type semantics.
+- trait objects require object safety; generic methods or those returning `Self` typically need a `where Self: Sized` clause or refactoring.
+- Unstable language features must be explicitly targeted at nightly builds and cannot appear in stable examples.
 
-## 常见验证
+## Common Validation
 
 ```bash
 cargo check --all-targets --all-features
@@ -25,9 +25,9 @@ cargo test --doc
 cargo semver-checks check-release
 ```
 
-最后一个命令需要第三方工具，只有项目已采用或用户允许安装时才执行。
+The last command requires a third-party tool; execute only if the project has adopted it or user permission is granted to install.
 
-官方来源：
+Official sources:
 
 - https://doc.rust-lang.org/book/ch10-02-traits.html
 - https://doc.rust-lang.org/reference/items/traits.html

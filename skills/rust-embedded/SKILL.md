@@ -1,246 +1,168 @@
 ---
 name: rust-embedded
-description: Rust 嵌入式开发技能 — no_std、panic、Cortex-M、embedded-hal 1.0、PAC、GPIO、总线、中断、RTIC 2 和链接脚本。Use when building or reviewing microcontroller firmware and portable HAL drivers; require the exact chip, target, HAL/PAC versions and hardware validation, and hand raw-memory invariants to rust-unsafe-ffi.
+description: Design, implement, review, and validate embedded Rust firmware, including no_std, targets, runtime and startup, embedded-hal drivers, interrupts, DMA, shared state, async executors, hardware mocks, cross-compilation, flashing, and hardware acceptance evidence. Use when users ask about MCU firmware, portable drivers, HAL versions, bare-metal targets, interrupts, Embassy, RTIC, probe-rs, or embedded testing.
 ---
 
-# Rust 嵌入式开发
+# Rust Embedded Firmware Delivery
 
-> 基于 [Embedded Rust Book](https://doc.rust-lang.org/stable/embedded-book/)、[embedded-hal](https://docs.rs/embedded-hal/) 与 [RTIC](https://rtic.rs/)。
+Establish hardware facts first, then select abstractions and frameworks. Do not treat example code for a specific development board as portable; do not claim firmware is usable without hardware evidence.
 
-## Capability Boundaries
+## Determine Task Type
 
-### ✅ 强项
-1. no_std 环境配置（#![no_std]、#![no_main]、extern crate alloc）
-2. panic_handler 定义
-3. Cortex-M 启动（cortex-m-rt：#[entry]、#[interrupt]、异常向量、startup）
-4. embedded-hal 1.0 trait（`OutputPin`、`InputPin`、`DelayNs`、`I2c`、`SpiBus`、`SpiDevice`）
-5. 外设访问（PAC：Peripherals::take、寄存器读写、VolatileCell）
-6. GPIO 控制（输入/输出/推挽/开漏/上拉/下拉）
-7. 定时器/PWM/ADC/UART 外设控制
-8. 中断处理（NVIC 配置、enable/disable、优先级、#[interrupt]）
-9. RTIC 2 属性宏（`#[rtic::app]`、硬件/软件任务、shared/local 资源、spawn）
-10. 链接脚本配置（memory.x）
+Distinguish between the following deliverables:
 
-### ⚠️ 前置要求
-1. 了解目标微控制器架构（Cortex-M、RISC-V 等）
-2. Rust 基础（`rust-stable`）
+1.  **Portable `no_std` Library or Driver**: Core logic should be tested on host using mock HALs.
+2.  **Specific MCU/Development Board Firmware**: Requires target, runtime, HAL/PAC, memory layout, burn tooling, and hardware acceptance testing.
+3.  **Board Support or Boot Code**: Focuses on linking, startup, clocks, pins, and safety invariants.
+4.  **Embedded Linux Application**: Typically uses `std`; handle as CLI, Web, or concurrency application unless device interface or cross-compilation is involved.
 
-### ❌ 不适用范围
-1. Web 服务器 → 使用 `rust-web` 技能
-2. CLI 应用 → 使用 `rust-cli` 技能
+## Mandatory Hardware Contracts
 
-## 何时使用
+Confirm and record before modification:
 
-- "用 Rust 做嵌入式"
-- "no_std 环境配置"
-- "控制 GPIO"
-- "RTIC 实时框架"
-- "外设中断处理"
+-   Exact MCU model, architecture, development board revision, peripheral connections;
+-   Rust target triple, toolchain/MSRV, build profile;
+-   Actual versions of runtime, HAL, PAC, BSP, `embedded-hal`, and execution framework;
+-   Flash/RAM start addresses, capacity, bootloader source, linker script origin;
+-   Debug probes, transmission protocol, burn tools, permissions;
+-   Clocks, pin multiplexing, voltage, bus address/mode/frequency;
+-   Concurrency model: bare-metal interrupts, critical sections, RTIC, Embassy, or others;
+-   Observability channels: `defmt`, UART, RTT, LEDs, logic analyzers, etc.;
+-   Real hardware acceptance steps and security constraints.
 
-## Data Privacy
-
-本技能不收集、存储或传输任何用户数据。
-
----
-
-## 一、no_std 环境
-
-```rust
-// 禁用标准库
-#![no_std]
-#![no_main]
-
-use core::panic::PanicInfo;
-
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
-}
-
-// 使用 alloc（需要全局分配器）
-extern crate alloc;
-use alloc::vec::Vec;
-```
-
-## 二、Cortex-M 启动
-
-```rust
-// Cargo.toml
-// [dependencies]
-// cortex-m = "0.7"
-// cortex-m-rt = "0.7"
-// panic-halt = "0.2"
-
-#![no_std]
-#![no_main]
-
-use cortex_m_rt::entry;
-use panic_halt as _;
-
-#[entry]
-fn main() -> ! {
-    loop {}
-}
-```
-
-## 三、嵌入式 HAL
-
-```rust
-// Cargo.toml
-// [dependencies]
-// rp2040-hal = "0.10"
-// embedded-hal = "1.0"
-
-use embedded_hal::delay::DelayNs;
-use embedded_hal::digital::OutputPin;
-use rp2040_hal::gpio::Pins;
-
-// GPIO 控制
-fn blink(led: &mut impl OutputPin, delay: &mut impl DelayNs) {
-    led.set_high().ok();
-    delay.delay_ms(500);
-    led.set_low().ok();
-    delay.delay_ms(500);
-}
-
-// 使用通用 HAL trait 编写可移植驱动
-pub struct LedDriver<P: OutputPin> {
-    pin: P,
-}
-
-impl<P: OutputPin> LedDriver<P> {
-    pub fn new(pin: P) -> Self {
-        Self { pin }
-    }
-    pub fn on(&mut self) { self.pin.set_high().ok(); }
-    pub fn off(&mut self) { self.pin.set_low().ok(); }
-}
-```
-
-## 四、外设访问（PAC）
-
-```rust
-// PAC crate: 如 rp2040-pac、stm32f4-pac
-use rp2040_pac::Peripherals;
-
-let mut peripherals = Peripherals::take().unwrap();
-
-// 寄存器读写（通过 svd2rust 生成的 API）
-peripherals.PADS_BANK0.gpio25.modify(|_, w| w.pue().set_bit());
-let val = peripherals.IO_BANK0.gpio25.ctrl.read().bits();
-```
-
-## 五、中断处理
-
-```rust
-use cortex_m::peripheral::NVIC;
-use stm32f4xx_hal::interrupt;
-
-// 启用中断
-unsafe { NVIC::unmask(interrupt::TIM2); }
-
-// 设置优先级
-NVIC::set_priority(interrupt::TIM2, 128);
-
-// 中断处理函数
-#[interrupt]
-fn TIM2() {
-    // 中断服务程序
-}
-```
-
-## 六、RTIC 实时框架
-
-```rust
-// Cargo.toml
-// rtic = "2"
-
-#![no_std]
-#![no_main]
-
-#[rtic::app(device = rp2040_pac, peripherals = true)]
-mod app {
-    #[shared]
-    struct Shared {
-        counter: u32,
-    }
-
-    #[local]
-    struct Local {
-        led: rp2040_hal::gpio::Pin<rp2040_hal::gpio::pin::Pin25, rp2040_hal::gpio::FunctionSioOutput>,
-    }
-
-    #[init]
-    fn init(cx: init::Context) -> (Shared, Local) { /* ... */ }
-
-    // 硬件任务（绑定中断）
-    #[task(binds = TIMER_IRQ_0, shared = [counter])]
-    fn timer_tick(mut cx: timer_tick::Context) {
-        cx.shared.counter.lock(|c| *c += 1);
-    }
-
-    // 软件任务
-    #[task]
-    fn background(_cx: background::Context) { /* ... */ }
-}
-```
-
-## 七、链接脚本（memory.x）
-
-```ld
-/* memory.x — 在项目根目录 */
-MEMORY {
-    FLASH : ORIGIN = 0x10000000, LENGTH = 2M
-    RAM   : ORIGIN = 0x20000000, LENGTH = 256K
-}
-
-/* 在 build.rs 中引用 */
-// fn main() {
-//     println!("cargo::rustc-link-arg-bins=--nmagic");
-//     println!("cargo::rerun-if-changed=memory.x");
-// }
-```
-
-## 常用 Crate
-
-| 用途 | crate | 说明 |
-|------|-------|------|
-| 运行时 | cortex-m-rt | 启动 + 中断向量 |
-| HAL trait | embedded-hal | 硬件抽象层 |
-| MCU HAL | rp2040-hal | RP2040 |
-| MCU HAL | stm32f4xx-hal | STM32F4 |
-| 实时框架 | rtic | RTIC v2 |
-| 调试 | defmt | 高效日志 |
-| 调试 | probe-rs (CLI) | 调试器 |
+Do not fabricate values when chip memory layout or pin configuration is uncertain. Prioritize reading existing BSPs, datasheets, reference manuals, and locked documentation from the project repository.
 
 ## Workflow
 
-Step 1. 选择硬件 — 确定目标微控制器（Cortex-M/RISC-V/其他）
-Step 2. 配置 no_std 环境 — 设置 #![no_std]、panic_handler、链接脚本
-Step 3. 初始化外设 — 使用 PAC crate 获取外设所有权，配置时钟
-Step 4. 实现 HAL 驱动 — 使用 embedded-hal trait 编写可移植的外设驱动
-Step 5. 处理中断 — 配置 NVIC，编写中断处理函数
-Step 6. 部署与调试 — 使用 probe-rs/OpenOCD 烧录和调试固件
+### 1. Establish Build Baseline and Hardware Foundation
 
+Check repository configuration, target selection, and dependency sources:
 
-## Gotchas
+```bash
+rustc --version --verbose
+rustup target list --installed
+cargo metadata --format-version 1
+cargo tree -e features
+```
 
-1. #![no_std] 项目可用 alloc crate - 在支持堆分配时可以 Vec、String
-2. Cortex-M 中断处理函数不能有参数 - #[interrupt] fn 必须是 fn() 类型
-3. embedded-hal 1.0 OutputPin::set_high() 返回 Result
-4. cortex_m::Peripherals::take() 只能成功一次 - 第二次返回 None
-5. RTIC spawn 在硬件任务中需用 spawn_after - 普通 spawn 不可用
+Locate `.cargo/config.toml`, linker parameters, `memory.x`/linker script, `build.rs`, runner, chip feature flags, and existing burn commands. Recreate the current build or save failure logs first.
 
+When selecting target, runtime, or memory layout, read [Target and Runtime](references/target-and-runtime.md).
 
-## 按需资源
+### 2. Establish Minimum Boot Path
 
-- [嵌入式示例](examples/examples.md)
-- [常用 crate 速查](references/references.md)
-- `examples/golden-no-std/`：CI 在宿主工具链上编译的 no_std trait 示例
+Ensure minimum firmware builds correctly on a specific target to produce checkable images before integrating complex peripherals:
 
-## 官方参考
+```text
+Reset/Startup Code
+    -> Initialize Memory and Runtime
+    -> Initialize Clocks and Required Peripherals
+    -> Enter Unique Application Entry Point
+    -> Produce Observable Heartbeat or Diagnostics
+```
 
-- [Embedded Rust Book](https://doc.rust-lang.org/embedded-book)
-- [embedded-hal docs](https://docs.rs/embedded-hal/)
-- [RTIC Book](https://rtic.rs/2/book/)
-- [cortex-m-rt docs](https://docs.rs/cortex-m-rt/)
+-   Bare-metal binaries typically use `#![no_std]`; whether to use `#![no_main]` depends on the runtime.
+-   Use only `alloc` after providing a global allocator, memory space, and failure strategies.
+-   Panic policies must suit both device constraints and debugging environments.
+-   Memory layout must derive from chip/BSP/bootloader facts rather than copying example code from other development boards; do not hardcode single architecture assumptions for Cortex-M, RISC-V, or others.
+
+### 3. Separate Portable Logic from Board Wiring
+
+Recommended boundaries:
+
+```text
+Pure Domain Logic (No Hardware Dependencies)
+    -> portable driver (core + embedded-hal traits)
+    -> board adapter (specific HAL/PAC, pins, clocks)
+    -> firmware binary (startup, tasks, failure strategies)
+```
+
+-   Portable drivers depend on `embedded-hal` trait but not specific PAC singletons.
+-   Board layers handle real peripherals and configure pins, clocks, and DMA.
+-   Direct access to PAC is reserved for cases where HAL cannot express startup or performance needs; do not silently discard GPIO, bus, or protocol failures using `.ok()`.
+-   Document safety assumptions for registers, DMA, bare-metal pointers, and FFI in `SAFETY` comments, then review deeply with `rust-unsafe-ffi`.
+
+### 4. Select a Concurrency Model
+
+Do not arbitrarily mix bare-metal interrupts, multiple executors, or different resource locking models within the same firmware.
+
+-   **Bare-Metal Interrupts**: Ensure ISRs are bounded, non-blocking, and minimize allocations; delegate work to main loop or tasks.
+-   **Critical Sections**: Minimize interrupt masking time, explicitly define priority inversion and nesting semantics.
+-   **RTIC**: Verify resource locking versions, priorities, and task APIs against the lock version.
+-   **Embassy**: Confirm executor configuration, time drivers, chip integration, and cancellation behavior.
+-   **DMA**: Buffer ownership and transmission lifecycles must be constrained by types or clear invariants.
+
+When HAL, shared state, or framework selection is required, read [HAL and Concurrency](references/hal-and-concurrency.md). Complex language-level concurrency semantics should use `rust-concurrency`.
+
+### 5. Increase Observability and Failure Strategies
+
+-   Provide recoverable log/probe paths for development builds;
+-   Do not let logging timing obscure interrupt or real-time issues;
+Distinguish between developer panic scenarios, hardware watchdog reset events, and production graceful degradation strategies.
+-   Preserve context for sensor timeouts, bus errors, checksum failures, peripheral unavailability.
+
+Do not leak device keys, pairing credentials, or sensitive identifiers in logs.
+
+### 6. Layered Verification
+
+Verify from fastest to slowest:
+
+1.  Host unit tests on pure logic;
+2.  Use mock `embedded-hal` for driver protocol and error path testing;
+3.  Cross-compile all relevant features/profiles against the real target;
+4.  Check ELF, sections, symbols, image size, stack/heap budgets;
+5.  Burn and save probe/UART logs;
+6.  Verify pins, buses, timing, interrupts, reset paths on real hardware;
+7.  Use oscilloscopes or logic analyzers to confirm electrical and timing facts when needed.
+
+Complete evidence list available in [Hardware Validation](references/hardware-validation.md).
+
+## Common Gateways
+
+Replace `<target>` and `<package>` based on repository configuration:
+
+```bash
+cargo fmt --all -- --check
+cargo test -p <portable-package> --all-targets
+cargo clippy -p <portable-package> --all-targets -- -D warnings
+cargo build -p <firmware-package> --target <target> --release
+cargo size -p <firmware-package> --target <target> --release
+```
+
+`cargo size` requires the project to be installed and `cargo-binutils`; otherwise, use existing ELF/section check tools in the repository. Only execute burn or run commands if the runner is configured for that target and hardware goals are confirmed. Burning changes device state; parse exact targets first and adhere strictly to user authorization scopes.
+
+## Completion Criteria
+
+-   Hardware contracts, dependency versions, memory layout sources clearly defined;
+-   Portable logic separated from board code with errors not silently swallowed;
+-   Host tests and cross-compilation against target pass;
+-   Concurrency, DMA, registers, or unsafe invariants documented;
+-   Image size and resource budgets checked;
+-   Real hardware acceptance has log/measure evidence.
+
+Mark "Build Verification Only" if no real hardware is available during verification.
+
+## Handoff Boundaries
+
+| Primary Issue | Assigned To |
+|---|---|
+| Bare pointers, MMIO, FFI, safety encapsulation invariants | `rust-unsafe-ffi` |
+| Async, cancellation, Send/Sync and general concurrency semantics | `rust-concurrency` |
+| Host tests, attribute tests, coverage or benchmarks | `rust-testing` |
+| Target configuration, feature flags, build scripts | `rust-cargo-build` |
+| Language ownership, traits, errors, and `core` API | `rust-stable` |
+
+## On-Demand Resources
+
+-   [Target and Runtime](references/target-and-runtime.md): Read when confirming target, startup, or memory layout.
+-   [HAL and Concurrency](references/hal-and-concurrency.md): Read while writing driver code for interrupts, RTIC, Embassy tasks.
+-   [Hardware Validation](references/hardware-validation.md): Read during build, burn, measurement, and reporting of results.
+-   [Scenario Examples](examples/examples.md): Read when task splitting templates are needed.
+-   `examples/golden-no-std/`: Host-compilable, mock-testable `no_std` driver boundary examples.
+
+## Basis
+
+-   [The Embedded Rust Book](https://doc.rust-lang.org/stable/embedded-book/)
+-   [Rust Embedded Working Group](https://github.com/rust-embedded)
+-   [`embedded-hal`](https://docs.rs/embedded-hal/)
+-   [The Rust Reference: no_std](https://doc.rust-lang.org/stable/reference/names/preludes.html#the-no_std-attribute)

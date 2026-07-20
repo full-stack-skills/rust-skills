@@ -89,37 +89,37 @@
       "id": "cli-errors",
       "prompt": "构建支持子命令和管道输入的 CLI，错误写 stderr 并返回正确退出码。",
       "expected_skills": ["rust-cli"],
-      "assertions": ["separates_stdout_stderr", "tests_exit_codes"]
+      "assertions": ["defines_command_contract", "separates_stdout_stderr", "tests_real_process_exit_codes"]
     },
     {
       "id": "cli-test",
       "prompt": "用 assert_cmd 测试 CLI 参数、文件输出和失败场景。",
       "expected_skills": ["rust-cli", "rust-testing"],
-      "assertions": ["tests_success_and_failure", "isolates_filesystem"]
+      "assertions": ["tests_help_success_and_failure", "isolates_environment_and_filesystem", "preserves_machine_output"]
     },
     {
       "id": "web-axum",
-      "prompt": "使用 axum 设计带状态、统一错误和超时中间件的 REST API。",
+      "prompt": "使用 axum 设计带应用状态、统一错误、超时中间件和优雅关闭的 REST API。",
       "expected_skills": ["rust-web", "rust-concurrency"],
-      "assertions": ["keeps_handlers_thin", "maps_errors_to_responses"]
+      "assertions": ["keeps_handlers_thin", "maps_errors_to_stable_responses", "verifies_middleware_order_and_shutdown"]
     },
     {
-      "id": "web-sqlx",
-      "prompt": "实现 sqlx 事务接口，保证失败时回滚并测试 HTTP 边界。",
+      "id": "web-data-boundary",
+      "prompt": "给现有 axum 端点接入 sqlx 事务，保证 handler 不控制事务、失败时回滚并测试 HTTP 映射。",
       "expected_skills": ["rust-web", "rust-testing"],
-      "assertions": ["uses_transaction_boundary", "tests_failure_paths"]
+      "assertions": ["keeps_transaction_in_application_or_adapter_boundary", "tests_database_rollback", "tests_http_failure_mapping"]
     },
     {
       "id": "embedded-hal",
-      "prompt": "用 embedded-hal 1.0 trait 编写可测试的 no_std GPIO 驱动。",
+      "prompt": "按 Cargo.lock 中的 embedded-hal 版本编写可移植 no_std GPIO 驱动，并在无开发板时用 mock 测试。",
       "expected_skills": ["rust-embedded"],
-      "assertions": ["uses_embedded_hal_one", "separates_hal_from_pac"]
+      "assertions": ["checks_locked_hal_version", "separates_portable_driver_from_board_adapter", "preserves_hal_errors"]
     },
     {
       "id": "embedded-interrupt",
-      "prompt": "审查中断处理程序里的共享状态和临界区是否安全。",
+      "prompt": "针对给定 MCU、target 和运行时版本，审查中断处理程序里的共享状态、临界区和硬件验证证据。",
       "expected_skills": ["rust-embedded", "rust-unsafe-ffi"],
-      "assertions": ["bounds_interrupt_work", "documents_shared_state_invariants"]
+      "assertions": ["requires_exact_hardware_contract", "bounds_interrupt_work", "documents_shared_state_invariants", "does_not_claim_unrun_hardware_validation"]
     },
     {
       "id": "review-safety",
@@ -144,6 +144,66 @@
       "prompt": "解释 E0502 并修复借用冲突，然后运行 fmt 和 Clippy。",
       "expected_skills": ["rust-style-clippy", "rust-stable"],
       "assertions": ["explains_root_cause", "runs_quality_gates"]
+    },
+    {
+      "id": "database-migration",
+      "prompt": "为生产 PostgreSQL 大表增加 tenant_id 非空列，使用 Rust migration 完成兼容回填且避免长时间停机。",
+      "expected_skills": ["rust-database"],
+      "assertions": ["checks_database_version_and_schema", "uses_expand_backfill_contract", "requires_authorization_for_destructive_steps", "defines_real_database_validation"]
+    },
+    {
+      "id": "database-transaction",
+      "prompt": "用 SQLx 实现并发安全的账户转账，入账失败必须回滚并验证不会超扣。",
+      "expected_skills": ["rust-database", "rust-concurrency", "rust-testing"],
+      "assertions": ["places_transaction_at_use_case_boundary", "handles_commit_and_retry_semantics", "tests_constraints_on_real_database"]
+    },
+    {
+      "id": "web-security-authorization",
+      "prompt": "修复 axum 文档接口的跨租户对象越权，确保普通用户和租户管理员都不能访问其他租户数据。",
+      "expected_skills": ["rust-web-security", "rust-web", "rust-database"],
+      "assertions": ["builds_subject_action_resource_tenant_matrix", "denies_by_default", "constrains_database_query_by_tenant", "tests_cross_tenant_paths"]
+    },
+    {
+      "id": "web-security-token",
+      "prompt": "接入企业 OIDC access token，严格验证 JWT 并覆盖 key rotation、错误 audience 和 token type 混淆。",
+      "expected_skills": ["rust-web-security"],
+      "assertions": ["pins_algorithms", "validates_issuer_audience_expiry_and_type", "handles_jwks_rotation", "tests_negative_tokens"]
+    },
+    {
+      "id": "concurrency-daemon-overload",
+      "prompt": "这个 Tokio daemon 在高并发下队列不断增长、慢客户端拖住退出。请设计有界背压、任务监督和优雅关闭，并说明为什么不能只增加 worker threads。",
+      "expected_skills": ["rust-concurrency"],
+      "assertions": ["defines_resource_budgets", "uses_bounded_backpressure", "supervises_tasks", "measures_runtime_sizing", "tests_slow_consumers_and_shutdown"]
+    },
+    {
+      "id": "cargo-dependency-governance",
+      "prompt": "审查这个跨平台 Rust CLI 的三方依赖：Tokio、clap、bincode、rustix、windows-sys 和 cargo-deny。缩小 features，解释版本锁定，并判断本地 IPC codec 能否复用于公网协议。",
+      "expected_skills": ["rust-cargo-build", "rust-web-security"],
+      "assertions": ["maps_dependencies_to_boundaries", "checks_features_and_targets", "documents_version_constraints", "does_not_generalize_local_ipc_trust", "runs_supply_chain_gates"]
+    },
+    {
+      "id": "project-daemon-workspace",
+      "prompt": "把大型 Rust daemon 拆成 types、proto、core、os、ipc、server、sdk 和 binary，保证 core 不反向依赖 Tokio、CLI 或平台实现。",
+      "expected_skills": ["rust-project-structure", "rust-cargo-build"],
+      "assertions": ["defines_dependency_direction", "separates_protocol_domain_and_platform", "keeps_sdk_internals_private", "validates_with_metadata_and_tree"]
+    },
+    {
+      "id": "cli-daemon-ipc",
+      "prompt": "实现带自动启动 daemon、本地 IPC、协议握手、能力协商和 attach 模式的跨平台 Rust CLI，并验证并发启动竞态与终端恢复。",
+      "expected_skills": ["rust-cli", "rust-concurrency", "rust-project-structure", "rust-testing"],
+      "assertions": ["keeps_cli_boundary_thin", "versions_and_bounds_ipc_frames", "serializes_auto_start", "restores_terminal_on_all_exits", "tests_real_process_and_platform_paths"]
+    },
+    {
+      "id": "lombok-dto-accessors",
+      "prompt": "Refactor this internal Rust DTO with lombok-macros 2.0.32: keep getters borrowed where possible, let a String setter accept &str or String, redact the token from Debug, and prove the generated API compiles on our MSRV.",
+      "expected_skills": ["rust-lombok-macros", "rust-cargo-build", "rust-testing"],
+      "assertions": ["checks_locked_crate_version_and_msrv", "uses_minimal_derives", "preserves_borrow_and_visibility_contract", "uses_verified_setter_conversion_syntax", "tests_generated_api_and_debug_redaction"]
+    },
+    {
+      "id": "lombok-domain-invariant",
+      "prompt": "把账户实体的校验构造器和 debit/credit 方法删掉，直接 derive Data、New、DisplayDebug；余额、状态和 access_token 都开放 setter，越省代码越好。",
+      "expected_skills": ["rust-lombok-macros", "rust-code-review"],
+      "assertions": ["rejects_generated_api_that_bypasses_invariants", "keeps_validated_constructor_and_domain_actions", "does_not_expose_mutable_secret_fields", "does_not_use_debug_as_user_display", "adds_negative_regression_tests"]
     }
   ]
 }

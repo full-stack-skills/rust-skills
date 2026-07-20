@@ -1,18 +1,46 @@
-# 类型转换
+# Type Conversion
 
-## 选择规则
+## Selection Rules
 
-- 无损、不会失败且语义明确：实现 `From<T>`，自动获得 `Into<U>`。
-- 可能失败：实现 `TryFrom<T>`，自动获得 `TryInto<U>`。
-- 只需要借用视图：`AsRef<T>` / `AsMut<T>`。
-- 昂贵复制或分配：使用 `to_*` 命名并让成本可见。
-- 廉价借用视图：使用 `as_*` 命名。
-- 数值窄化：优先 `TryFrom`，不要默认 `as` 截断是正确业务语义。
+- Lossless, non-failing with clear semantics: Implement `From<T>` to automatically obtain `Into<U>`.
+  ```rust
+  impl From<i32> for String { ... } // Automatically implements Into<String>
+  ```
 
-## API 提示
+- Possible failure: Implement `TryFrom<T>` and derive `TryInto<U>`.
+  ```rust
+  impl TryFrom<i32> for Result<u64, Error> { ... } // Derives TryInto<Result<u64, Error>>
+  ```
 
-- 泛型入口可接受 `impl AsRef<Path>`、`impl Into<String>`，但不要过度泛化导致错误难读。
-- 错误类型通过 `From` 支持 `?` 转换时，应保留原始 source。
-- FFI 类型转换、布局和指针转换转到 `rust-unsafe-ffi`。
+- Borrowed views only: Use `AsRef<T>` / `AsMut<T>`.
+  ```rust
+  fn foo(s: &str) {}           // AsRef<str>
+  fn bar(mut s: String) {}     // AsMut<String>
+  ```
 
-官方来源：https://doc.rust-lang.org/std/convert/
+- Expensive copy or allocation: Prefix with `to_` and make the cost explicit.
+  ```rust
+  pub fn to_uppercase(&self) -> Result<String, Error> { ... }
+  ```
+
+- Cheap borrowed views: Use `as_*`.
+  ```rust
+  let s = str::from_utf8(data.as_slice())?; // as_str() / as_bytes() etc.
+  ```
+
+- Value narrowing (e.g., from large to small types): Prefer `TryFrom` over default `as`, which silently truncates and may hide semantic errors in business logic.
+  ```rust
+  let count: u64 = i32::from(10) // TryFrom<u32> for Result<u64, Error>; do not use as::<u64>.
+  ```
+
+## API Guidelines
+
+- Generic entry points may accept `impl AsRef<Path>` or `impl Into<String>`, but avoid over-generalization that obscures error messages.
+- When using the `?` operator with a conversion derived from `From`, preserve the original source type in errors:
+  ```rust
+  let path = std::fs::read_to_string(path)?; // Source is String, not Path
+  ```
+
+- FFI conversions and layout/pointer transformations should be delegated to `rust-unsafe-ffi`.
+
+Official documentation: https://doc.rust-lang.org/std/convert/

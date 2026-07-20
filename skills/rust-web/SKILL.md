@@ -1,262 +1,169 @@
 ---
 name: rust-web
-description: Rust Web 开发技能 — axum 路由和提取器、serde、tower 中间件、reqwest、sqlx、事务、WebSocket、CORS 和认证边界。Use when designing, implementing, debugging, or testing Rust HTTP services and clients; combine with rust-concurrency for async lifecycle and rust-testing for endpoint and database tests.
+description: Design, implement, test, and operate production Rust server-side HTTP services, including axum, Actix Web, routing, extractors, application state, error mapping, middleware order, timeouts, body limits, observability, graceful shutdown, and database boundaries. Use when users ask for Rust REST APIs, web handlers, middleware, server lifecycle, HTTP contracts, or production web-service architecture; hand security controls to rust-web-security.
 ---
 
-# Rust Web 开发
+# Rust HTTP Service Delivery
 
-> 基于社区主流 crate：axum、tokio、serde、sqlx、reqwest、tower-http 文档。
+Deliver server-side HTTP APIs based on HTTP contracts and runtime lifecycles. The framework handles transport adaptation; domain logic and data access remain independently testable without embedding all backend issues into handlers.
 
-## Capability Boundaries
+## Confirming the Service Contract
 
-### ✅ 强项
-1. axum 路由（Router::new、route、nest、layer、fallback）
-2. 提取器（Path、Query、Json、Form、State、Extension、String、Bytes）
-3. 响应体实现（Json、Html、StatusCode、Redirect、自定义 IntoResponse）
-4. 共享状态（axum::extract::State、FromRef 模式）
-5. 中间件（tower 中间件栈、tower-http 工具集）
-6. serde 序列化（#[derive(Serialize, Deserialize)]、#[serde(rename/skip/tag)]）
-7. HTTP 客户端（reqwest：GET/POST、JSON、headers、文件上传）
-8. 数据库（sqlx：编译时 query!、query_as!、连接池、迁移）
-9. WebSocket（axum::extract::ws、发送/接收消息）
-10. CORS（tower-http CorsLayer）
-11. JWT 认证（jsonwebtoken crate）
-12. 错误处理（应用错误 → HTTP 响应、anyhow 集成）
+Before modification, verify from OpenAPI specs, existing routes, clients, tests, configuration, and run environments:
 
-### ⚠️ 前置要求
-1. 理解 async/await（rust-concurrency）
-2. Rust 基础（`rust-stable`）
+- Methods, paths, status codes, request/response schemas, and compatibility strategies;
+- Authentication context origin (authentication system design is outside this skill scope);
+- Request bodies, concurrency limits, timeouts, upload sizes, and response size constraints;
+- Dependencies on external HTTP services, databases, caches, or queues, including failure semantics;
+- Listening addresses, proxies, TLS termination, health checks, graceful shutdown budgets;
+- Rust/MSRV versions of axum, Tokio, Tower, and related crates with locked dependencies;
+- Logging levels, tracing configuration, metrics exposure, sensitive field handling, data retention policies.
 
-### ❌ 不适用范围
-1. CLI 应用 → 使用 `rust-cli` 技能
-2. 纯异步编程 → 使用 `rust-concurrency` 技能
-
-## 何时使用
-
-- "用 axum 创建 REST API"
-- "连接数据库"
-- "JSON 序列化"
-- "WebSocket 处理"
-- "HTTP 客户端请求"
-
-## Data Privacy
-
-本技能不收集、存储或传输任何用户数据。
-
----
-
-## 一、axum Web 框架
-
-```toml
-[dependencies]
-axum = "0.8"
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tower-http = { version = "0.6", features = ["cors", "trace", "compression"] }
-```
-
-```rust
-use axum::{
-    Router,
-    extract::{Path, Query, State},
-    http::StatusCode,
-    response::Json,
-    routing::get,
-};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-
-#[derive(Serialize, Deserialize, Clone)]
-struct User {
-    id: u64,
-    name: String,
-}
-
-type AppState = Arc<SharedState>;
-struct SharedState {
-    db: Mutex<Vec<User>>,
-}
-
-async fn list_users(
-    State(state): State<AppState>,
-) -> Json<Vec<User>> {
-    let users = state.db.lock().unwrap();
-    Json(users.clone())
-}
-
-async fn get_user(
-    Path(id): Path<u64>,
-    State(state): State<AppState>,
-) -> Result<Json<User>, StatusCode> {
-    let users = state.db.lock().unwrap();
-    users.iter()
-        .find(|u| u.id == id)
-        .map(|u| Json(u.clone()))
-        .ok_or(StatusCode::NOT_FOUND)
-}
-
-#[tokio::main]
-async fn main() {
-    let state = Arc::new(SharedState {
-        db: Mutex::new(vec![]),
-    });
-
-    let app = Router::new()
-        .route("/users", get(list_users).post(create_user))
-        .route("/users/:id", get(get_user))
-        .with_state(state)
-        .layer(tower_http::cors::CorsLayer::permissive());
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-```
-
-## 二、数据库（sqlx）
-
-```toml
-[dependencies]
-sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "mysql", "sqlite", "migrate"] }
-```
-
-```rust
-use sqlx::PgPool;
-
-#[derive(sqlx::FromRow, serde::Serialize, serde::Deserialize)]
-struct User {
-    id: i64,
-    name: String,
-    email: String,
-}
-
-// 连接池
-let pool = PgPool::connect("postgres://user:pass@localhost/db").await?;
-
-// 编译时检查查询
-let user = sqlx::query_as::<_, User>(
-    "SELECT id, name, email FROM users WHERE id = $1"
-)
-.bind(user_id)
-.fetch_one(&pool)
-.await?;
-
-// 迁移
-sqlx::migrate!("./migrations").run(&pool).await?;
-```
-
-## 三、HTTP 客户端（reqwest）
-
-```rust
-let client = reqwest::Client::new();
-
-// GET
-let resp = client.get("https://api.github.com/users")
-    .header("User-Agent", "my-app")
-    .send()
-    .await?;
-
-let body = resp.text().await?;
-let json: serde_json::Value = resp.json().await?;
-
-// POST JSON
-let user = serde_json::json!({"name": "Alice"});
-let resp = client.post("https://api.example.com/users")
-    .json(&user)
-    .send()
-    .await?;
-```
-
-## 四、中间件模式
-
-```rust
-use tower::ServiceBuilder;
-use tower_http::{
-    cors::CorsLayer,
-    trace::TraceLayer,
-    compression::CompressionLayer,
-    timeout::TimeoutLayer,
-};
-
-let middleware = ServiceBuilder::new()
-    .layer(TraceLayer::new_for_http())
-    .layer(CompressionLayer::new())
-    .layer(CorsLayer::permissive())
-    .layer(TimeoutLayer::new(Duration::from_secs(30)));
-
-let app = Router::new()
-    .route("/api/:path", get(handler))
-    .layer(middleware);
-```
-
-## 五、WebSocket
-
-```rust
-use axum::extract::ws::{WebSocket, WebSocketUpgrade, Message};
-
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-) -> impl axum::response::IntoResponse {
-    ws.on_upgrade(handle_socket)
-}
-
-async fn handle_socket(mut socket: WebSocket) {
-    while let Some(msg) = socket.recv().await {
-        let msg = msg.unwrap();
-        match msg {
-            Message::Text(text) => {
-                socket.send(Message::Text(text)).await.unwrap();
-            }
-            Message::Close(_) => break,
-            _ => {}
-        }
-    }
-}
-```
-
-## 常用 Crate 速查
-
-| 用途 | crate | 说明 |
-|------|-------|------|
-| Web 框架 | axum | 基于 tokio/tower，推荐 |
-| 运行时 | tokio | async 运行时 |
-| 序列化 | serde / serde_json | JSON 序列化 |
-| HTTP 客户端 | reqwest | async HTTP client |
-| 数据库 | sqlx | 编译时检查 SQL |
-| ORM | sea-orm | 异步 ORM |
-| WebSocket | axum::extract::ws | 内置 |
-| JWT | jsonwebtoken | JWT 编解码 |
-| 模板 | askama | 编译时模板 |
+Response fields from existing client libraries constitute compatibility constraints. When contracts are missing, declare minimal assumptions first.
 
 ## Workflow
 
-Step 1. 选择框架 — 确定使用 axum（推荐）或其他框架
-Step 2. 设计路由 — 规划 RESTful API 路由和 handler 签名
-Step 3. 连接数据库 — 配置 sqlx 连接池，编写编译时检查的查询
-Step 4. 添加中间件 — 配置 CORS、跟踪、压缩、超时等中间件
-Step 5. 错误处理 — 统一错误类型，将应用错误转为 HTTP 响应
-Step 6. 测试 — 编写集成测试，使用 axum::test 或 reqwest 测试端点
+### 1. Establish Current Baseline
 
+```bash
+rustc --version --verbose
+cargo metadata --format-version 1
+cargo tree -e features
+cargo test --all-targets
+```
 
-## Gotchas
+Verify service entry points, router composition, state management, error types, middleware ordering, shutdown signals, and testing tools. Adhere strictly to `Cargo.lock` versions and official documentation; do not mix axum/Tower APIs based on memory rather than versioned specifications.
 
-1. axum extract::Path 顺序依赖路由参数名 - /:id 必须匹配 Path<u32> 类型
-2. tokio::spawn 的 Future 必须 Send - AppState 含 Rc/RefCell 会编译失败
-3. sqlx::query! 需要运行时数据库验证 - CI 中需启动数据库或改用 query_as
-4. serde #[serde(flatten)] 性能开销 - 创建临时 Value 中间表示
-5. axum WebSocket::recv() 返回 None 表示连接已关闭
+### 2. Define Transport Boundaries
 
+Recommended call flow:
 
-## 按需资源
+```text
+HTTP request
+  -> router / extractor / transport validation
+  -> application service / use case
+  -> repository or outbound HTTP port
+  -> domain result/error
+  -> centralized HTTP response mapping
+```
 
-- [Web 示例](examples/examples.md)
-- [Web crate 速查](references/references.md)
-- `examples/golden-handler/`：CI 编译的纯 handler 边界示例
+- Handlers perform extraction, transport-layer validation, invoke use cases, and map responses;
+- Domain logic does not depend on axum request/response types;
+- Database connection pools and HTTP clients serve as stateful dependencies within the service layer; do not store business data in global locks.
+- Transactions belong to use case/data access boundaries and are not scatteredly controlled by handlers.
+- DTOs, domain models, and persistence models should be separated based on change reasons to avoid unintended reuse of structures without control.
 
-## 官方参考
+Refer to [Service Boundaries](references/service-boundaries.md) when determining specific layering or adapter requirements.
 
-- [axum docs](https://docs.rs/axum/)
-- [tokio docs](https://docs.rs/tokio/)
-- [serde docs](https://serde.rs/)
-- [sqlx docs](https://docs.rs/sqlx/)
-- [reqwest docs](https://docs.rs/reqwest/)
+### 3. Implement Routing and Input Boundaries
+
+- Route paths, extractors, and response types must align with locked axum versions;
+- Explicitly validate path parameters, query strings, headers, and request bodies to distinguish syntax errors from domain conflicts;
+- Enforce limits on request body size, uploads, pagination, and batch sizes;
+- Avoid `.await` operations across lock-held states; prefer delegating shared mutable state to dedicated services or storage mechanisms.
+- Do not use `unwrap()`/`expect()` for handling failures in requests, network access, database queries, or serialization; instead, convert unexpressible preconditions into type-level checks and centralized validation that avoids duplication across multiple handlers.
+
+### 4. Unified Error Response Mapping
+
+Define a single mapping from application errors to HTTP responses:
+
+- Validation failures → client-fixable 4xx status codes;
+- Not found, conflicts, and permission denials → stable client-error statuses such as `404`, `409`, and `403`;
+- Downstream unavailability, timeouts, internal defects → 5xx status codes that do not leak internal details.
+
+Each error response must include a stable machine code and request/tracing identifiers for correlation. Full error chains enter controlled logging; responses should not expose SQL queries, tokens, file paths, or backtraces. Avoid mapping all errors to `500` or hiding failures by returning `200`.
+
+### 5. Middleware Composition and Security Boundaries
+
+Review the Tower middleware layer in accordance with actual call order:
+
+- Redact sensitive headers while retaining request IDs and trace identifiers;
+- Configure global and downstream timeouts;
+- Enforce request body limits and concurrency/load protection measures;
+- Integrate authentication contexts and authorization checks at appropriate points.
+- Maintain precise CORS allowlists; do not default to permissive policies when credentials are present in the service chain.
+- Account for CPU costs associated with compression and risks of exposing sensitive responses under compressed headers.
+- Trust proxy headers only from explicitly controlled sources.
+
+Middleware ordering, timeout configurations, and graceful shutdown strategies are documented in [Middleware and Lifecycle](references/middleware-and-lifecycle.md).
+
+### 6. Managing Async Lifecycles
+
+- Configure layered timeouts for servers, external requests, and database operations;
+- Ensure cancellation propagates downward to clean up subtasks without creating leaked tasks detached from request lifetimes;
+- Gracefully shut down by stopping new incoming requests while exhausting in-flight ones within budget limits before releasing resources.
+- Distinguish between non-retryable and retryable errors; retries require budgets, backoff strategies, and idempotency guarantees.
+- Route deep design of Tokio tasks, channels, `Send`/`Sync`, cancellation safety, and lock scopes to `$rust-concurrency`.
+
+### 7. Bounded External Adapter Access
+
+This skill can integrate with services requiring databases or outbound HTTP clients but focuses solely on the server-side boundary:
+
+- Reuse connection pools/client instances rather than creating new ones per request;
+- Configure timeouts, connection limits, and observable error reporting for downstream components;
+- Ensure transaction coverage across complete use cases without unnecessary external network waits.
+- Route schema migrations, indexes, transactions, SQL tuning, and ORM modeling to `$rust-database`.
+- Independent SDKs, crawlers, or bulk HTTP clients are not part of the server-side main flow; they belong to separate tooling domains.
+- Route JWT/OAuth flows, sessions, tokens, CORS/CSRF policies, and secret management to `$rust-web-security`; this skill only consumes principal identities and authorization outcomes from verified sources.
+- WebSocket upgrades, message protocols, heartbeat mechanisms, and backpressure handling are processed as independent sub-flows when explicitly requested.
+
+### 8. Layered Service Testing
+
+Ensure coverage of:
+
+1. Domain/use case pure tests;
+2. Router-level request testing without binding to real ports per use case;
+3. Extractor failures, error mapping logic, body limits, timeouts, and authentication boundaries;
+4. External adapter contract validation and fault injection scenarios;
+5. Database migration isolation, commits, rollbacks when requiring real databases;
+6. Limited socket tests verifying listening behavior, proxy configurations, or graceful shutdown dynamics.
+
+Detailed test matrices are provided in [HTTP Service Testing](references/testing.md). Test organization, coverage targets, CI gate policies, and performance baselines fall under the purview of [rust-testing](references/testing.md).
+
+## Common Gates
+
+```bash
+cargo fmt --all -- --check
+cargo check --all-targets
+cargo test --all-targets
+cargo clippy --all-targets -- -D warnings
+```
+
+Add OpenAPI/schema compatibility checks, integration environment tests, and security scans per project. Do not silently skip failing dependency-based tests to claim overall pass status.
+
+## Completion Criteria
+
+- HTTP contracts, versioning assumptions, and compatibility guarantees are explicit;
+- Handlers remain thin with domain logic and external adapters testable independently;
+- Error handling, status codes, timeouts, middleware ordering, and graceful shutdown behaviors have corresponding tests;
+- Logs and responses do not leak secrets or internal details.
+- `cargo fmt`, `cargo check`, `cargo test`, and `clippy` pass successfully;
+- When real databases, networks, TLS connections, or deployments are unverified, remaining boundaries must be explicitly marked.
+
+## Handoff Boundaries
+
+| Primary Issue | Assigned Responsibility |
+|---|---|
+| Schema definitions, migrations, transactions, connection pools, SQL/ORM modeling | `rust-database` |
+| Authentication, authorization, sessions/tokens, CORS/CSRF policies, SSRF protection | `rust-web-security` |
+| Tokio tasks, locks, channels, cancellation safety, graceful shutdown implementation | `rust-concurrency` |
+| Test layering strategies, coverage targets, attribute tests, performance baselines | `rust-testing` |
+| Ownership semantics, serde type contracts, generic error design patterns | `rust-stable` |
+| Features, workspace configurations, build scripts, release pipelines | `rust-cargo-build` |
+| Unsafe network libraries, C ABI interfaces, raw buffer handling | `rust-unsafe-ffi` |
+
+## On-Demand Resources
+
+- [Service Boundaries](references/service-boundaries.md): Consult when designing handlers, state management, data structures, or outbound HTTP adapters.
+- [Middleware and Lifecycle](references/middleware-and-lifecycle.md): Review Tower configuration, timeout policies, CORS rules, load balancing strategies, or graceful shutdown logic.
+- [HTTP Service Testing](references/testing.md): Refer to design patterns for router integration, end-to-end testing, fault injection scenarios.
+- [Examples](examples/examples.md): Use templates for end-to-end task decomposition when needed.
+- `examples/golden-handler/`: Offline compilation and verification of transport boundary behavior and error mapping logic.
+
+## References
+
+- [Rust Networking](https://www.rust-lang.org/what/networking)
+- [axum documentation](https://docs.rs/axum/)
+- [Tokio documentation](https://docs.rs/tokio/)
+- [Tower documentation](https://docs.rs/tower/)
+- [Serde](https://serde.rs/)

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Web Security"
+  short_description: "Secure and audit Rust web applications and APIs"
+  default_prompt: "Use $rust-web-security to threat-model and verify this Rust web security change."

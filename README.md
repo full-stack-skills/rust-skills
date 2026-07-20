@@ -16,7 +16,7 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 12 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 15 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
@@ -36,7 +36,7 @@ npx skills add full-stack-skills/rust-skills --skill rust-web
 flowchart TB
     S["rust-stable<br/>language and std entry"]
     P["project engineering<br/>project-structure / cargo-build"]
-    D["specialized domains<br/>concurrency / testing / unsafe-ffi / macros<br/>cli / web / embedded"]
+    D["specialized domains<br/>concurrency / testing / unsafe-ffi / macros / lombok-macros<br/>cli / web / database / web-security / embedded"]
     Q["quality gates<br/>code-review / style-clippy"]
 
     S --> P
@@ -54,9 +54,12 @@ flowchart TB
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
 | Domain | `rust-unsafe-ffi` | Unsafe, raw pointers, layout, FFI and Miri |
 | Domain | `rust-macros` | Declarative and procedural macros |
-| Domain | `rust-cli` | CLI arguments, I/O, logging and exit codes |
-| Domain | `rust-web` | axum, serde, sqlx, reqwest and middleware |
-| Domain | `rust-embedded` | no_std, HAL, interrupts and RTIC |
+| Domain | `rust-lombok-macros` | Controlled `lombok-macros` accessors, constructors and debug formatting |
+| Domain | `rust-cli` | End-to-end CLI contracts, standard streams, exit codes and process tests |
+| Domain | `rust-web` | Server-side HTTP APIs, handler boundaries, middleware and lifecycle |
+| Domain | `rust-database` | SQL/ORM, schema migrations, transactions, pools and real database verification |
+| Domain | `rust-web-security` | Threat modeling, authentication, authorization, sessions, tokens and browser security |
+| Domain | `rust-embedded` | Bare-metal firmware, portable no_std drivers and hardware validation |
 | Quality | `rust-code-review` | Correctness, safety, performance, APIs and dependencies |
 | Quality | `rust-style-clippy` | rustfmt, Clippy, Edition migration and diagnostics |
 
@@ -86,12 +89,31 @@ python3 scripts/validate_skills.py --check-examples
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
 
+## v2.3 Lombok Macros
+
+- Adds `rust-lombok-macros` as an independent skill for the locked `lombok-macros` API, rather than overloading general procedural-macro authoring.
+- Covers minimal derive selection, accessor ownership and visibility, setter conversions, constructor defaults, Debug redaction, MSRV verification, and generated-API contract tests.
+- Explicitly blocks generated setters, mutable getters, constructors, and Debug-backed Display when they would bypass domain invariants, panic on optional/error data, or expose secrets and unstable user output.
+
+## v2.2 Engineering Hardening
+
+- Extracts actor, bounded-queue, backpressure, slow-consumer, task-supervision, single-worker runtime, and graceful-shutdown patterns from the rmux production case study into `rust-concurrency`.
+- Adds third-party dependency selection, feature/platform isolation, version constraints, `cargo-deny`, and security-exception governance to `rust-cargo-build`.
+- Adds on-demand references for workspace boundaries, daemon/IPC/PTY/TUI design, concurrency/platform testing, production Rust idioms, and cryptographic dependency boundaries.
+- rmux remains case-study evidence only; the skills do not depend on its source or treat its constants, crate versions, or cryptographic protocol as universal defaults.
+
+## v2.1 Additions
+
+- `rust-database` owns data access stacks, schema migrations, transactions, connection pools, and real-database verification.
+- `rust-web-security` owns web threat modeling, authentication, object/tenant authorization, sessions/tokens, CSRF/CORS, SSRF, and security auditing.
+
 ## v2.0 Migration
 
 `rust-1.93` has been replaced by `rust-stable`. The old name represented a fixed historical snapshot while claiming to be current. Update explicit invocations to `$rust-stable`.
 
-## Official Sources
+## Authoritative Sources
 
+- [rust-lang/rust source](https://github.com/rust-lang/rust)
 - [Rust Release Notes](https://doc.rust-lang.org/stable/releases.html)
 - [The Rust Programming Language](https://doc.rust-lang.org/book/)
 - [Rust Standard Library](https://doc.rust-lang.org/std/)
@@ -99,6 +121,10 @@ Validation covers manifest/directory parity, frontmatter, the 500-line limit, re
 - [Cargo Book](https://doc.rust-lang.org/cargo/)
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
+- [lombok-macros on crates.io](https://crates.io/crates/lombok-macros) and [versioned docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)
+- [Tokio](https://tokio.rs/), [clap](https://docs.rs/clap/), [cargo-deny](https://embarkstudios.github.io/cargo-deny/), and [cargo-nextest](https://nexte.st/)
+- [SQLx](https://docs.rs/sqlx/), [Diesel](https://diesel.rs/guides/), and [SeaORM](https://www.sea-ql.org/SeaORM/)
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) and [RFC 8725](https://datatracker.ietf.org/doc/html/rfc8725)
 
 ## License
 

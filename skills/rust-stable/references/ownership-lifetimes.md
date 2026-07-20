@@ -1,43 +1,41 @@
-# 所有权、借用与生命周期
+# Ownership, Borrowing, and Lifetimes
 
-## 决策顺序
+## Decision Order
 
-1. 值是否需要跨作用域继续存在？
-2. 调用者是否还需要继续使用它？
-3. 是否需要修改？
-4. 是否需要多个所有者或跨线程共享？
+1. Does the value need to live across scopes?
+2. Is the caller still required to use it?
+3. Should it be modified?
+4. Are multiple owners or cross-thread sharing required?
 
-据此优先选择：
+Prioritize based on:
+- Read-only observation: `&T`
+- Exclusive modification: `&mut T`
+- Transfer responsibility: `T` (move)
+- Shared ownership: single-threaded `Rc<T>`, multi-threaded `Arc<T>`
+- Internal mutability: `Cell<T>`, `RefCell<T>`, or synchronization primitives
 
-- 只读观察：`&T`
-- 独占修改：`&mut T`
-- 转移责任：`T`
-- 共享所有权：单线程 `Rc<T>`，跨线程 `Arc<T>`
-- 内部可变性：`Cell<T>`、`RefCell<T>` 或同步原语
+## API Design
 
-## API 设计
+- Input accepts borrows; output returns owned values, which is the most common and composable boundary.
+- Prefer text input as `&str`; convert to `String` only when necessary for storage.
+- For collections, prefer slices or iterators over forcing callers to construct `Vec`.
+- Lifetimes describe reference relationships but do not extend actual lifetimes.
+- Before returning references, prove that the data is owned by the caller and has a clear single source of origin.
 
-- 输入接受借用，输出返回拥有值，是最常见且容易组合的边界。
-- 文本输入优先 `&str`，只在需要保存时转换为 `String`。
-- 集合输入优先 slice 或 iterator，而不是强制调用者构造 `Vec`。
-- 生命周期参数描述引用之间的关系，不用于延长实际生命周期。
-- 返回引用前先证明数据由调用者拥有，且来源唯一明确。
+## Common Fixes
 
-## 常见修复
+- Local temporary values cannot be returned: return an owned value or require the caller to provide storage.
+- Overlapping mutable and immutable borrows: narrow borrow scopes first; extract required data before modification.
+- Closure escaping current scope: choose `move` based on responsibility, then evaluate clone costs.
+- Modifying collections during iteration: collect changes beforehand using `retain`, `drain`, or the entry API.
+- Self-referential requirements: prefer re-designing structures; if fixed addresses are needed, use `rust-unsafe-ffi` to handle `Pin`s and safety invariants.
 
-- 局部临时值无法返回：返回拥有值，或让调用者提供存储。
-- 可变借用与不可变借用重叠：缩小借用作用域，先提取所需数据。
-- 闭包逃逸当前作用域：根据责任选择 `move`，并检查 clone 成本。
-- 迭代中修改集合：先收集变更，或使用 `retain`、`drain`、entry API。
-- 自引用需求：优先重建设计；确需固定地址时转到 `rust-unsafe-ffi` 处理 Pin 和安全不变量。
+## Verification
 
-## 验证
+Do not rely solely on compilation success. Continue checking:
+- Does cloning mask ownership design issues?
+- Are references cross-threaded, across await boundaries, or exposed via FFI?
+- Do drop orders affect locks, files, transactions, and temporary directories?
+- Is the public API unnecessarily exposing lifetime parameters?
 
-不要只让代码通过编译。继续检查：
-
-- clone 是否掩盖所有权设计问题。
-- 引用是否跨线程、跨 await 或跨 FFI 边界。
-- Drop 顺序是否影响锁、文件、事务和临时目录。
-- 公共 API 是否暴露了不必要的生命周期参数。
-
-官方来源：https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html
+Official source: https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html

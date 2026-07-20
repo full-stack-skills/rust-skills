@@ -126,7 +126,7 @@ def check_repository(require_examples: bool) -> tuple[list[str], list[Path]]:
 
     for readme in (ROOT / "README.md", ROOT / "README.zh-CN.md"):
         text = readme.read_text(encoding="utf-8")
-        if "12" not in text or "rust-stable" not in text:
+        if str(len(directory_names)) not in text or "rust-stable" not in text:
             errors.append(f"{readme.name}: missing current skill count or rust-stable entry")
 
     if not SCENARIOS.is_file():

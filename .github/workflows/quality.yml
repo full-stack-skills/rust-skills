@@ -17,5 +17,7 @@ jobs:
         with:
           toolchain: 1.97.1
           components: rustfmt, clippy
+      - name: Fetch locked third-party golden dependencies
+        run: cargo fetch --locked --manifest-path skills/rust-lombok-macros/examples/golden-lombok/Cargo.toml
       - name: Validate skills and golden examples
         run: python3 scripts/validate_skills.py --check-examples

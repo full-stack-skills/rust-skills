@@ -1,6 +1,6 @@
 # Build Scripts
 
-`build.rs` 在编译 package 前运行。只用它完成 Cargo 无法直接表达的本地构建步骤。
+The `build.rs` script runs before compiling a package. It is used to perform local build steps that Cargo cannot express directly in the standard compilation process.
 
 ```rust
 fn main() {
@@ -9,13 +9,13 @@ fn main() {
 }
 ```
 
-规则：
+Rules:
 
-- 生成文件写入 `OUT_DIR`。
-- 每个文件和环境输入都声明重跑条件。
-- 标准输出只写 Cargo 指令；诊断写 stderr。
-- 不依赖当前工作目录以外的隐式路径。
-- 原生依赖优先使用成熟 `-sys` crate 和 pkg-config/cmake 约定。
-- 生成 Rust 代码时确保输出可复现并由正常编译流程检查。
+- Files are written to `OUT_DIR`.
+- Each file and each environment input is declared with a re-run condition.
+- Standard output should only contain Cargo commands; diagnostics go to stderr.
+- Do not rely on implicit paths outside the current working directory.
+- Native dependencies should prefer mature `-sys` crate usage and pkg-config/cmake conventions.
+- Ensure generated Rust code produces reproducible outputs that can be checked by normal compilation workflows.
 
-官方来源：https://doc.rust-lang.org/cargo/reference/build-scripts.html
+Official source: https://doc.rust-lang.org/cargo/reference/build-scripts.html

@@ -1,6 +1,6 @@
 {
   "name": "rust-skills",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "description": "Stable Rust language and engineering skills",
   "author": {
     "name": "PartMeAI",
@@ -17,8 +17,11 @@
     "./skills/rust-testing",
     "./skills/rust-unsafe-ffi",
     "./skills/rust-macros",
+    "./skills/rust-lombok-macros",
     "./skills/rust-cli",
     "./skills/rust-web",
+    "./skills/rust-database",
+    "./skills/rust-web-security",
     "./skills/rust-embedded",
     "./skills/rust-code-review",
     "./skills/rust-style-clippy"

@@ -2,9 +2,11 @@
 
 基线日期：2026-07-20
 
-插件版本：2.0.0
+插件版本：2.3.0
 
 Rust 验证工具链：1.97.1
+
+Rust 源码核验：`rust-lang/rust` main `9f36de775bc636c8e88c31a173c2bcb6995956a0`（2026-07-19，`src/version` 为 1.99.0 nightly）；该源码的 `RELEASES.md` 最新 stable 记录为 1.97.1。研究 checkout 仅用于只读核验，不是技能运行依赖。
 
 ## 评测定位
 
@@ -20,12 +22,12 @@ Rust 验证工具链：1.97.1
 |---|---|---|
 | Manifest parity | `plugin.json` 与 `skills/*` 双向一致 | 通过 |
 | Frontmatter | name、description、目录名、唯一性 | 通过 |
-| Progressive disclosure | 所有 `SKILL.md` 不超过 500 行 | 通过，最长 271 行 |
+| Progressive disclosure | 所有 `SKILL.md` 不超过 500 行 | 通过，最长 253 行；Concurrency/CLI/Embedded/Web/Database/Web Security/Lombok Macros 分别为 222/150/168/169/144/137/139 行 |
 | Local links | README、SKILL、references、examples | 通过 |
 | Markdown fences | 所有 Markdown 代码围栏闭合 | 通过 |
-| Agent metadata | 12 份 `agents/openai.yaml` 与默认提示 | 通过 |
-| Golden examples | 12 个示例的 fmt/check/test/Clippy | 12/12 通过 |
-| Trigger scenarios | 24 个中英文场景覆盖全部 12 个技能 | 结构通过，待独立 Agent forward-test |
+| Agent metadata | 15 份 `agents/openai.yaml` 与默认提示 | 通过 |
+| Golden examples | 15 个示例的 fmt/check/test/Clippy | 15/15 通过；三方宏示例按 `Cargo.lock` 预取后离线验证 |
+| Trigger scenarios | 34 个中英文场景覆盖全部 15 个技能 | 结构通过，待独立 Agent forward-test |
 
 执行命令：
 
@@ -47,7 +49,7 @@ python3 scripts/validate_skills.py --check-examples
 ## 成功标准
 
 - 结构门禁零错误。
-- 12/12 黄金示例通过全部命令。
+- 15/15 黄金示例通过全部命令。
 - 每个技能至少两个触发或交接场景。
 - 不使用当前项目 MSRV 尚未稳定的 API。
 - 不把历史版本快照描述为自动更新的 stable 事实。

@@ -1,57 +1,57 @@
 ---
 name: rust-project-structure
-description: Rust 项目结构与脚手架技能 — package、crate、模块树、可见性、re-export 和 workspace 布局。Use when creating or reorganizing Rust projects, public module boundaries, multi-crate workspaces, or file layouts; hand manifest, dependency, feature, and build settings to rust-cargo-build.
+description: Design and refactor Rust packages, crates, modules, public APIs, workspaces, dependency direction, feature boundaries, and production daemon layering. Use when users ask how to organize lib.rs or main.rs, split a crate, create a workspace, control visibility and re-exports, prevent dependency cycles, or separate protocol, domain, platform, SDK, and binary layers.
 ---
 
-# Rust 项目结构与脚手架
+# Rust Project Structure and Boilerplate
 
-> 基于 The Rust Programming Language ch 7 与 The Rust Reference ch 7（Items & Modules）。
+> Based on *The Rust Programming Language* Chapter 7 and *The Rust Reference* Chapter 7 (Items & Modules).
 
 ## Capability Boundaries
 
-### ✅ 强项
-1. 包（package）与 crate（二进制/库）的概念与约定
-2. 模块文件系统布局（src/lib.rs、src/main.rs、子模块文件/目录）
-3. mod 声明与模块嵌套
-4. pub 可见性体系（pub、pub(crate)、pub(super)、pub(self)）
-5. use 路径模式（绝对/相对、嵌套 `A::{B,C}`、glob `A::*`、别名 `A as B`、re-export）
-6. 外部 crate 引用
-7. 工作空间（workspace）多包项目布局
-8. 条件编译与 cfg 属性
-9. 项目模板与脚手架（cargo new、cargo-generate）
+### ✅ Strengths
+1. Concepts and conventions for packages (`package`) and crates (binary/library)
+2. Module file system layout: `src/lib.rs`, `src/main.rs`, submodules/directories
+3. `mod` declarations and module nesting
+4. Public visibility model: `pub`, `pub(crate)`, `pub(super)`, `pub(self)`
+5. Import path patterns (absolute/relative, nested `A::{B,C}`, glob `A::*`, aliases `A as B`, re-exports)
+6. External crate references
+7. Workspace multi-package project layouts and dependency directions
+8. Conditional compilation with `cfg` attributes
+9. Project templates and scaffolding (`cargo new`, `cargo-generate`)
 
-### ⚠️ 前置要求
-1. 理解 Rust 所有权与模块基础（可参考 `rust-stable` 技能）
+### ⚠️ Prerequisites
+1. Understanding Rust ownership and module foundations (refer to the `rust-stable` skill)
 
-### ❌ 不适用范围
-1. Cargo.toml 配置 → 使用 `rust-cargo-build` 技能
-2. Rust 语法基础 → 使用 `rust-stable` 技能
-3. 测试组织 → 使用 `rust-testing` 技能
+### ❌ Out of Scope
+1. Cargo.toml configuration → use the `rust-cargo-build` skill
+2. Rust syntax fundamentals → use the `rust-stable` skill
+3. Testing organization → use the `rust-testing` skill
 
-## 何时使用
+## When to Use
 
-- "组织 Rust 项目结构"
-- "模块之间怎么引用"
-- "pub 可见性规则"
-- "多 crate 工作空间布局"
+- "Organize Rust project structure"
+- "How modules reference each other"
+- "Public visibility rules"
+- "Multi-crate workspace layouts"
 
 ## Data Privacy
 
-本技能不收集、存储或传输任何用户数据。
+This skill does not collect, store, or transmit any user data.
 
 ---
 
-## 一、包与 Crate
+# One: Packages and Crates
 
 ```rust
-// package 二进制 + 库混合布局
+// Package binary + library mixed layout
 my-project/
 ├── Cargo.toml
 ├── src/
-│   ├── lib.rs        # 库 crate 根
-│   └── main.rs       # 二进制 crate 根
+│   ├── lib.rs        # Library crate root
+│   └── main.rs       # Binary crate root
 
-// 多二进制 crate 布局
+// Multi-binary crate layout
 my-project/
 ├── Cargo.toml
 └── src/
@@ -59,63 +59,63 @@ my-project/
     ├── main.rs
     └── bin/
         ├── other.rs
-        └── another.rs  // 每个 bin/ 文件独立二进制
+        └── another.rs  // Each file in `bin/` is an independent binary
 ```
 
-## 二、模块系统
+# Two: Module System
 
 ```rust
-// lib.rs — 声明模块
-pub mod front_of_house;      // 从 front_of_house.rs 或 front_of_house/mod.rs 加载
-mod back_of_house;           // 私有模块，仅当前 crate 可见
-pub(crate) mod utils;        // 对整个 crate 公开但外部不可见
+// lib.rs — Declare module(s)
+pub mod front_of_house;      // Load from `front_of_house.rs` or `front_of_house/mod.rs`
+mod back_of_house;           // Private modules, visible only within this crate
+pub(crate) mod utils;        // Public to the entire crate but not externally accessible
 
 // front_of_house.rs
-pub mod hosting;             // 从 hosting.rs 加载
+pub mod hosting;             // Load from `hosting.rs`
 
 // front_of_house/hosting.rs
 pub fn add_to_waitlist() {}
-fn seat_at_table() {}        // 默认私有
+fn seat_at_table() {}        // Default private (current module + submodules)
 ```
 
-## 三、可见性体系
+# Three: Visibility Model
 
 ```rust
-pub fn public_fn() {}             // 外部可见
-fn private_fn() {}                // 默认私有（当前模块 + 子模块）
-pub(crate) fn crate_visible() {}  // 整个 crate 可见
-pub(super) fn parent_visible() {} // 父模块可见
-pub(self) fn module_visible() {}  // 当前模块可见（等价默认）
-pub(in crate::foo) fn restricted() {}  // 指定路径可见（nightly）
+pub fn public_fn() {}             // Visible externally
+fn private_fn() {}                // Private by default (within current crate and its submodules)
+pub(crate) fn crate_visible() {}  // Visible to the entire crate but not external
+pub(super) fn parent_visible() {} // Visible within this module's parent modules
+pub(self) fn module_visible() {}  // Visible within this module itself (equivalent to default visibility)
+pub(in crate::foo) fn restricted() {} // Visible only in specified ancestor modules' scope
 ```
 
-## 四、use 路径模式
+# Four: Import Path Patterns
 
 ```rust
-// 绝对路径 — crate:: 或 根
+// Absolute paths — `crate::` or root path
 use crate::front_of_house::hosting;
 use std::collections::HashMap;
 
-// 相对路径 — self:: 或 super::
+// Relative paths — `self::` or `super::`
 use self::back_of_house::Cook;
 use super::parent_module::helper;
 
-// 嵌套路径
+// Nested paths
 use std::{cmp::Ordering, io};
 use std::io::{self, Write};
 
-// Glob（谨慎使用）
+// Glob (use with caution)
 use std::collections::*;
 
-// 别名
+// Aliases
 use std::fmt::Result as FmtResult;
 
-// 重新导出（pub use）
+// Re-exports (`pub use`)
 pub use crate::front_of_house::hosting;
-// 外部现在可以通过 my_crate::hosting 访问
+// External crates can now be accessed via `my_crate::hosting`
 ```
 
-## 五、工作空间（Workspace）
+# Five: Workspaces (Workspace)
 
 ```toml
 # Cargo.toml (workspace root)
@@ -130,7 +130,7 @@ resolver = "3"
 
 ```text
 my-workspace/
-├── Cargo.toml          # workspace 定义
+├── Cargo.toml          # Defines the workspace
 ├── crates/
 │   ├── core/
 │   │   ├── Cargo.toml  # [package] + [dependencies]
@@ -141,16 +141,16 @@ my-workspace/
 ├── app/
 │   ├── Cargo.toml
 │   └── src/main.rs
-└── Cargo.lock          # 共享 lock 文件
+└── Cargo.lock          # Shared lock file
 ```
 
 ```toml
-# crates/utils/Cargo.toml — 引用 workspace 内 crate
+# crates/utils/Cargo.toml — References workspace crate(s)
 [dependencies]
 core = { path = "../core" }
 ```
 
-## 六、条件编译
+# Six: Conditional Compilation
 
 ```rust
 #[cfg(target_os = "linux")]
@@ -162,55 +162,56 @@ fn not_windows() {}
 #[cfg(feature = "serde")]
 fn with_serde() {}
 
-// cfg! 宏（运行时检查）
+// `cfg!` macro (runtime check)
 if cfg!(target_os = "linux") {
     println!("Running on Linux");
 }
 
-// cfg_attr
+// `cfg_attr`
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 struct Config;
 ```
 
-## 七、项目脚手架
+# Seven: Project Scaffolding
 
 ```bash
-cargo new my-app              # 二进制项目
-cargo new my-lib --lib        # 库项目
-cargo init                    # 当前目录初始化
-cargo new --vcs none          # 不初始化 git
+cargo new my-app              # Binary project
+cargo new my-lib --lib        # Library project
+cargo init                    # Initialize current directory
+cargo new --vcs none          # No git initialization
 
-# 使用模板（需要 cargo-generate）
+# Use templates (requires cargo-generate)
 cargo install cargo-generate
 cargo generate --git https://github.com/rust-unofficial/patterns.git
 ```
 
 ## Workflow
 
-Step 1. 确认项目类型 — 单 crate 包、多 crate 包还是工作空间
-Step 2. 选择命名约定 — 按项目用途确定二进制和库名称（snake_case）
-Step 3. 规划模块层次 — 从 lib.rs 开始按功能域拆分模块文件和目录
-Step 4. 设计可见性接口 — 确定哪些类型/函数是 pub/pub(crate) 还是私有
-Step 5. 组织路径与 use — 配置 use 导入，确保不违反模块可见性规则
-Step 6. 验证 — cargo check 确认编译通过，检查 IDE 模块导航正常
-
+1. Confirm project type — single crate package, multi-crate package, or workspace?
+2. Select naming conventions — determine binary and library names based on project purpose (snake_case)
+3. Plan module hierarchy — start with `lib.rs`, split modules into files/directories by functional domain
+4. Design visibility interfaces — decide which types/functions are public (`pub`), private, or crate-visible; do not mix DTOs, domain state, and platform handles across layers
+5. Organize paths and imports — configure import statements to ensure compliance with module visibility rules
+6. Verify dependency directions — use `cargo metadata`/`cargo tree` to confirm core crates have no reverse dependencies on CLI, network implementations, or platform-specific code
+7. Validate — run `cargo check` to verify compilation success; inspect IDE module navigation
 
 ## Gotchas
 
-1. crate:: vs ::crate_name:: - crate:: 引用当前 crate 根；::other_crate:: 是绝对路径引用外部 crate
-2. pub(crate) 在 2015 edition 中不可用 - 需要 edition 2018+
-3. mod.rs 已弃用 - 2018 edition 起推荐 module_name.rs 而非 module_name/mod.rs
-4. workspace resolver 是全局设置；Edition 2021 默认 resolver 2，Edition 2024 默认 resolver 3
-5. #[path] 属性绕过文件系统约定 - 使用后模块路径不再遵循默认文件树
+1. Distinguish between `crate::` (references the current crate root) and `::other_crate_name::` (absolute path reference to an external crate).
+2. Restricted visibility such as `pub(crate)` is not an Edition boundary; verify the project's Rust version rather than assuming Edition 2015 forbids it.
+3. Both `module.rs` and `module/mod.rs` are supported; new code typically prefers the former, but do not misinterpret a deprecated warning as an error for using `mod.rs`.
+4. Workspace resolver settings apply globally; Edition 2021 defaults to resolver 2, while Edition 2024 defaults to resolver 3.
+5. The path argument in `pub(in path)` must point to ancestor modules of the current item and cannot be used to expose visibility across arbitrary sibling modules.
+6. Use of the `#[path]` attribute bypasses filesystem conventions — module paths no longer follow default file tree structures after application.
 
+## On-Demand Resources
 
-## 按需资源
+- [Layout Examples](examples/examples.md)
+- [Concept Quick Reference](references/references.md)
+- [Production-grade workspace boundaries](references/production-workspace-boundaries.md): When splitting protocols, domains, platforms, transports, SDKs, adapters, and binaries, read the relevant sections.
+- `examples/golden-layout/`: CI compilation module boundary examples
 
-- [布局示例](examples/examples.md)
-- [概念速查](references/references.md)
-- `examples/golden-layout/`：CI 编译的模块边界示例
-
-## 官方参考
+## Official References
 
 - [The Book ch 7](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html)
 - [Rust Reference ch 7 (Items)](https://doc.rust-lang.org/reference/items.html)

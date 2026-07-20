@@ -1,29 +1,30 @@
-# Rust 风格指南
+# Rust Style Guide
 
-## 命名
+## Naming Conventions
 
-- 类型与 trait：`UpperCamelCase`
-- 函数、方法、模块和变量：`snake_case`
-- 常量与静态量：`SCREAMING_SNAKE_CASE`
-- 构造函数通常使用 `new`，转换遵循 `from_*`、`into_*`、`as_*`、`to_*`
+- Types and traits: `UpperCamelCase` (e.g., `MyType`, `MyTrait`)
+- Functions, methods, modules, and variables: `snake_case` (e.g., `my_function`, `my_module_name`)
+- Constants and statics: `SCREAMING_SNAKE_CASE` (e.g., `MY_CONSTANT`, `STATIC_VAR`)
+  - Constructors typically use the keyword `new`.
+  - Conversion methods follow patterns like `from_*`, `into_*`, `as_*`, or `to_*`.
 
-## 模块与 API
+## Modules and API Surface
 
-- 按领域能力组织模块，不按 struct/trait/impl 文件类型拆分。
-- 默认私有，只公开稳定且有意维护的接口。
-- 在 crate 根重导出主要公共类型，避免用户依赖深层内部路径。
-- 对公共错误、panic、unsafe 和平台限制编写 rustdoc 章节。
-- 示例优先写成可执行 doctest。
+- Organize modules by domain capability rather than splitting them into individual struct/trait/impl files.
+- Default visibility is private; public APIs are limited to stable, intentionally maintained interfaces.
+- Re-export major public types from the crate root to avoid deep internal paths in user dependencies.
+- Write documentation for public errors, panics, unsafe code, and platform-specific limitations using rustdoc chapters.
+- Prefer writing examples as executable doctests instead of inline comments or standalone test files.
 
-## 格式与 lint
+## Formatting and Linting
 
 ```bash
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 ```
 
-不要为了消除 lint 直接全局 `allow`；记录为何不适用并把 allow 缩到最小范围。
+Do not globally `allow` lint rules solely to suppress them; record why they are inapplicable and restrict the scope of any allowed exceptions.
 
-更深入的 lint、Edition 迁移和错误码分析转到 `rust-style-clippy`。
+More advanced lints, edition migrations, and error code analysis should be handled by the dedicated tooling: [rust-style-clippy](https://github.com/rust-lang/style-guide).
 
-官方来源：https://doc.rust-lang.org/style-guide/
+Official source: https://doc.rust-lang.org/style-guide/

@@ -1,10 +1,10 @@
-# Path 与 PathBuf
+# Path and PathBuf
 
-- 使用 `Path` 接受借用路径，使用 `PathBuf` 保存或构造拥有路径。
-- 不把路径强制转换为 UTF-8；展示时按需要使用 `display()` 或 `to_string_lossy()`。
-- 使用 `join` 组合路径，不手工拼接分隔符。
-- `canonicalize` 会访问文件系统且可能解析符号链接，不能只当字符串标准化。
-- `extension`、`file_name` 和 `parent` 都可能返回 `None`。
-- 处理不可信路径时，单纯检查 `..` 不足以建立沙箱边界；还需考虑绝对路径、符号链接和竞态。
+- Accept borrowed paths with `Path`, or construct/safe-guard paths using `PathBuf`.
+- Do not force UTF‑8 conversion; use `display()` when displaying, or `to_string_lossy()` as needed.
+- Use `join` to combine path components instead of manually concatenating separators.
+- `canonicalize` accesses the filesystem and may resolve symbolic links; it is unsuitable for string-only normalization.
+- `extension`, `file_name`, and `parent` can all return `None`.
+- When handling potentially untrusted paths, relying solely on checking for `..` does not establish a sandbox boundary; also consider absolute paths, symlinks, and race conditions.
 
-官方来源：https://doc.rust-lang.org/std/path/
+Official source: https://doc.rust-lang.org/std/path/

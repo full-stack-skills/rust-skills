@@ -1,15 +1,15 @@
-# 当前稳定版基线
+# Current Stable Baseline
 
-维护快照：2026-07-20。
+**Snapshot**: 2026-07-20.
 
-## 当前版本
+## Current Version
 
-- Stable：Rust 1.97.1（2026-07-16）。
-- 当前 Edition：2024。
-- Edition 2024 的最低稳定工具链是 Rust 1.85.0。
-- Cargo resolver 3 自 Rust 1.84 起可用，并由 Edition 2024 默认选择。
+- **Stable**: Rust 1.97.1 (2026-07-16).
+- **Current Edition**: 2024.
+- The minimum stable toolchain for Edition 2024 is Rust 1.85.0.
+- Cargo resolver version 3 became available since Rust 1.84 and is the default selection for Edition 2024.
 
-始终通过以下命令确认用户环境，不要把本文件当成运行时探测结果：
+Always verify your user environment using one of the following commands; do not treat this file as a runtime probe result:
 
 ```bash
 rustc --version --verbose
@@ -17,25 +17,25 @@ cargo --version
 rustup show active-toolchain
 ```
 
-## Rust 1.97 重点
+## Rust 1.97 Highlights
 
-- 新增 `cfg(target_has_atomic_primitive_alignment)`。
-- 放宽部分 import 中尾随 `self` 的写法。
-- 稳定一组整数最高位、最低位和 bit width API。
-- Cargo 稳定 `build.warnings` 和 `resolver.lockfile-path` 配置。
-- Rust 1.97.1 修复 LLVM 优化相关误编译，应优先于 1.97.0。
+- Introduced `cfg(target_has_atomic_primitive_alignment)`.
+- Relaxed trailing `self` syntax in some import statements.
+- Stabilized integer APIs for highest bit, lowest bit, and bit width.
+- Stabilized Cargo configurations: `build.warnings` and `resolver.lockfile-path`.
+- Fixed LLVM optimization-related miscompilation issues; prioritize Rust 1.97.1 over 1.97.0.
 
-使用这些能力前同时检查项目 MSRV。不要因为本机 stable 支持就把新 API 引入旧 MSRV 项目。
+Before using these capabilities, verify the project's Minimum Supported Rust Version (MSRV). Do not introduce APIs that the project's supported toolchain cannot compile.
 
-## 更新本基线
+## Update This Baseline
 
-1. 打开官方 Release Notes 的首个版本条目。
-2. 更新版本号、发布日期和本页重点。
-3. 检查语言、标准库、Cargo、Clippy、Rustdoc 和兼容性说明。
-4. 在最新版与声明的 MSRV 上编译黄金示例。
-5. 更新 TRACE/Eval 基线和插件版本。
+1. Open the first entry in the official Release Notes.
+2. Update version number, release date, and highlights for this page.
+3. Check language standard library, Cargo, Clippy, Rustdoc, and compatibility documentation.
+4. Compile golden examples separately on the declared MSRV and the current supported stable toolchain.
+5. Update TRACE/Eval baseline versions and plugin versions.
 
-## 官方来源
+## Official Sources
 
 - https://doc.rust-lang.org/stable/releases.html
 - https://blog.rust-lang.org/releases/

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Rust CLI"
-  short_description: "构建参数清晰、错误友好且可测试的 Rust 命令行工具"
-  default_prompt: "Use $rust-cli to build and verify this Rust command-line application."
+  display_name: "Rust CLI Engineering"
+  short_description: "Build production Rust command-line applications"
+  default_prompt: "Use $rust-cli to design, implement, and verify this Rust command-line workflow."

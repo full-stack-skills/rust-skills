@@ -1,26 +1,26 @@
-# 交叉编译
+# Cross-compilation
 
-## 基本流程
+## Basic Workflow
 
 ```bash
 rustup target add aarch64-unknown-linux-gnu
 cargo build --target aarch64-unknown-linux-gnu
 ```
 
-Rust target 安装不等于系统 linker、C compiler 和目标系统库已经就绪。`.cargo/config.toml` 可配置：
+Installing Rust targets does not guarantee that the system linker, C compiler, and libraries for the target platform are ready. The `.cargo/config.toml` file can be configured as follows:
 
 ```toml
 [target.aarch64-unknown-linux-gnu]
 linker = "aarch64-linux-gnu-gcc"
 ```
 
-验证：
+Verification steps include:
 
 - `rustc --print target-list`
 - `cargo build --target <triple>`
-- 检查产物架构和动态依赖。
-- 在目标设备、模拟器或可信 runner 上执行测试。
+- Checking the architecture and dynamic dependencies of the produced artifacts.
+- Executing tests on the target device, emulator, or trusted runner.
 
-不要通过“宿主机 cargo check 成功”宣称交叉编译或目标运行成功。
+Do not claim cross-compilation success merely because "host cargo check" succeeds; actual runtime execution must be verified on the target platform.
 
-官方来源：https://doc.rust-lang.org/cargo/reference/config.html
+Official source: https://doc.rust-lang.org/cargo/reference/config.html

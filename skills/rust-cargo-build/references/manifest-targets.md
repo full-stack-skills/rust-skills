@@ -1,6 +1,6 @@
-# Manifest 与构建目标
+# Manifest and Build Targets
 
-## 最小 package
+## Minimum Package Configuration
 
 ```toml
 [package]
@@ -13,8 +13,8 @@ description = "Example crate"
 repository = "https://example.com/repository"
 ```
 
-默认目标是 `src/lib.rs` 和 `src/main.rs`。只有路径、名称或 crate type 不符合约定时才显式配置 `[lib]`、`[[bin]]`、`[[example]]`、`[[test]]` 或 `[[bench]]`。
+The default targets are `src/lib.rs` and `src/main.rs`. Explicit configuration of `[lib]`, `[[bin]]`, `[[example]]`, `[[test]]`, or `[[bench]]` is only required when the path, name, or crate type does not conform to conventions.
 
-发布 crate 时补齐 description、license/license-file、repository、readme、keywords 和 categories，并用 `cargo package --list` 检查内容。
+When publishing a crate, ensure that all fields—specifically description, license/license-file, repository, readme, keywords, and categories—are populated. Verify package contents using `cargo package --list`.
 
-官方来源：https://doc.rust-lang.org/cargo/reference/manifest.html
+Official documentation: https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -1,49 +1,37 @@
-# Web Examples
+# HTTP Service Scenario Examples
 
-## Minimal axum server
-```rust
-use axum::{Router, routing::get, response::Json};
+## Scenario: Adding a Query Endpoint
 
-async fn hello() -> Json<&'static str> {
-    Json("Hello, World!")
-}
+User Request:
+Add the `GET /users/{id}` endpoint to an existing Axum service, with unified error formatting and timeout support.
 
-#[tokio::main]
-async fn main() {
-    let app = Router::new().route("/", get(hello));
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
+First confirm success responses, syntax errors for invalid IDs, user not found status codes, database timeouts, and internal failures along with their corresponding response bodies. Then:
+
+```text
+Path extractor
+  -> GetUser use case
+  -> UserRepository port
+  -> UserResponse / AppError
+  -> centralized IntoResponse mapping
 ```
 
-## CRUD with state
-```rust
-use axum::{Router, extract::{Path, State}, response::Json, routing::get};
-use std::sync::Arc;
-use tokio::sync::Mutex;
+The handler should not directly write SQL queries; the router must test at least for status codes 200, invalid ID (400), missing user (404), downstream timeout, and response sanitization. Middleware tests confirm that the `timeout` middleware covers all target routes.
 
-type Db = Arc<Mutex<Vec<String>>>;
+## Scenario: Integrating Transaction Scenarios
 
-async fn list(State(db): State<Db>) -> Json<Vec<String>> {
-    Json(db.lock().await.clone())
-}
+User Request:
+The `POST /orders` endpoint requires both order creation and inventory updates; any failure must result in rollback.
 
-#[tokio::main]
-async fn main() {
-    let app = Router::new()
-        .route("/items", get(list))
-        .with_state(Arc::new(Mutex::new(vec![])));
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-```
+Place transactions at the boundary of application/data adapters, where only request parsing and invocation of `CreateOrder` occur via handlers. Test cases include:
 
-## reqwest client
-```rust
-let client = reqwest::Client::new();
-let resp = client.get("https://api.github.com/users")
-    .header("User-Agent", "my-app")
-    .send()
-    .await?;
-let body: serde_json::Value = resp.json().await?;
-```
+1. **Use Case Testing**: Ensure that a partial commit does not occur if the second write fails during transaction execution.
+2. **Database Integration Testing**: Verify in real-world scenarios that transactions are properly rolled back on failure.
+3. **Router Testing**: Map conflicts, insufficient inventory, and database unavailability to agreed-upon responses.
+4. **Idempotency Testing**: Confirm that client retries do not result in duplicate order creation.
+
+## Scenario: Graceful Shutdown
+
+User Request:
+During rolling deployments, ensure no requests are dropped while processing is active.
+
+First confirm platform termination signals and grace periods. Stop accepting new incoming requests, propagate cancellation to background tasks, exhaust pending work within budget limits using controlled slow handlers; verify both the exhaustion path and timeout behavior without relying solely on process signal reception.

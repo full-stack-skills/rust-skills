@@ -7,3 +7,7 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
+
+[[bin]]
+name = "rust-cli-golden"
+path = "src/main.rs"

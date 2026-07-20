@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Database"
+  short_description: "Build safe Rust database access and migrations"
+  default_prompt: "Use $rust-database to design and verify this Rust database change."

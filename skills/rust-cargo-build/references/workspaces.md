@@ -1,5 +1,3 @@
-# Workspace
-
 ```toml
 [workspace]
 members = ["crates/*"]
@@ -13,14 +11,14 @@ license = "Apache-2.0"
 serde = { version = "1", features = ["derive"] }
 ```
 
-成员通过 `{ workspace = true }` 继承依赖或 package 字段。
+Members inherit dependencies or package fields via `{ workspace = true }`.
 
-规则：
+Rules:
 
-- profile 只在 workspace 根生效。
-- workspace 共享一个 `Cargo.lock` 和 target 目录。
-- `default-members` 只影响根目录未指定 package 时的默认选择。
-- `exclude` 与 glob 成员需要和实际目录结构一起验证。
-- virtual workspace 没有 package edition 可帮助推断 resolver，因此应显式写 resolver。
+- `profile` is only effective at the root of a workspace.
+- A shared `Cargo.lock` and target directory are used across all members in a workspace.
+- The default-members field affects member selection when no explicit package name is provided for each member.
+- Members with an exclude path must be validated against their actual directory structure alongside glob patterns.
+- Virtual workspaces do not have access to the `edition` field, which can help infer resolver behavior; therefore, a specific resolver should always be explicitly specified in such cases.
 
-官方来源：https://doc.rust-lang.org/cargo/reference/workspaces.html
+Official source: https://doc.rust-lang.org/cargo/reference/workspaces.html

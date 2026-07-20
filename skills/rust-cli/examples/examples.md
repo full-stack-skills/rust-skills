@@ -1,44 +1,46 @@
-# CLI Examples
+# CLI Scenario Examples
 
-## Basic clap CLI
+## Scenario: Building a Filter Pipeline-Ready
+
+User Request:
+Build `rgrep PATTERN [FILE]`. When FILE is omitted, read from stdin; match lines to stdout; write errors and file parameter mismatches to stderr; do not crash the runtime on unmatched input.
+
+Execution Strategy: Establish an initial contract first:
+
+| Scenario | stdout | stderr | Exit Code |
+|---|---|---|---|
+| Match Found | Matching line(s) | Empty | 0 |
+| No Matches | Empty | Empty (project convention value) | Project-defined default |
+| File Not Found | Empty | Path and reason included | Non-zero exit code |
+| Missing Arguments | Empty | Usage diagnostics | Parser-convention value |
+
+Subsequently, decompose into:
+
 ```rust
-use clap::Parser;
-
-#[derive(Parser)]
-#[command(name = "myapp", version, about = "A CLI tool")]
-struct Cli {
-    #[arg(short, long, default_value = "-")]
-    input: String,
-    #[arg(short, long)]
-    verbose: bool,
+struct Options {
+    pattern: String,
+    input: Option<std::path::PathBuf>,
 }
 
-fn main() {
-    let cli = Cli::parse();
-    println!("input: {}, verbose: {}", cli.input, cli.verbose);
+fn filter(
+    options: &Options,
+    input: impl std::io::BufRead,
+    output: &mut impl std::io::Write,
+) -> std::io::Result<bool> {
+    // Return whether a match was found; do not exit the process or write diagnostics here.
+    todo!()
 }
 ```
 
-## File reader
-```rust
-use std::fs;
+Finally, validate parameter handling, stdin input, file existence, stdout output, stderr error messages, and exit codes using real processes.
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let contents = fs::read_to_string("data.txt")?;
-    for line in contents.lines() {
-        println!("{line}");
-    }
-    Ok(())
-}
+## Scenario: Adding Configuration Overrides
+
+User Request:
+Enable `tool sync` to support configuration files, the environment variable `TOOL_ENDPOINT`, and the command-line flag `--endpoint`.
+
+Establish precedence order as follows:
+```text
+--endpoint > TOOL_ENDPOINT > config file > default value
 ```
-
-## Cat clone (stdin)
-```rust
-use std::io::{self, BufRead};
-
-fn main() {
-    for line in io::stdin().lock().lines() {
-        println!("{}", line.unwrap());
-    }
-}
-```
+Preserve source information for each layer. Conduct separate tests for each layer; additionally include a test that sets all four layers simultaneously to verify conflict resolution. Do not print tokens or full URLs containing credentials in error messages.

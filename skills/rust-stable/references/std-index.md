@@ -1,20 +1,18 @@
-# 标准库任务导航
+# Standard Library Task Navigation
 
-| 任务 | 首选模块或类型 | 本地资料 |
+| Task | Preferred Module or Type | Local Documentation |
 |---|---|---|
-| 动态数组、排序、过滤 | `Vec<T>`、slice | [vec.md](vec.md) |
-| UTF-8 文本 | `String`、`str` | [string.md](string.md) |
-| 键值索引 | `HashMap<K, V>`、entry API | [hashmap.md](hashmap.md) |
-| 惰性数据处理 | `Iterator` | [iterators.md](iterators.md) |
-| 结构化错误 | `Result`、`Error`、`From` | [errors.md](errors.md) |
-| 缓冲读写 | `Read`、`Write`、`BufRead` | [io.md](io.md) |
-| 文件和目录 | `std::fs` | [fs.md](fs.md) |
-| 跨平台路径 | `Path`、`PathBuf` | [path.md](path.md) |
-| 堆与共享所有权 | `Box`、`Rc`、`Arc` | [smart-pointers.md](smart-pointers.md) |
-| 内部可变性 | `Cell`、`RefCell`、`OnceLock` | [interior-mutability.md](interior-mutability.md) |
-| 类型转换 | `From`、`TryFrom`、`AsRef` | [conversions.md](conversions.md) |
-| 格式化 | `Display`、`Debug` | [fmt.md](fmt.md) |
+| Dynamic Arrays, Sorting, Filtering | `Vec<T>`, slice | [vec.md](vec.md) |
+| UTF-8 Text | `String`、`str` | [string.md](string.md) |
+| Key-Value Indexing | `HashMap<K, V>`、entry API | [hashmap.md](hashmap.md) |
+| Lazy Data Processing | `Iterator` | [iterators.md](iterators.md) |
+| Structured Errors | `Result`, `Error`, `From` | [errors.md](errors.md) |
+| Buffered I/O | `Read`, `Write`, `BufRead` | [io.md](io.md) |
+| Files and Directories | `std::fs` | [fs.md](fs.md) |
+| Cross-Platform Paths | `Path`, `PathBuf` | [path.md](path.md) |
+| Heap & Shared Ownership | `Box`, `Rc`, `Arc` | [smart-pointers.md](smart-pointers.md) |
+| Interior Mutability | `Cell`, `RefCell`, `OnceLock` | [interior-mutability.md](interior-mutability.md) |
+| Type Conversion | `From`, `TryFrom`, `AsRef` | [conversions.md](conversions.md) |
+| Formatting | `Display`, `Debug` | [fmt.md](fmt.md)
 
-如果任务涉及线程同步，转到 `rust-concurrency`；涉及裸指针或布局，转到 `rust-unsafe-ffi`。
-
-查阅 API 时检查页面中的稳定版本标记，并与项目 MSRV 比较。
+If a task involves thread synchronization, refer to `rust-concurrency`. If it involves raw pointers or layout details, refer to `rust-unsafe-ffi`. When consulting APIs, verify the stable version marker in the documentation page and compare with your project's MSRV.

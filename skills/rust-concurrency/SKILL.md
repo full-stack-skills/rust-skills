@@ -1,46 +1,50 @@
 ---
 name: rust-concurrency
-description: Rust 并发编程技能 — scoped threads、Mutex/RwLock、原子、channel、Send/Sync、Future 和 Tokio。Use when designing, debugging, or testing threaded and async Rust, cancellation, task lifetimes, lock scope, atomics, or message passing; hand basic ownership to rust-stable and unsafe invariants to rust-unsafe-ffi.
+description: Design, implement, diagnose, and test Rust concurrency with threads, Send and Sync, mutexes, atomics, channels, async runtimes, cancellation, bounded backpressure, actor ownership, task supervision, graceful shutdown, and overload control. Use when users ask about shared state, deadlocks, async tasks, Tokio, high concurrency, daemon resource budgets, slow consumers, worker pools, or concurrent correctness.
 ---
 
-# Rust 并发编程
+# Rust Concurrency Programming
 
-> 基于 Rust 标准库 `std::thread`、`std::sync`、`std::sync::atomic` 与 [Async Book](https://rust-lang.github.io/async-book/)。
+> Based on the standard library `std::thread`, `std::sync`, and `std::sync::atomic` modules, along with the Async Book. Use when designing, debugging, load-testing, or reviewing threaded and async Rust code; cancellation, task ownership, lock scope, runtime sizing, queues, overload management, message passing, hand basic ownership to rust-stable and unsafe invariants to rust-unsafe-ffi.
 
 ## Capability Boundaries
 
-### ✅ 强项
-1. OS 线程（thread::spawn、Builder、join、scoped threads、move 闭包）
-2. 同步原语（Mutex、RwLock、Barrier、Condvar、OnceLock、LazyLock）
-3. 原子类型（AtomicBool/Isize/Usize、load/store/fetch_add/swap/compare_exchange、Ordering）
-4. 通道（mpsc：多生产者单消费者、Receiver、Sender）
-5. Send/Sync trait 系统（自动推导与手动实现）
-6. async/await 语法与 Future trait
-7. Tokio 运行时（tokio::main、tokio::spawn、select!、JoinSet）
-8. 异步 I/O 基础（tokio::fs、tokio::net、tokio::io）
+### ✅ Strengths
+1. OS threads (`thread::spawn`, `Builder`, `join`, scoped threads, move closures)
+2. Synchronization primitives (Mutex, RwLock, Barrier, Condvar, OnceLock, LazyLock)
+3. Atomic types (AtomicBool/Isize/Usize, load/store/fetch_add/swap/compare_exchange, Ordering)
+4. Channels (`mpsc`: multi-producer single-consumer, Receiver, Sender)
+5. `Send` / `Sync` trait system (automatic derivation and manual implementation)
+6. async/await syntax with the Future trait
+7. Tokio runtime (`tokio::main`, `tokio::spawn`, select!, JoinSet)
+8. Async I/O foundations (`tokio::fs`, `tokio::net`, `tokio::io`)
+9. Bounded queues, backpressure, slow consumers, concurrency limits and overload strategies
+10. Task supervision, connection lifecycles, cancellation safety and graceful shutdown
 
-### ⚠️ 前置要求
-1. 理解 Rust 所有权模型（`rust-stable`）
+### ⚠️ Prerequisites
+1. Understanding Rust ownership model (`rust-stable`)
 
-### ❌ 不适用范围
-1. 不安全代码并发 → 使用 `rust-unsafe-ffi` 技能
-2. 基础所有权/借用 → 使用 `rust-stable` 技能
+### ❌ Inapplicable Scenarios
+1. Unsafe code concurrent execution → use `rust-unsafe-ffi` skill
+2. Basic ownership/borrowing → use `rust-stable` skill
 
-## 何时使用
+## When to Use
 
-- "多线程处理数据"
-- "async/await 怎么写"
-- "Tokio 运行时使用"
-- "线程间共享数据"
-- "避免数据竞争"
+- "Process data with multiple threads"
+- "How to write async/await"
+- "Tokio runtime usage"
+- "Shared data between threads"
+- "Avoid data races"
+- "Rate limiting and graceful shutdown in high-concurrency services"
+- "Tokio channel backlog or slow consumers"
 
 ## Data Privacy
 
-本技能不收集、存储或传输任何用户数据。
+This skill does not collect, store, or transmit any user data.
 
 ---
 
-## 一、OS 线程
+## I. OS Threads
 
 ```rust
 use std::thread;
@@ -50,28 +54,28 @@ let handle = thread::spawn(move || {
 });
 handle.join().unwrap();
 
-// 带配置的线程
+// Thread with configuration
 let builder = thread::Builder::new()
     .name("worker".into())
     .stack_size(1024 * 1024);
 let handle = builder.spawn(move || { /* ... */ }).unwrap();
 
-// scoped threads（1.63+）
+// scoped threads (1.63+)
 let mut v = vec![1, 2, 3];
 thread::scope(|s| {
     s.spawn(|| {
-        v.push(4);  // 借用，不需 move
+        v.push(4); // borrow, no move required
     });
 });
-println!("{v:?}");  // v 仍可用
+println!("{v:?}"); // v remains usable
 ```
 
-## 二、同步原语
+## II. Synchronization Primitives
 
 ```rust
 use std::sync::{Arc, Mutex, RwLock, Barrier, OnceLock, LazyLock};
 
-// Mutex（互斥锁）
+// Mutex (mutual exclusion lock)
 let counter = Arc::new(Mutex::new(0));
 let mut handles = vec![];
 
@@ -83,12 +87,12 @@ for _ in 0..10 {
     }));
 }
 
-// RwLock（读写锁）
+// RwLock (read-write lock)
 let data = Arc::new(RwLock::new(vec![1, 2, 3]));
 let read = data.read().unwrap();
 let write = data.write().unwrap();
 
-// OnceLock（线程安全懒初始化）
+// OnceLock (thread-safe lazy initialization)
 static CONFIG: OnceLock<String> = OnceLock::new();
 let config = CONFIG.get_or_init(|| load_config());
 
@@ -96,7 +100,7 @@ let config = CONFIG.get_or_init(|| load_config());
 static CACHE: LazyLock<HashMap<String, Data>> = LazyLock::new(HashMap::new);
 ```
 
-## 三、原子操作
+## III. Atomic Operations
 
 ```rust
 use std::sync::atomic::{
@@ -110,15 +114,15 @@ static READY: AtomicBool = AtomicBool::new(false);
 READY.store(true, Ordering::Release);
 let ready = READY.load(Ordering::Acquire);
 
-// Ordering 级别
-// Relaxed — 无顺序保证（仅原子性）
-// Release — 写入可见
-// Acquire — 读取可见
-// AcqRel — 读+写
-// SeqCst — 全局顺序（最强，默认）
+// Ordering levels
+// Relaxed — no ordering guarantees (only atomicity)
+// Release — write visibility
+// Acquire — read visibility
+// AcqRel — both reads and writes visible
+// SeqCst — global sequential order (strongest, but not automatically default; explicit Ordering required for atomic operations)
 ```
 
-## 四、通道
+## IV. Channels
 
 ```rust
 use std::sync::mpsc;
@@ -132,12 +136,12 @@ for received in rx {
     println!("Got: {received}");
 }
 
-// 多生产者
+// Multi-producer scenario
 let (tx, rx) = mpsc::channel();
 let tx1 = tx.clone();
 ```
 
-## 五、async/await
+## V. async/await
 
 ```rust
 use tokio::time;
@@ -150,7 +154,7 @@ async fn do_work(id: u32) -> &'static str {
 
 #[tokio::main]
 async fn main() {
-    // 并发执行
+    // Concurrent execution
     let (r1, r2) = tokio::join!(do_work(1), do_work(2));
 
     // select!
@@ -165,17 +169,17 @@ async fn main() {
 }
 ```
 
-## 六、Send / Sync
+## VI. Send / Sync
 
 ```rust
-// Send: T 的所有权可跨线程转移
-// Sync: &T 可跨线程共享引用
+// T is Send if its ownership can be transferred across threads
+// &T is Sync if it can be shared references across threads
 
-// Send + Sync 类型：Arc<Mutex<T>>、i32、&str
-// !Send 类型：Rc<T>、*const T
-// !Sync 类型：RefCell<T>、Cell<T>
+// Types that are both Send + Sync: Arc<Mutex<T>>, i32, &'static str
+// !Send types: Rc<T>, *const T
+// !Sync types: RefCell<T>, Cell<T>
 
-// 手动实现（需 unsafe）
+// Manual implementation (requires unsafe)
 struct MyType(*const u8);
 unsafe impl Send for MyType {}
 unsafe impl Sync for MyType {}
@@ -183,33 +187,36 @@ unsafe impl Sync for MyType {}
 
 ## Workflow
 
-Step 1. 确认并发模型 — 选择 OS 线程、async/await（Tokio）还是 scoped threads
-Step 2. 数据共享设计 — 确定哪些数据需跨线程共享，选择 Arc/Mutex/Channel
-Step 3. 处理同步 — 使用 Mutex/RwLock/Barrier/atomic 协调多线程访问
-Step 4. 处理异步 — 选择 Tokio 运行时，使用 async fn + await + tokio::spawn
-Step 5. 错误处理 — 处理 Mutex 中毒、JoinHandle 错误、channel 关闭场景
-Step 6. 测试验证 — cargo test -- --test-threads=1 测试并发代码
-
+1. **Write concurrency budget** — define maximum connections, in-flight tasks, queue capacity, per-item timeouts, memory budgets, and shutdown timelines.
+2. **Determine state ownership priorities** — prefer single-writer/actor patterns; if sharing is required, split locks by responsibility while distinguishing between synchronous locks, asynchronous locks, and atomic states.
+3. **Select communication semantics** — use bounded `mpsc + oneshot` for requests/responses, `watch` for latest status updates, reserve `broadcast` only when multiple subscribers are allowed to lose events; clearly specify queue fullness, shutdown strategies, lag handling.
+4. **Supervise tasks** — save `JoinHandle`s or `JoinSet`, define how subtasks fail, panic, and respond to caller cancellation and parent task exit without orphaned spawns.
+5. **Design graceful shutdown sequence** — stop accepting new work, broadcast closure signals, cancel pending tasks, wait for bounded duration, release resources, and aggregate errors.
+6. **Measure runtime after adjustments** — determine worker count based on ready drivers, CPU utilization, blocking call counts, and wake costs; isolate blocking work to `spawn_blocking` or dedicated thread pools with individual submission limits.
+7. **Validate failure paths** — cover full queue saturation, slow consumers, out-of-order completion, partial failures, peer disconnection, timeouts, cancellation scenarios, race conditions during shutdown, task leaks.
 
 ## Gotchas
 
-1. Mutex::lock() 返回 MutexGuard - drop 前不要 await，可能导致死锁
-2. tokio::spawn 的 Future 必须是 Send + 'static - 非 Send 引用会导致编译失败
-3. async 闭包捕获与普通闭包不同 - 需要 move 关键字传递所有权
-4. select! 中取消的 Future 不会执行清理 - 分支被取消后 Future 直接 drop
-5. Atomic Ordering 不是关系型的 - 滥用 Relaxed 可能导致意外 memory ordering 问题
+1. Mutex::lock() returns a `MutexGuard`; do not await before dropping to avoid deadlocks
+2. tokio::spawn's Future must be both Send and 'static; non-Send references will cause compilation errors
+3. Async closures capture ownership differently than regular closures — use the move keyword explicitly for transfer of state
+4. Cancelled Futures in select! branches do not execute cleanup logic directly before dropping
+5. Atomic Ordering is not relational semantics; misuse of Relaxed can lead to unexpected memory ordering issues
+6. broadcast lag is distinct from normal success paths; must choose between discarding, rebuilding snapshots, disconnecting slow consumers, or persistently replaying events
+7. max_blocking_threads limits only the number of blocking threads and does not provide backpressure for submission queues; high-cost tasks require Semaphore or bounded queues
+8. JoinSet returns results in completion order; if API requires input ordering, carry indices through to restore sequence during aggregation
 
+## On-Demand Resources
 
-## 按需资源
+- [Concurrency Examples](examples/examples.md)
+- [Type & Tool Quick Reference](references/references.md)
+- [Production Async Service Patterns](references/production-async-services.md): Read when designing actors, backpressure, slow consumers, task supervision, runtime configuration, and shutdown protocols.
+- `examples/golden-threads/`: CI-built scoped thread examples
 
-- [并发示例](examples/examples.md)
-- [类型与工具速查](references/references.md)
-- `examples/golden-threads/`：CI 编译的 scoped thread 示例
+## Official References
 
-## 官方参考
-
-- [std::thread](https://doc.rust-lang.org/std/thread/)
-- [std::sync](https://doc.rust-lang.org/std/sync/)
-- [std::sync::atomic](https://doc.rust-lang.org/std/sync/atomic/)
+- [std::thread Documentation](https://doc.rust-lang.org/std/thread/)
+- [std::sync Documentation](https://doc.rust-lang.org/std/sync/)
+- [std::sync::atomic Documentation](https://doc.rust-lang.org/std/sync/atomic/)
 - [Async Book](https://rust-lang.github.io/async-book/)
 - [Tokio Guide](https://tokio.rs/tokio/tutorial)

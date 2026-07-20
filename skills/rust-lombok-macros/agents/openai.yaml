@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Lombok Macros"
+  short_description: "Generate safe Rust boilerplate with lombok-macros"
+  default_prompt: "Use $rust-lombok-macros to evaluate and implement safe generated accessors, constructors, or redacted Debug output."

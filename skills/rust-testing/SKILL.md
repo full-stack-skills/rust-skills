@@ -1,47 +1,44 @@
 ---
 name: rust-testing
-description: Rust 测试与基准测试技能 — 单元测试、集成测试、doctest、cargo test、稳定版 Criterion 基准、覆盖率与失败路径设计。Use when users ask to design, write, run, debug, or assess Rust tests and benchmarks; distinguish stable Criterion from the nightly-only libtest bench attribute, and hand project layout to rust-project-structure.
+description: Design, implement, and validate Rust tests, including unit, integration, doctest, compile-fail, property, fuzz, benchmark, coverage, async, concurrency, process, daemon, IPC, terminal, platform, and hardware-facing test strategies. Use when users ask for Rust test architecture, flaky-test diagnosis, coverage gates, benchmarks, trybuild, cargo-nextest, real-process tests, or failure-path verification.
 ---
 
-# Rust 测试与基准测试
+# Rust Testing and Benchmarking
 
-> 基于 The Rust Programming Language ch 11 与 Rustdoc Book。
+> Based on Chapter 11 of *The Rust Programming Language* and the Rust Book.
 
 ## Capability Boundaries
 
-### ✅ 强项
-1. 单元测试（#[test]、测试模块 `#[cfg(test)]` 组织）
-2. 断言宏（assert!、assert_eq!、assert_ne!、debug_assert!）
-3. 测试属性（#[should_panic]、#[ignore]、#[cfg(test)]）
-4. 集成测试（tests/ 目录与共享模块）
-5. 文档测试（```rust 代码块、# 隐藏行、should_panic、no_run、ignore）
-6. cargo test 运行器（过滤、--nocapture、--test-threads、--include-ignored）
-7. 稳定版 Criterion 基准，以及明确标注为 nightly-only 的 libtest `#[bench]`
-8. 代码覆盖率（cargo-llvm-cov 的使用）
+### ✅ Strengths
+1. Unit tests (using `#[test]`, organizing test modules with `#[cfg(test)]`)
+2. Assertion macros (`assert!`, `assert_eq!`, `assert_ne!`, `debug_assert!`)
+3. Test attributes (`#[should_panic]`, `#[ignore]`, `#[cfg(test)]`)
+4. Integration tests (tests/ directory and shared modules)
+5. Documentation tests (code blocks, hidden lines with `#`, should_panic/no_run/ignore flags)
+6. cargo test runner (filtering, --nocapture, --test-threads, --include-ignored options)
+7. Stable Criterion benchmarks; explicitly distinguishing stable Criterion from nightly-only libtest `#[bench]` attribute
+8. Code coverage using cargo-llvm-cov
+9. Asynchronous race conditions, backpressure, timeouts, process/daemon models, platform matrices, and resource-constrained testing
 
-### ⚠️ 前置要求
-1. 理解 Rust 模块系统（rust-project-structure）
+### ⚠️ Prerequisites
+1. Understanding of Rust module system (rust-project-structure)
 
-### ❌ 不适用范围
-1. 属性测试（proptest）→ 暂不涉及
-2. Mock 对象 → 暂不涉及
-3. Rust 语法基础 → 使用 `rust-stable` 技能
+### ❌ Out of Scope
+1. Property-based tests (`proptest`) → Not currently covered
+2. Mock objects → Not currently covered
+3. Basic Rust syntax → Use `rust-stable` skill instead
 
-## 何时使用
+## When to Use
 
-- "写单元测试"
-- "集成测试放哪里"
-- "文档测试怎么写"
-- "性能基准测试"
-- "检查代码覆盖率"
-
-## Data Privacy
-
-本技能不收集、存储或传输任何用户数据。
+- "Write unit tests"
+- "Where should integration tests be placed?"
+- "How do I write documentation tests?"
+- "Performance benchmarking"
+- "Check code coverage"
 
 ---
 
-## 一、单元测试
+## Unit Tests
 
 ```rust
 // src/lib.rs
@@ -77,21 +74,21 @@ mod tests {
 }
 ```
 
-## 二、集成测试
+## Integration Tests
 
 ```text
 my-project/
 ├── Cargo.toml
 ├── src/lib.rs
 └── tests/
-    ├── common/          # 测试共享模块
+    ├── common/          # Test shared modules
     │   └── mod.rs
     ├── integration_test.rs
     └── api_test.rs
 ```
 
 ```rust
-// tests/integration_test.rs — 每个文件是独立 crate
+// tests/integration_test.rs — Each file is an independent crate
 use my_project::add;
 
 #[test]
@@ -99,14 +96,14 @@ fn integration_test() {
     assert_eq!(add(1, 2), 3);
 }
 
-// tests/common/mod.rs — 共享辅助函数
+// tests/common/mod.rs — Shared helper functions
 pub fn setup() { /* ... */ }
 ```
 
-## 三、文档测试（doctest）
+## Documentation Tests (doctest)
 
 ```rust
-/// 将两个数相加。
+/// Add two numbers.
 ///
 /// ```
 /// use my_crate::add;
@@ -118,32 +115,32 @@ pub fn setup() { /* ... */ }
 /// ```
 ///
 /// ```rust,no_run
-/// // 编译但不运行
+/// // Compile but do not run
 /// loop {}
 /// ```
 pub fn add(a: i32, b: i32) -> i32 { a + b }
 ```
 
-## 四、cargo test 命令
+## cargo test Commands
 
 ```bash
-cargo test                    # 运行所有测试
-cargo test test_name          # 按名称过滤
-cargo test -- --nocapture     # 显示 println 输出
-cargo test -- --test-threads=1 # 单线程
-cargo test -- --skip test_name # 跳过特定测试
-cargo test -- --ignored       # 只运行 #[ignore] 测试
-cargo test -- --include-ignored # 包含忽略的
-cargo test --doc              # 只运行文档测试
-cargo test -p my-crate        # 特定包
+cargo test                    # Run all tests
+cargo test test_name          # Filter by name
+cargo test -- --nocapture     # Show println output
+cargo test -- --test-threads=1 # Single thread
+cargo test -- --skip test_name # Skip specific tests
+cargo test -- --ignored       # Only run #[ignore] tests
+cargo test -- --include-ignored # Include ignored tests
+cargo test --doc              # Run only documentation tests
+cargo test -p my-crate        # Specific package
 ```
 
-## 五、基准测试
+## Benchmarks
 
-稳定版项目优先使用 Criterion。内置 libtest `#[bench]` 仍依赖 nightly 的 `#![feature(test)]`，不能写成 stable 默认方案。
+Stable projects should prioritize Criterion. The built-in libtest `#[bench]` still relies on nightly's `#![feature(test)]`, which cannot be used as a stable default solution.
 
 ```rust
-// nightly-only 内置方案（不要用于 stable 门禁）
+// Nightly-only builtin approach (do not use for stable gatekeeping)
 #![feature(test)]
 extern crate test;
 
@@ -158,7 +155,7 @@ mod benches {
     }
 }
 
-// 稳定版使用 criterion
+// Stable approach using criterion
 // [dev-dependencies] criterion = { version = "0.5", features = ["html_reports"] }
 use criterion::{black_box, Criterion};
 
@@ -169,46 +166,47 @@ criterion_group!(benches, bench_add);
 criterion_main!(benches);
 ```
 
-## 六、代码覆盖率
+## Code Coverage
 
 ```bash
-# 安装
+# Install
 cargo install cargo-llvm-cov
 
-# 使用
-cargo llvm-cov                   # 运行并报告
-cargo llvm-cov --open            # 生成 HTML 报告
-cargo llvm-cov --lcov --output-path lcov.info  # LCOV 格式
+# Usage
+cargo llvm-cov                   # Run and report results
+cargo llvm-cov --open            # Generate HTML reports
+cargo llvm-cov --lcov --output-path lcov.info  # LCOV format output
 ```
 
 ## Workflow
 
-Step 1. 准备测试环境 — 确保 cargo test 可用，确认测试类型（单元/集成/文档）
-Step 2. 编写单元测试 — 在 #[cfg(test)] 模块中编写 #[test] 函数
-Step 3. 添加集成测试 — 在 tests/ 目录创建独立 crate 类型的测试文件
-Step 4. 添加文档测试 — 在 /// 注释中嵌入可执行代码块
-Step 5. 运行与调试 — cargo test，用 --nocapture 和 --test-threads 控制输出
-Step 6. 覆盖率检查 — cargo llvm-cov 检查测试覆盖范围
-
+1. Prepare test environment — Ensure cargo test is available, confirm test types (unit/integration/documentation)
+2. Write unit tests — Implement #[test] functions within `#[cfg(test)]` modules
+3. Add integration tests — Create independent crate-type files in the tests/ directory
+4. Add documentation tests — Embed executable code blocks inside /// comments
+5. Run and debug — Use cargo test; use --nocapture to locate issues; prioritize resource isolation or test grouping for shared resources, avoiding permanent serialization of full test suites
+6. Concurrency and platform validation — Implement bounded assertions for queue limits, slow consumers, disconnections, cancellations, timeouts, and graceful shutdowns on real target platforms; run platform-specific code directly
+7. Coverage checks — Use cargo llvm-cov to verify coverage ranges
 
 ## Gotchas
 
-1. #[cfg(test)] 模块中的代码不会编译进 release - 测试辅助函数应放在 tests/common/mod.rs
-2. 集成测试文件是独立 crate - 不能使用 super:: 或 crate::
-3. 文档测试中的 # 行会被隐藏但仍是可执行代码
-4. cargo test 默认并行运行 - 共享状态时需要 --test-threads=1
-5. #[bench] 需要 #![feature(test)] - stable Rust 需使用 criterion
+1. Code in `#[cfg(test)]` modules does not compile into release builds — Helper functions should reside in tests/common/mod.rs
+2. Integration test files are independent crates — Cannot use super:: or crate:: prefixes within them
+3. Hidden lines (#) in documentation tests remain executable but invisible to the compiler
+4. cargo test runs by default in parallel; shared resource conflicts should be resolved via unique temporary directories/ports, process isolation, nextest test group limits, or local serialization only when necessary
+5. #[bench] requires #![feature(test)] — Stable Rust must use criterion instead
+6. Providing a broad timeout for async tests hides deadlock causes; also assert intermediate states, task recovery, and resource counts
 
+## On-Demand Resources
 
-## 按需资源
+- [Test examples](examples/examples.md)
+- [Macro commands and command reference](references/references.md)
+- [Concurrency, daemon, and platform testing](references/concurrency-daemon-platform-testing.md): Test for memory leaks in tasks, slow consumers, race conditions, real processes, and resource-limited parallelism when reading.
+- `examples/golden-tests/`: CI compilation and execution of doctest golden examples
 
-- [测试示例](examples/examples.md)
-- [测试宏与命令速查](references/references.md)
-- `examples/golden-tests/`：CI 编译并运行 doctest 的黄金示例
-
-## 官方参考
+## Official References
 
 - [The Book ch 11](https://doc.rust-lang.org/book/ch11-00-testing.html)
-- [Rustdoc Book — doctest](https://doc.rust-lang.org/rustdoc/write-documentation/documentation-tests.html)
-- [cargo test](https://doc.rust-lang.org/cargo/commands/cargo-test.html)
-- [criterion.rs](https://docs.rs/criterion/)
+- [Rustdoc Book — doctest documentation](https://doc.rust-lang.org/rustdoc/write-documentation/documentation-tests.html)
+- [cargo test command reference](https://doc.rust-lang.org/cargo/commands/cargo-test.html)
+- [criterion.rs library docs](https://docs.rs/criterion/)

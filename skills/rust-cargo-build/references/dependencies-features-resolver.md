@@ -1,11 +1,11 @@
-# 依赖、Features 与 Resolver
+# Dependencies, Features, and Resolver
 
-## 依赖来源
+## Dependency Sources
 
-- crates.io：优先使用清晰的 SemVer requirement。
-- Git：固定 rev 最可复现；branch/tag 仍可能发生治理变化。
-- Path：适合同仓库开发，不可单独发布为外部依赖来源。
-- Workspace：使用 `[workspace.dependencies]` 统一版本和常用 feature。
+- **crates.io**: Prefer clear SemVer requirements.
+- **Git**: Fixed revision ensures reproducibility; branches/tags may still undergo governance changes.
+- **Path**: Suitable for internal development in the same repository. A crates.io publication cannot depend on an unpublished path alone; provide an appropriate registry version when the published package must resolve that dependency.
+- **Workspace**: Use `[workspace.dependencies]` to unify versions and common features across all members of a workspace.
 
 ## Features
 
@@ -18,7 +18,7 @@ default = []
 json = ["dep:serde"]
 ```
 
-Feature 在同一解析图中是可加和的。验证来源：
+Features are additive within the same dependency graph. Verification commands:
 
 ```bash
 cargo tree -e features
@@ -27,11 +27,11 @@ cargo tree -i serde
 
 ## Resolver
 
-- resolver 2：Edition 2021 默认，改进 dev/build/target dependency 的 feature unification。
-- resolver 3：Edition 2024 默认，把不兼容 `rust-version` 的依赖版本默认设为 fallback。
-- resolver 是 workspace 全局配置；virtual workspace 应显式声明。
+- **resolver 2**: Default for Edition 2021; improves feature unification of dev/build/target dependencies.
+- **resolver 3**: Default for Edition 2024; sets fallback versions by default for packages incompatible with the specified `rust-version`.
+- The resolver is a workspace-wide configuration setting; virtual workspaces must explicitly declare their own resolver settings.
 
-官方来源：
+Official documentation:
 
 - https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html
 - https://doc.rust-lang.org/cargo/reference/features.html

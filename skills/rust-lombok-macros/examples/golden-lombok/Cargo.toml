@@ -1,0 +1,8 @@
+[package]
+name = "golden-lombok"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+lombok-macros = "=2.0.32"
