@@ -346,6 +346,55 @@ cargo tree --invert --package my-core         # what depends on my-core?
 
 If `my-types` shows up as depending on anything non-`std`, the direction is wrong. Layering rules in `references/dependency-direction.md`.
 
+## Reference example — `sa-token-rs` (11-crate virtual workspace)
+
+[`sa-token-rs`](https://github.com/dromara/sa-token-rs) is a real-world Rust port of the Java Sa-Token permission framework — an exemplar of every pattern this skill teaches. Virtual manifest, 11 crates, clean 5-layer DAG, `crates/<category>/` grouping, full `[workspace.*]` inheritance.
+
+### Layout (Pattern A + B hybrid)
+
+```text
+sa-token-rs/
+├── Cargo.toml                          # virtual manifest
+└── crates/
+    ├── sa-token/                       # Layer 3: facade (public API)
+    ├── sa-token-core/                  # Layer 1: core types & traits (no internal deps)
+    ├── sa-token-derive/                # Layer 2: proc-macro (core only)
+    ├── sa-token-context-mock/          # Layer 2: mock context (core only)
+    ├── sa-token-dao-memory/            # Layer 2: memory DAO (core only)
+    ├── sa-token-dao-redis/             # Layer 4: redis DAO (facade + core)
+    ├── sa-token-axum/                  # Layer 4: axum adapter (facade + core)
+    ├── sa-token-plugin/                # Pattern B grouping
+    │   ├── sa-token-jwt/               # Layer 4: JWT plugin
+    │   └── sa-token-sign/              # Layer 4: signature plugin
+    ├── sa-token-demo/                  # Pattern B grouping
+    │   └── sa-token-demo-axum/         # Layer 5: binary example
+    └── sa-token-test/                  # Layer 5: integration tests
+```
+
+### DAG — 5 layers, every arrow points up
+
+```text
+L1  sa-token-core
+      ▲
+L2  sa-token-derive   sa-token-context-mock   sa-token-dao-memory
+      ▲                      ▲                       ▲
+L3  sa-token  (facade — aggregates L2 leaves into one public API)
+      ▲
+L4  sa-token-dao-redis   sa-token-axum   sa-token-jwt   sa-token-sign
+      ▲
+L5  sa-token-demo-axum   sa-token-test   (binaries + tests)
+```
+
+### Why it's exemplary
+
+1. **Virtual manifest** — no root `[package]`; `cargo build` builds all 11 by default.
+2. **Pattern A + B hybrid** — flat `crates/sa-token-*` for leaves, `crates/sa-token-plugin/` and `crates/sa-token-demo/` for grouped sub-crates.
+3. **Full `[workspace.*]` inheritance** — `version`, `edition = "2024"`, `rust-version = "1.85"`, `license`, `repository`, `[workspace.lints]` (`unsafe_code = "forbid"`, `missing_docs = "warn"`, `clippy::pedantic = "warn"`), and `[workspace.dependencies]` for internal + external deps.
+4. **Feature-gated optional dep** — `sa-token` exposes `redis = ["dep:sa-token-dao-redis"]`.
+5. **Clean DAG** — core has zero internal deps; facade aggregates; adapters/plugins/DAOs sit on top; demos/tests consume everything.
+
+See `references/sa-token-rs-case-study.md` for the full member-by-member Cargo.toml breakdown, DAG verification commands, and how the layout supports independent publishing.
+
 ## Workspace commands cheat sheet
 
 ```bash
@@ -400,6 +449,7 @@ For batch version bumps and publishes across all members, install [`cargo-worksp
 - [Mixed Root Package Anti-Pattern](references/mixed-root-package-antipattern.md) — full diagnosis + migration path for rbatis-style layouts
 - [Workspace Dependencies](references/workspace-dependencies.md) — `[workspace.package]` / `[workspace.dependencies]` / `[workspace.lints]` in depth
 - [Dependency Direction](references/dependency-direction.md) — DAG rules, layering, leaky direction anti-patterns
+- [`sa-token-rs` Case Study](references/sa-token-rs-case-study.md) — real-world 11-crate virtual workspace with 5-layer DAG, full member-by-member breakdown, DAG verification, and publishing implications
 - [Production-grade workspace boundaries](references/production-workspace-boundaries.md): When splitting protocols, domains, platforms, transports, SDKs, adapters, and binaries, read the relevant sections.
 - `examples/golden-layout/`: single-crate CI compilation example
 - `examples/golden-workspace/`: multi-crate virtual workspace example with three crates and a facade

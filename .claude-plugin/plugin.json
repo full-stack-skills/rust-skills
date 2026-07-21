@@ -1,6 +1,6 @@
 {
   "name": "rust-skills",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "Stable Rust language and engineering skills",
   "author": {
     "name": "PartMe.AI",
@@ -14,6 +14,7 @@
     "./skills/rust-stdlib",
     "./skills/rust-by-example",
     "./skills/rust-api-design",
+    "./skills/rust-crate-discovery",
     "./skills/rust-workspace",
     "./skills/rust-module-layout",
     "./skills/rust-cargo-build",

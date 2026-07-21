@@ -450,6 +450,36 @@
       "prompt": "I have src/network/client.rs and src/network/server.rs. How do mod declarations work? Show lib.rs and the file structure.",
       "expected_skills": ["rust-by-example"],
       "assertions": ["declares_mod_network_in_lib_rs", "declares_submodules_in_network_rs", "distinguishes_modern_vs_mod_rs_layout"]
+    },
+    {
+      "id": "crate-discovery-search",
+      "prompt": "I need a Rust crate for an ORM. Search crates.io and show me the top candidates with downloads and recent activity.",
+      "expected_skills": ["rust-crate-discovery"],
+      "assertions": ["runs_crate_eval_search", "filters_by_downloads_and_recency", "returns_multiple_candidates"]
+    },
+    {
+      "id": "crate-discovery-eval-rbatis",
+      "prompt": "Evaluate rbatis — is it maintained, popular, and safe to use? Show me the score breakdown and any red flags.",
+      "expected_skills": ["rust-crate-discovery"],
+      "assertions": ["runs_crate_eval", "fetches_4_sources", "produces_weighted_score", "surfaces_red_flags", "checks_rustsec_advisories"]
+    },
+    {
+      "id": "crate-discovery-compare-orms",
+      "prompt": "Compare rbatis, diesel, sea-orm, and sqlx for a new project. Which should I pick?",
+      "expected_skills": ["rust-crate-discovery"],
+      "assertions": ["runs_crate_eval_compare", "produces_side_by_side_scorecard", "flags_advisories_on_diesel_or_sqlx", "recommends_based_on_score_and_red_flags"]
+    },
+    {
+      "id": "crate-discovery-block-on-advisory",
+      "prompt": "I'm considering crate X for production but cargo-audit shows RUSTSEC-2024-XXXX. Should I still use it?",
+      "expected_skills": ["rust-crate-discovery", "rust-dependencies"],
+      "assertions": ["identifies_advisory_as_blocking", "checks_for_fixed_version", "recommends_alternative_if_unfixed", "routes_to_rust_dependencies_for_policy"]
+    },
+    {
+      "id": "crate-discovery-cold-start",
+      "prompt": "This new crate has great docs but only 50 downloads. Should I trust it?",
+      "expected_skills": ["rust-crate-discovery"],
+      "assertions": ["explains_cold_start_limitation", "checks_maintainer_track_record", "notes_score_underestimates_new_crates", "recommends_caution_not_block"]
     }
   ]
 }

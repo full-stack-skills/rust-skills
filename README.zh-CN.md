@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 25 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 26 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 25 个可用技能，不执行安装：
+仅查看全部 26 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 25 个技能：
+无交互地为所有已检测智能体安装全部 26 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -79,6 +79,7 @@ flowchart TB
 | 核心 | `rust-stdlib` | 标准 API 选择 —— 集合、智能指针、字符串类型、内部可变性、I/O、迭代器、channel、时间、路径、进程 |
 | 核心 | `rust-by-example` | 具体代码模式 —— 类型转换、流程控制、闭包、模块、泛型、trait、错误处理、属性、unsafe、跨语言迁移 |
 | 设计 | `rust-api-design` | Rust API Guidelines（约 100 条 C-* 规则）：命名、互操作 trait、类型安全、可演进性 |
+| 设计 | `rust-crate-discovery` | 搜索 crates.io，从 4 个数据源（crates.io/docs.rs/GitHub/RustSec）评估，加权 0-100 评分，标记风险，对比推荐 |
 | 工程 | `rust-workspace` | 多 crate workspace、虚拟 manifest、crate 边界、依赖方向 DAG、`[workspace.*]` 配置 |
 | 工程 | `rust-module-layout` | 单个 crate 内部 `src/` 目录树、`lib.rs` 门面、`mod` 声明、可见性、re-export —— 与 `rust-workspace` 配套 |
 | 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、profiles、build scripts、`.cargo/config.toml`、Cargo Home、source replacement |
@@ -105,7 +106,7 @@ flowchart TB
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 25 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 26 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
@@ -133,6 +134,10 @@ python3 scripts/validate_skills.py --check-examples
 - Markdown 相对链接和代码围栏有效。
 - `agents/openai.yaml` 存在且默认提示显式引用对应技能。
 - 黄金示例通过 `cargo fmt`、`cargo check`、`cargo test` 和 `cargo clippy -D warnings`。
+
+## v3.5 Crate 发现与评估
+
+- 新增 `rust-crate-discovery`，负责**采用前的发现+评估**环节 —— 搜索 crates.io，从 4 个数据源（crates.io API、docs.rs、GitHub API、RustSec advisory DB）获取元数据，按 6 维度加权评分 0-100（采用度 30 / 维护度 25 / 文档 15 / 成熟度 15 / 社区 10 / 许可证 5），标记红色关注点（advisory、长期未更新、无文档、单人维护），推荐最佳选择。附带仅依赖 stdlib 的 `scripts/crate_eval.py`，支持 `search`、`eval`、`compare` 三个子命令，输出人类可读或 JSON 格式。与 `rust-dependencies`（采用后治理）、`rust-semver`（版本策略）互补。
 
 ## v3.4 标准库与示例驱动模式
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Crate Discovery"
+  short_description: "Discover, evaluate, score, and compare Rust crates across adoption/maintenance/docs/maturity/community/license"
+  default_prompt: "Use $rust-crate-discovery to find candidates for a Rust dependency need, score them 0-100, compare alternatives, and flag red concerns (advisories, unmaintained, no docs) before adopting. Run scripts/crate_eval.py for the evaluation."

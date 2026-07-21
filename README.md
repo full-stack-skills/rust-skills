@@ -16,11 +16,11 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 25 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 26 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
-List the 25 available skills without installing them:
+List the 26 available skills without installing them:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ Choose skills and target agents interactively for the current project:
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install all 25 skills for all detected agents without prompts:
+Install all 26 skills for all detected agents without prompts:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -79,6 +79,7 @@ flowchart TB
 | Core | `rust-stdlib` | Std API selection — collections, smart pointers, string types, interior mutability, I/O, iterators, channels, time, path, process |
 | Core | `rust-by-example` | Concrete code patterns — type conversions, flow control, closures, modules, generics, traits, errors, attributes, unsafe, migrations |
 | Design | `rust-api-design` | Rust API Guidelines (~100 C-* rules): naming, interop traits, type safety, future-proofing |
+| Design | `rust-crate-discovery` | Search crates.io, evaluate across 4 sources (crates.io/docs.rs/GitHub/RustSec), weighted 0-100 score, red-flag detection, comparison |
 | Engineering | `rust-workspace` | Multi-crate workspaces, virtual manifests, crate boundaries, dependency direction DAGs, `[workspace.*]` configuration |
 | Engineering | `rust-module-layout` | In-crate `src/` directory tree, `lib.rs` facade, `mod` declarations, visibility, re-exports — the companion to `rust-workspace` |
 | Engineering | `rust-cargo-build` | Manifests, dependencies, features, resolver, profiles, build scripts, `.cargo/config.toml`, Cargo Home, source replacement |
@@ -126,6 +127,10 @@ python3 scripts/validate_skills.py --check-examples
 ```
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
+
+## v3.5 Crate Discovery and Evaluation
+
+- Adds `rust-crate-discovery` for the **pre-adoption discovery + evaluation phase** — search crates.io, fetch metadata from 4 sources (crates.io API, docs.rs, GitHub API, RustSec advisory DB), apply a weighted 0-100 scoring model across adoption (30) / maintenance (25) / documentation (15) / maturity (15) / community (10) / license (5), flag red concerns (advisories, stale, no docs, single-maintainer bus factor), and recommend the best fit. Ships with a stdlib-only `scripts/crate_eval.py` supporting `search`, `eval`, and `compare` subcommands with human-readable and JSON output. Complements `rust-dependencies` (post-adoption governance) and `rust-semver` (version policy).
 
 ## v3.4 Standard Library and Example-Driven Patterns
 
