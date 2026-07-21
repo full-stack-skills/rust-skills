@@ -22,8 +22,32 @@
     {
       "id": "project-visibility",
       "prompt": "设计 lib.rs 的 re-export，隐藏内部模块但公开稳定 API。",
-      "expected_skills": ["rust-project-structure"],
+      "expected_skills": ["rust-project-structure", "rust-module-layout"],
       "assertions": ["uses_minimal_visibility", "runs_cargo_check"]
+    },
+    {
+      "id": "module-layout-flat-lib-rs",
+      "prompt": "这个 crate 的 lib.rs 是 `pub mod db; pub use db::*;` 这种索引页加 glob 反模式，请重构为带门面的现代布局，重命名 db→connection、io→buffer、rt→runtime 等模糊模块名。",
+      "expected_skills": ["rust-module-layout"],
+      "assertions": ["removes_glob_reexports", "renames_vague_modules", "preserves_public_api", "runs_cargo_check"]
+    },
+    {
+      "id": "module-layout-monster-file",
+      "prompt": "src/crud.rs 已经 600 行，混了 select/insert/update/delete 和宏定义，按职责拆成 src/crud/ 目录。",
+      "expected_skills": ["rust-module-layout"],
+      "assertions": ["splits_by_concern", "preserves_caller_paths", "runs_cargo_check"]
+    },
+    {
+      "id": "module-layout-modernize",
+      "prompt": "把这个 Edition 2021 crate 里所有的 foo/mod.rs 迁移到现代的 foo.rs + foo/ 布局。",
+      "expected_skills": ["rust-module-layout"],
+      "assertions": ["removes_mod_rs", "consistent_layout", "runs_cargo_check"]
+    },
+    {
+      "id": "module-layout-facade",
+      "prompt": "用户现在要写 my_crate::parser::lexer::token::Token 这种深层路径。设计 lib.rs 门面，把常用类型拍平到 crate 根，但保持内部深层树私有。",
+      "expected_skills": ["rust-module-layout"],
+      "assertions": ["flat_facade", "private_internal_tree", "targeted_pub_use", "runs_cargo_check"]
     },
     {
       "id": "cargo-resolver",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Module Layout"
+  short_description: "Design idiomatic in-crate module layouts and refactor flat lib.rs trees"
+  default_prompt: "Use $rust-module-layout to design or refactor the internal directory structure, module declarations, visibility, and re-exports of a single Rust crate."

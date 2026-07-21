@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 19 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 20 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 19 个可用技能，不执行安装：
+仅查看全部 20 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 19 个技能：
+无交互地为所有已检测智能体安装全部 20 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -55,7 +55,7 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>语言与标准库入口"]
-    P["项目工程<br/>project-structure / cargo-build / documentation"]
+    P["项目工程<br/>project-structure / module-layout / cargo-build / documentation"]
     D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
@@ -70,7 +70,8 @@ flowchart TB
 | 层级 | 技能 | 主要职责 |
 |---|---|---|
 | 核心 | `rust-stable` | 所有权、trait、集合、错误处理、标准库、版本判断 |
-| 工程 | `rust-project-structure` | package、crate、模块树、workspace 布局 |
+| 工程 | `rust-project-structure` | package、crate、workspace 布局、依赖方向 |
+| 工程 | `rust-module-layout` | 单个 crate 内部 `src/` 目录树、`lib.rs` 门面、`mod` 声明、可见性、re-export —— 与 `rust-project-structure` 配套 |
 | 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、构建与发布 |
 | 工程 | `rust-documentation` | rustdoc API 契约、doctest、mdBook 指南和文档发布门禁 |
 | 领域 | `rust-concurrency` | 线程、异步运行时、CPU 并行、同步、背压、任务监督和模型测试 |
@@ -93,7 +94,7 @@ flowchart TB
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 19 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 20 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
