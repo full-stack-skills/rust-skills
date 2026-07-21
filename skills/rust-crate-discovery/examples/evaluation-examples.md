@@ -1,20 +1,13 @@
 # Evaluation Examples
 
 > Worked scenarios for [`scripts/crate_eval.py`](../scripts/crate_eval.py),
-> companion to [`SKILL.md`](../SKILL.md). Each example shows the command, the
-> output, and — most importantly — **how to read the output and decide**.
+> companion to [`SKILL.md`](../SKILL.md). Each shows the command, output, and
+> **how to read the output and decide**.
 
-> **All numeric outputs below are illustrative**, captured to show the *shape*
-> of the tool's report. Live numbers shift daily as download counters tick and
-> maintainers cut releases. Re-run the commands yourself for current values.
-> The decision logic, however, is stable.
-
-The commands assume you are in the skill directory:
-
-```bash
-cd .../skills/rust-crate-discovery
-python3 scripts/crate_eval.py <subcommand>
-```
+> **All numeric outputs below are illustrative** — captured to show the *shape*
+> of the report. Live numbers shift daily; re-run the commands for current
+> values. The decision logic is stable. Commands assume you are in the skill
+> directory (`python3 scripts/crate_eval.py <subcommand>`).
 
 ---
 
@@ -33,13 +26,11 @@ sea-orm                       1.1.0      1,843,566 244,103  2026-06-18   async O
 sqlx                          0.8.1     12,103,447 1,002,331 2026-07-02   async SQL with compile-time checks
 diesel                        2.2.4      8,234,001 410,556  2026-05-30   safe ORM and query builder
 rbatis                        4.9.6        657,356  19,938  2026-07-10   async ORM (dynamic SQL)
-...
-(8 results)
 ```
 
 ### Step 2: shortlist and compare
 
-The top four by relevance are `sqlx`, `diesel`, `sea-orm`, `rbatis`. Compare:
+Shortlist the top four (`sqlx`, `diesel`, `sea-orm`, `rbatis`) and compare:
 
 ```bash
 python3 scripts/crate_eval.py compare sqlx diesel sea-orm rbatis
@@ -56,41 +47,23 @@ rbatis                   C        61    18/30  21/25  12/15  10/15  3/10  5/5   
 
 ### Step 3: interpret
 
-- **`sqlx` (A, 92)** — dominant on adoption (12M downloads) and full marks on
-  docs/maintenance. The compile-time SQL check is a unique safety feature.
-  **No red flags.**
-- **`sea-orm` (A, 88)** — slightly lower adoption but a clean bill of health.
-  Best fit if you want a high-level async ORM (ActiveRecord-style) rather than
-  `sqlx`'s query-macro style.
-- **`diesel` (B, 79)** — the License sub-score (4/5) hints at a license
-  nuance (illustrative: Diesel is MIT/Apache in reality; the 4 reflects an
-  older `license` field format the parser didn't fully match). Mature (15/15)
-  but synchronous-only — a fitness mismatch if you need async.
-- **`rbatis` (C, 61)** — lower maturity (10/15, younger) and lower adoption.
-  Acceptable, but the higher-scoring alternatives dominate on health signals.
+- **`sqlx` (A, 92)** — dominant adoption (12M downloads), full marks on docs/maintenance; compile-time SQL check is a unique safety feature. No red flags.
+- **`sea-orm` (A, 88)** — slightly lower adoption, clean bill of health. Best fit for high-level async ORM (ActiveRecord-style) vs `sqlx`'s query-macro style.
+- **`diesel` (B, 79)** — License sub-score (4/5) hints at a field-format nuance (illustrative; Diesel is MIT/Apache in reality). Mature (15/15) but synchronous-only — a fitness mismatch if you need async.
+- **`rbatis` (C, 61)** — lower maturity/adoption; acceptable but out-competed on health signals.
 
 ### Step 4: decide
 
-For a new async web service, `sqlx` or `sea-orm` is the pick. Choose by
-**fitness**, not raw score:
+For a new async web service, `sqlx` or `sea-orm` is the pick — choose by **fitness**, not raw score:
 
-| If you want…                            | Pick      |
-|-----------------------------------------|-----------|
-| Compile-time-checked SQL, hand-written queries | `sqlx` |
+| If you want…                                       | Pick      |
+|----------------------------------------------------|-----------|
+| Compile-time-checked SQL, hand-written queries     | `sqlx`    |
 | High-level ORM, dynamic queries, ActiveRecord style | `sea-orm` |
 
 ### Step 5: hand off
 
-Once adopted:
-
-```bash
-# Pin policy and semver → rust-semver
-# Governance: cargo-deny, license policy, advisory response → rust-dependencies
-```
-
-Add the crate to `Cargo.toml`, then set up `cargo-deny` to catch future
-advisories automatically. See the `rust-dependencies` skill for the
-post-adoption governance workflow.
+Add to `Cargo.toml`, then set up `cargo-deny`. Pin policy → `rust-semver`; governance (cargo-deny, license policy, advisory response) → `rust-dependencies`.
 
 ---
 
@@ -128,30 +101,23 @@ isahc                    C        58    14/30  12/25  13/15  13/15  3/10  5/5   
 
 ### Interpret
 
-- **`reqwest` (A, 94)** — maxes adoption (45M downloads) and docs. The de-facto
-  high-level client. Built on `hyper`.
-- **`hyper` (A, 90)** — equally healthy, maxes maturity (15/15, oldest and most
-  stable). But it is **low-level**: you write HTTP/1.1 and HTTP/2 plumbing, not
-  `client.get(url).send()`.
-- **`ureq` (A, 86)** — minimal, blocking, zero-async. Great when you want a
-  tiny dependency tree (no tokio runtime).
-- **`isahc` (C, 58)** — note the maintenance drop (12/25) and the older
-  `UPDATED` date (2025-11). Likely a stale-release red flag.
+- **`reqwest` (A, 94)** — maxes adoption (45M downloads) and docs; the de-facto high-level client, built on `hyper`.
+- **`hyper` (A, 90)** — equally healthy, maxes maturity (15/15, oldest/most stable). But **low-level**: you write HTTP/1.1+2 plumbing, not `client.get(url).send()`.
+- **`ureq` (A, 86)** — minimal, blocking, zero-async; great for a tiny dep tree (no tokio runtime).
+- **`isahc` (C, 58)** — maintenance drop (12/25) and older `UPDATED` (2025-11); likely a stale-release red flag.
 
 ### Decision framework — high-level vs low-level
 
-This is a **fitness** decision the score cannot make for you:
+A **fitness** decision the score cannot make for you:
 
-| Need                                        | Pick      |
-|---------------------------------------------|-----------|
-| "Just make an HTTP request" (most apps)     | `reqwest` |
-| You are building a client/server framework  | `hyper`   |
-| Blocking, minimal deps, no async runtime    | `ureq`    |
-| curl-backed features (you depend on libcurl)| evaluate carefully |
+| Need                                        | Pick                |
+|---------------------------------------------|---------------------|
+| "Just make an HTTP request" (most apps)     | `reqwest`           |
+| You are building a client/server framework  | `hyper`             |
+| Blocking, minimal deps, no async runtime    | `ureq`              |
+| curl-backed features (you depend on libcurl)| evaluate carefully  |
 
-The score measures *health*; all three top picks are healthy. Read the docs to
-confirm the API shape matches your abstraction level. Then hand off to
-`rust-api-design` for the API-fit check.
+All three top picks are healthy. Confirm the API shape matches your abstraction level, then hand off to `rust-api-design`.
 
 ---
 
@@ -173,35 +139,24 @@ slog                      B        72    18/30  16/25  13/15  15/15  4/10  5/5  
 
 ### Interpret
 
-- **`tracing` (A, 91)** — the modern choice. Structured, async-aware,
-  spans/events. The maintenance/community edge reflects active tokio-team
-  stewardship.
-- **`log` (A, 89)** — maxes adoption (it is the foundational facade every
-  logging crate routes through) and maturity (oldest). Still the right pick for
-  *libraries* that want to stay runtime-agnostic.
-- **`slog` (B, 72)** — structured logging pioneer, but maintenance (16/25)
-  reflects a slower release cadence. Functional but the ecosystem has
-  consolidated around `tracing`.
+- **`tracing` (A, 91)** — the modern choice: structured, async-aware, spans/events. The maintenance/community edge reflects active tokio-team stewardship.
+- **`log` (A, 89)** — maxes adoption (the foundational facade every logging crate routes through) and maturity (oldest). Right pick for *libraries* that want to stay runtime-agnostic.
+- **`slog` (B, 72)** — structured-logging pioneer, but maintenance (16/25) reflects a slower cadence; the ecosystem has consolidated around `tracing`.
 
 ### Ecosystem fit matters more than raw score
 
-The gap between `tracing` (91) and `log` (89) is noise. The real question is
-**architecture**:
-
-- A **library** should depend on `log` (or `tracing`'s facade) so downstream
-  apps choose the implementation.
-- An **application** should pick `tracing` for structured, async-aware output.
-
-A 2-point score difference must not override this structural decision. This is
-the canonical case where the score measures *health* and you must layer a
-*fitness* judgment on top.
+The gap between `tracing` (91) and `log` (89) is noise; the real question is
+**architecture**: a **library** should depend on `log` (or `tracing`'s facade)
+so downstream apps choose the implementation, while an **application** should
+pick `tracing` for structured, async-aware output. A 2-point score difference
+must not override this structural decision — the canonical case where the score
+measures *health* and you must layer a *fitness* judgment on top.
 
 ---
 
 ## Example 4 — A risky crate (fictional `abandoned-crate`)
 
-> This crate is **fictional**, constructed to show how multiple red flags
-> compound into a low grade. The numbers below are illustrative.
+> **Fictional** crate showing how multiple red flags compound into a low grade. Numbers illustrative.
 
 ```bash
 python3 scripts/crate_eval.py eval abandoned-crate -v
@@ -234,32 +189,25 @@ python3 scripts/crate_eval.py eval abandoned-crate -v
 
 ### Why it scores F
 
-Every dimension except Maturity (it is technically old) is near zero:
-
-- **Adoption 3/30** — 842 all-time downloads, 12 recent: nobody is using it.
-- **Maintenance 0/25** — last release 1,240 days ago; no GitHub commit signal;
-  the advisory is unresolved.
-- **Documentation 2/15** — no docs.rs build, no description, no repo/docs URL.
-- **Community 0/10** — no GitHub signals (no repo to query).
-- **License 2/5** — unknown.
-
-The **advisory** forces the recommendation to `BLOCK` even though the score
-would already warrant `F`. This is the override rule in action: security
-trumps grade.
+Every dimension except Maturity (it is technically old) is near zero: Adoption
+3/30 (842 all-time / 12 recent — nobody uses it), Maintenance 0/25 (last
+release 1,240 days ago, advisory unresolved), Documentation 2/15 (no docs.rs,
+no description, no repo/docs URL), Community 0/10 (no repo to query), License
+2/5 (unknown). The **advisory** forces `BLOCK` even though the score already
+warrants `F` — the override rule in action: security trumps grade.
 
 ### Decision
 
-**Avoid.** Look for an alternative via `search` on the same domain. If this
-crate is the only option, you must either (a) pin to a version outside the
-advisory's affected range *and* vendor it for self-maintenance, or (b)
-reconsider whether you need the functionality at all.
+**Avoid.** Find an alternative via `search` on the same domain. If this crate
+is the only option, either (a) pin to a version outside the advisory's affected
+range *and* vendor it for self-maintenance, or (b) reconsider whether you need
+the functionality at all.
 
 ---
 
 ## Example 5 — Cold-start (a new crate with great docs but low adoption)
 
-> The crate `fresh-validation` is **fictional**, built to show the cold-start
-> problem. Numbers are illustrative.
+> **Fictional** crate (`fresh-validation`) showing the cold-start problem. Numbers illustrative.
 
 ```bash
 python3 scripts/crate_eval.py eval fresh-validation
@@ -286,31 +234,19 @@ python3 scripts/crate_eval.py eval fresh-validation
 
 ### Interpret
 
-The **C grade understates the crate's quality**. Look at the subscores:
-
-- Documentation 13/15 — excellent onboarding.
-- Maintenance 20/25 — actively maintained (updated 4 days ago).
-- License 5/5 — clean dual permissive.
-- Maturity 6/15 — only the age sub-signal is low (it's new); version is 0.2.
-
-The score is dragged down entirely by **cold-start signals**: adoption (2/30)
-and community (1/10) are near zero simply because the crate is two weeks old.
-This is the known [cold-start limitation](../references/scoring-rubric.md#known-limitations).
+The **C grade understates quality**. The subscores tell the real story:
+Documentation 13/15 (excellent onboarding), Maintenance 20/25 (updated 4 days ago), License 5/5 (clean dual permissive), Maturity 6/15 (only age is low — it's new; version is 0.2). The score is dragged down entirely by **cold-start signals**: adoption 2/30 and community 1/10 are near zero simply because the crate is two weeks old. See the [cold-start limitation](../references/scoring-rubric.md#known-limitations).
 
 ### Decision
 
-For an **early adopter** willing to accept a young dependency, this is
-acceptable — possibly even attractive. Before adopting:
-
-1. **Check the maintainer's track record.** Have they published other
-   well-maintained crates? A reputable author substantially de-risks a young
-   crate.
-2. **Pin the version** (`=0.2.0`) since it's pre-1.0 and the API will churn.
-3. **Vendor or fork-ready**: keep a copy in case the maintainer abandons it.
+For an **early adopter**, this is acceptable — possibly attractive. Before
+adopting: (1) check the maintainer's track record (a reputable author
+de-risks a young crate); (2) pin the version (`=0.2.0`) since pre-1.0 APIs
+churn; (3) vendor or fork-ready, in case the maintainer abandons it.
 
 For a **load-bearing production dependency** where stability is paramount, the
-cold-start score is doing its job — wait for the crate to earn adoption, or
-accept the risk explicitly.
+cold-start score is doing its job — wait for adoption to accrue, or accept the
+risk explicitly.
 
 ---
 
@@ -328,43 +264,31 @@ accept the risk explicitly.
 
 ### How to read subscores to find weaknesses
 
-The subscore table localizes the problem. Patterns:
+The subscore table localizes the problem:
 
-- **Low Adoption, high everything else** → niche or new; usually fine.
-- **Low Maintenance, high Adoption** → popular-but-stale; check for a
-  successor.
-- **Low Documentation, high everything else** → onboarding cost; budget time.
-- **Low Community, high everything else** → bus-factor risk; vendor it.
+- **Low Adoption, high rest** → niche or new; usually fine.
+- **Low Maintenance, high Adoption** → popular-but-stale; check for a successor.
+- **Low Documentation, high rest** → onboarding cost; budget time.
+- **Low Community, high rest** → bus-factor risk; vendor it.
 - **Low License** → policy review; not a health issue per se.
 - **Low Maturity** → expect breaking changes; pin exact versions.
 
 ### When to investigate red flags vs accept them
 
-- **Block-level flags** (advisory, no source, missing license) → never accept
-  without explicit resolution.
-- **High-severity flags** (stale, bus factor) → investigate the issue tracker;
-  accept only with a documented mitigation.
-- **Medium flags** (no docs, churn, pre-1.0) → usually survivable; note them
-  and move on, unless they cluster.
-- **Informational flags** (copyleft, few contributors) → context-dependent;
-  apply your policy.
+- **Block-level** (advisory, no source, missing license) → never accept without explicit resolution.
+- **High** (stale, bus factor) → investigate the issue tracker; accept only with documented mitigation.
+- **Medium** (no docs, churn, pre-1.0) → usually survivable; note and move on, unless they cluster.
+- **Informational** (copyleft, few contributors) → context-dependent; apply your policy.
 
-See [`references/red-flags.md`](../references/red-flags.md) for the full
-catalog and the override rules.
+See [`references/red-flags.md`](../references/red-flags.md) for the full catalog and override rules.
 
 ### After you decide
 
-Regardless of which crate you pick, the post-adoption workflow is the same:
-
-```bash
-# 1. Add to Cargo.toml and pin policy → rust-semver
-# 2. Set up cargo-deny for license + advisory governance → rust-dependencies
-# 3. Run cargo audit in CI → authoritative advisory check
-```
-
-The discovery skill's job ends when the crate enters `Cargo.toml`. Governance
-from there belongs to `rust-dependencies`; manifest mechanics to
-`rust-cargo-build`.
+The post-adoption workflow is the same regardless of pick: add to `Cargo.toml`
+and pin policy → `rust-semver`; set up `cargo-deny` for license + advisory
+governance → `rust-dependencies`; run `cargo audit` in CI for authoritative
+advisory checks. The discovery skill's job ends when the crate enters
+`Cargo.toml`; manifest mechanics belong to `rust-cargo-build`.
 
 ## Upstream sources
 

@@ -126,28 +126,13 @@ mitigation. Investigate before adopting; consider alternatives.
 
 ### 4. No release in >12 months
 
-| Aspect    | Value                                                                  |
-|-----------|------------------------------------------------------------------------|
-| Severity  | High                                                                   |
-| Detection | `_days_since(sig.updated_at) > 365`                                    |
-| Threshold | >365 days since last crates.io publish                                 |
-| Action    | Check issue tracker for unresolved bugs; consider a maintained fork. |
+**Detection**: `_days_since(sig.updated_at) > 365` (High). **Action**: check the issue tracker for unresolved bugs; consider a maintained fork.
 
-**What it means**: no release in over a year. May indicate abandonment, may
-indicate a "done" crate.
+**What it means**: no release in over a year. May indicate abandonment, may indicate a "done" crate.
 
-**False positives — the most common one**: a mature, stable crate that simply
-doesn't need releases. `libc`, `memchr`, `bitflags` can go years between
-releases while remaining perfectly healthy. Distinguish by:
-- Are open issues piling up with no response? → likely abandoned.
-- Is the maintainer active elsewhere (other crates, commits to a monorepo)?
-  → likely "done, not dead".
-- Does it still compile on current stable Rust? → a green `cargo build` is
-  strong evidence of life.
+**False positives — the most common one**: a mature, stable crate that simply doesn't need releases (`libc`, `memchr`, `bitflags` can go years between releases while remaining healthy). Distinguish by: are open issues piling up with no response (→ abandoned)? Is the maintainer active elsewhere (→ "done, not dead")? Does it still compile on current stable Rust (a green `cargo build` is strong evidence of life)?
 
-**Action**: read the issue tracker and the maintainer's recent activity. If
-unresolved security or correctness bugs sit open with no response, treat as
-abandoned and look for a fork or alternative.
+**Action**: read the issue tracker and the maintainer's recent activity. If unresolved security or correctness bugs sit open with no response, treat as abandoned and look for a fork or alternative.
 
 ```text
 ! no release in 547 days (>18 months)
@@ -155,44 +140,23 @@ abandoned and look for a fork or alternative.
 
 ### 5. Last GitHub commit >6 months
 
-| Aspect    | Value                                                                  |
-|-----------|------------------------------------------------------------------------|
-| Severity  | High                                                                   |
-| Detection | `_days_since(github_last_commit) > 180`                                |
-| Threshold | >180 days since last `pushed_at` on the GitHub repo                    |
-| Action    | Verify development hasn't moved to a fork or another repo.             |
+**Detection**: `_days_since(github_last_commit) > 180` (High). **Action**: verify development hasn't moved to a fork or another repo.
 
-**What it means**: the source repo has gone quiet. Combined with flag 4 this is
-strong evidence of abandonment; on its own it may mean development moved.
+**What it means**: the source repo has gone quiet. Combined with flag 4 this is strong evidence of abandonment; on its own it may mean development moved.
 
-**False positives**: a release-driven workflow where commits land in bursts
-then go quiet between releases — common for crates with a long release cycle.
-Also: some crates publish from a monorepo (e.g. `tokio`'s ecosystem), so the
-`repository` URL's commit history may understate real activity.
+**False positives**: a release-driven workflow where commits land in bursts then go quiet between releases. Also, some crates publish from a monorepo (e.g. `tokio`'s ecosystem), so the `repository` URL's commit history may understate real activity.
 
-**Action**: check whether a successor repo exists. If the maintainer has a
-newer crate covering the same domain, prefer that.
+**Action**: check whether a successor repo exists. If the maintainer has a newer crate covering the same domain, prefer that.
 
 ### 6. Single maintainer + low adoption (bus factor)
 
-| Aspect    | Value                                                                  |
-|-----------|------------------------------------------------------------------------|
-| Severity  | High                                                                   |
-| Detection | `github_contributors <= 1 AND downloads < 10_000`                      |
-| Threshold | ≤1 contributor AND <10k downloads                                      |
-| Action    | Assess whether you can fork-and-maintain if the author steps away.     |
+**Detection**: `github_contributors <= 1 AND downloads < 10_000` (High). **Action**: assess whether you can fork-and-maintain if the author steps away.
 
-**What it means**: if one person stops maintaining this, nobody is left. Low
-adoption also means few eyes finding bugs.
+**What it means**: if one person stops maintaining this, nobody is left; low adoption also means few eyes finding bugs.
 
-**False positives**: a brand-new crate from a reputable maintainer can trip
-this before it gains traction — see the cold-start example in
-[evaluation-examples.md](../examples/evaluation-examples.md). Also, the
-contributor count is GitHub-derived; a crate hosted elsewhere may have more
-contributors than the flag implies.
+**False positives**: a brand-new crate from a reputable maintainer can trip this before it gains traction — see the cold-start example in [evaluation-examples.md](../examples/evaluation-examples.md). The contributor count is GitHub-derived; a crate hosted elsewhere may have more contributors than the flag implies.
 
-**Action**: if the crate is load-bearing for you, (a) keep a vendored copy,
-(b) consider sponsoring/contributing, (c) have a documented fallback plan.
+**Action**: if the crate is load-bearing for you, keep a vendored copy, consider sponsoring/contributing, and have a documented fallback plan.
 
 ---
 
@@ -203,65 +167,33 @@ reflect a trade-off the maintainer has consciously made.
 
 ### 7. No docs.rs build
 
-| Aspect    | Value                                                                  |
-|-----------|------------------------------------------------------------------------|
-| Severity  | Medium                                                                 |
-| Detection | `not sig.docs_rs_present` (HEAD probe to docs.rs returned non-200)     |
-| Threshold | docs.rs has no successful build for this crate                         |
-| Action    | Check whether docs exist elsewhere; assess onboarding cost.            |
+**Detection**: `not sig.docs_rs_present` — HEAD probe to docs.rs returned non-200 (Medium). **Action**: check whether docs exist elsewhere; assess onboarding cost.
 
-**What it means**: the canonical Rust documentation host has nothing for this
-crate. Either the crate never built on docs.rs (feature/platform issue), or it
-was published before docs.rs coverage.
+**What it means**: the canonical Rust documentation host has nothing for this crate — either it never built (feature/platform issue) or was published before docs.rs coverage.
 
-**False positives**: very new crates may not have their first docs.rs build
-yet (lag of minutes to hours). Also, crates with `doctests = false` or
-platform-gated APIs can fail to build docs without being undocumented — check
-the repo's own rendered docs.
+**False positives**: very new crates may not have their first docs.rs build yet (lag of minutes to hours). Crates with `doctests = false` or platform-gated APIs can fail to build docs without being undocumented — check the repo's own rendered docs.
 
-**Action**: read the README and any in-repo docs. If the only documentation is
-source comments, budget extra onboarding time.
+**Action**: read the README and any in-repo docs. If the only documentation is source comments, budget extra onboarding time.
 
 ### 8. Low adoption with many versions
 
-| Aspect    | Value                                                                  |
-|-----------|------------------------------------------------------------------------|
-| Severity  | Medium                                                                 |
-| Detection | `downloads < 1000 AND version_count > 5`                               |
-| Threshold | <1k downloads AND >5 published versions                                |
-| Action    | Investigate why adoption isn't growing despite release churn.          |
+**Detection**: `downloads < 1000 AND version_count > 5` (Medium). **Action**: investigate why adoption isn't growing despite release churn.
 
-**What it means**: the maintainer is shipping releases but nobody is picking
-them up. Often a sign of churn without traction — frequent breaking changes
-that drive users away, or a niche crate with a small audience.
+**What it means**: the maintainer is shipping releases but nobody is picking them up — often churn without traction (frequent breaking changes driving users away), or a niche crate with a small audience.
 
-**False positives**: a genuinely niche crate (e.g. a bindings wrapper for an
-obscure library) may legitimately have few users and many patch releases.
-Judge by whether the releases fix real bugs vs. churn the API.
+**False positives**: a genuinely niche crate (e.g. a bindings wrapper for an obscure library) may legitimately have few users and many patch releases. Judge by whether releases fix real bugs vs. churn the API.
 
-**Action**: read the changelog. If versions are breaking-change after
-breaking-change, the API is unstable and you will be on an upgrade treadmill.
+**Action**: read the changelog. If versions are breaking-change after breaking-change, the API is unstable and you'll be on an upgrade treadmill.
 
 ### 9. Pre-1.0 with >20 versions
 
-| Aspect    | Value                                                                  |
-|-----------|------------------------------------------------------------------------|
-| Severity  | Medium                                                                 |
-| Detection | `major == 0 AND version_count > 20`                                    |
-| Threshold | 0.x version AND >20 published versions                                 |
-| Action    | Pin exact version; expect breaking changes on minor bumps.             |
+**Detection**: `major == 0 AND version_count > 20` (Medium). **Action**: pin exact version; expect breaking changes on minor bumps.
 
-**What it means**: pre-1.0 semver lets minor bumps be breaking. Twenty-plus
-0.x releases is strong evidence the API is still churning — every `cargo
-update` is a potential surprise.
+**What it means**: pre-1.0 semver lets minor bumps be breaking. Twenty-plus 0.x releases is strong evidence the API is still churning — every `cargo update` is a potential surprise.
 
-**False positives**: some crates deliberately stay pre-1.0 while being
-extremely stable (the maintainer reserves the right to break but rarely
-exercises it). Check the actual changelog rather than the version number
-alone.
+**False positives**: some crates deliberately stay pre-1.0 while being extremely stable (the maintainer reserves the right to break but rarely exercises it). Check the actual changelog rather than the version number alone.
 
-**Action**: pin with `=x.y.z` rather than `^x.y.z` until the crate reaches
-1.0. See `rust-semver` for pinning policy.
+**Action**: pin with `=x.y.z` rather than `^x.y.z` until the crate reaches 1.0. See `rust-semver` for pinning policy.
 
 ---
 

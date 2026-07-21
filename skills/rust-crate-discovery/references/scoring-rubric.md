@@ -123,14 +123,8 @@ activity) catches both gaps.
 | Last GitHub commit               | 5      | <30d → 5, <180d → 3, <365d → 1, else 0  |
 
 **Key signals**: `sig.updated_at`, `sig.version_count`, `sig.github_last_commit`.
-
-```text
-version count:  log_scale(version_count, 20, 8)
-   5 versions  → 2
-  20 versions  → 4   (midpoint ≈ half)
-  50 versions  → 6
- 200 versions  → 8
-```
+Version count uses `log_scale(version_count, 20, 8)`: 5→2, 20→4 (midpoint),
+50→6, 200→8.
 
 **Edge cases**:
 - `updated_at` older than 730 days → 0 release-recency points *and* a "no
