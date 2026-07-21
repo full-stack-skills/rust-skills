@@ -11,10 +11,13 @@ description: Apply and diagnose Rust style, rustfmt, Clippy, compiler diagnostic
 
 ### ✅ Strengths
 1. Stable rustfmt configuration (edition, max_width, tab_spaces, use_field_init_shorthand, etc.)
-2. Clippy lint system (cargo clippy, lint levels, clippy.toml configuration)
-3. Key Clippy lint groups (correctness, style, complexity, perf, pedantic, nursery, restriction)
-4. Edition migration (2015→2018→2021→2024, key changes per edition and cargo fix commands)
-5. Compiler error code interpretation (rustc --explain, common error codes reference table)
+2. Clippy lint system — all 10 lint groups: correctness, suspicious, style, complexity, perf, pedantic, restriction, cargo, nursery, internal
+3. `clippy.toml` configuration (msrv, arithmetic-side, cognitive-complexity-threshold, avoid-breaking-exported-api, etc.)
+4. `#[expect(...)]` attribute (Rust 1.81+) for CI-enforced lint expectations
+5. Lint `priority` ordering for layered policy
+6. Production CI lint policy (deny/warn/allow decisions per group)
+7. Edition migration (2015→2018→2021→2024, key changes per edition and cargo fix commands)
+8. Compiler error code interpretation (rustc --explain, common error codes reference table)
 
 ### ⚠️ Prerequisites
 1. Rust toolchain installed and configured
@@ -56,38 +59,84 @@ Options such as `imports_granularity`, `group_imports`, and `reorder_impl_items`
 ## II. Clippy
 
 ```bash
-cargo clippy                        # Run all lints
-cargo clippy -- -W clippy::pedantic # Enable additional lint groups
-cargo clippy --fix                  # Auto-fix issues
+cargo clippy                              # Default: correctness, suspicious, style, complexity, perf
+cargo clippy -- -W clippy::pedantic       # Enable pedantic group
+cargo clippy --fix                        # Auto-fix MachineApplicable lints
+cargo clippy -- -A clippy::module_inception  # Allow a specific lint
 ```
+
+### All 10 lint groups
+
+| Group | Default level | Description | High-leverage lints |
+|-------|---------------|-------------|---------------------|
+| `correctness` | deny (effectively) | Code that is **wrong** — broken semantics | `almost_swap`, `drop_non_drop`, `if_same_then_else`, `out_of_bounds_looping`, `ptr_offset_with_cast` |
+| `suspicious` | warn | Likely-buggy code that compiles but smells off | `mutable_key_type`, `assign_op_pattern`, `blqcklisted_name`, `cast_lossless`, `clone_on_ref_ptr` |
+| `style` | warn (default group) | Idiomatic Rust stylistic preferences | `enum_variant_names`, `new_without_default`, `wrong_self_convention`, `needless_return`, `module_inception` |
+| `complexity` | warn | Code that could be simpler | `too_many_arguments`, `cognitive-complexity`, `manual_flatten`, `option_option` |
+| `perf` | warn | Performance hints (allocations, copies) | `large_enum_variant`, `single_char_pattern`, `manual_memcpy`, `vec_box`, `derivable_impls` |
+| `pedantic` | **allow** (opt-in) | Opinionated style — stricter than style | `cast_possible_truncation`, `fn_params_excessive_bools`, `must_use_candidate`, `missing_errors_doc`, `module_name_repetitions` |
+| `restriction` | **allow** (opt-in) | Forbid patterns that may be intentional but risky | `unwrap_used`, `expect_used`, `panic`, `indexing_slicing`, `dbg_macro`, `print_stdout`, `float_arithmetic` |
+| `cargo` | warn | `Cargo.toml` quality | `cargo_common_metadata`, `negative_feature_names`, `redundant_feature_names`, `wildcard_dependencies` |
+| `nursery` | **allow** (experimental) | Lints under development | `use_self`, `fallible_impl_from`, `missing_const_for_fn` |
+| `internal` | allow | For Clippy's own development | (rarely used by users) |
+
+### `#[expect]` attribute (Rust 1.81+) — better than `#[allow]`
 
 ```rust
-// Control lint levels
-#[allow(clippy::needless_return)]
-fn my_fn() { return 42; }
+// ✅ #[expect] — CI fails if the lint stops firing, surfacing dead expectations
+#[expect(clippy::too_many_arguments, reason = "configurable builder has many options")]
+fn build(name: &str, retries: u32, timeout: u32, /* 5 more */) { /* */ }
 
-#[deny(clippy::unwrap_used)]
-fn safe_fn() -> Result<i32, Error> {
-    let v = risky()?; // Cannot use unwrap here
-    Ok(v)
-}
-
-// clippy.toml (project root directory)
-// disallowed-macros = ["unwrap", "expect"]
-// cognitive-complexity-threshold = 25
+// ❌ #[allow] — silently becomes dead code if the lint stops firing
+#[allow(clippy::too_many_arguments)]
+fn build(/* */) { /* */ }
 ```
 
-Key lint groups:
+Prefer `#[expect]` for intentional suppressions; reserve `#[allow]` for transient reasons.
 
-| Group | Description | Common Lints |
-|-------|-------------|--------------|
-| correctness | Correctness of compilation (default) | `clippy::almost_swap` |
-| style | Code style (default) | `clippy::enum_variant_names` |
-| complexity | Complexity hints | `clippy::too_many_arguments` |
-| perf | Performance hints | `clippy::large_enum_variant` |
-| pedantic | Strict mode (must be enabled manually) | `clippy::cast_possible_truncation` |
-| nursery | Experimental features | `clippy::use_self` |
-| restriction | Most restrictive | `clippy::unwrap_used`, `clippy::expect_used` |
+### Lint `priority` — layering
+
+```rust
+// Higher priority wins. Use for layered policy.
+#![warn(clippy::pedantic)]                       // enable pedantic (priority 0)
+#![warn(priority = 1, clippy::module_name_repetitions)]  // re-enable a specific lint
+```
+
+### `clippy.toml` configuration
+
+```toml
+# clippy.toml at workspace root
+msrv = "1.85"                                  # Don't suggest APIs newer than MSRV
+avoid-breaking-exported-api = false            # Suggest fixes that change public API
+cognitive-complexity-threshold = 25            # Function complexity limit
+arithmetic-side = "checked"                    # Prefer checked_* arithmetic
+enum-variant-name-threshold = 1                # Trigger variant_name lint
+single-char-binding-names-threshold = 3        # Allow `_a`, `_b`, but not 4+
+too-many-arguments-threshold = 7
+type-complexity-threshold = 250
+disallowed-methods = [
+    { path = "std::env::var", reason = "use our config::get instead" },
+]
+disallowed-types = [
+    { path = "std::collections::LinkedList", reason = "almost never the right choice" },
+]
+disallowed-macros = [
+    { path = "std::println", reason = "use tracing in libraries" },
+]
+```
+
+See `references/clippy-lint-policy.md` for the full `clippy.toml` reference and production policies.
+
+### Production CI lint policy
+
+Different projects need different strictness. See `references/clippy-lint-policy.md` for ready-to-paste configurations.
+
+| Project type | Pedantic | Restriction | Recommended |
+|--------------|----------|-------------|-------------|
+| Library (published) | warn | allow | `clippy::all` + `clippy::pedantic` warn + `cargo::cargo_common_metadata` deny |
+| Application / binary | warn | warn (`unwrap_used`) | Add `restriction::unwrap_used`, `panic`, `indexing_slicing` |
+| Embedded / safety-critical | warn | deny | All restriction lints deny; add `float_arithmetic` deny |
+| Internal tool | allow | allow | Just `clippy::all` (default groups) |
 
 ## III. Edition Migration
 
@@ -157,11 +206,12 @@ Many `restriction` and `pedantic` lints are off by default — enable them expli
 ## Workflow
 
 1. Format code — `cargo fmt` ensures consistent style
-2. Run Clippy — `cargo clippy` discovers potential errors and improvement opportunities
-3. Configure Clippy — Enable/disable specific lints per project needs (clippy.toml)
-4. Check Edition — Confirm edition in Cargo.toml is up-to-date
-5. Dependency safety — `cargo audit` scans for known vulnerabilities
-6. CI integration — Integrate fmt --check + clippy + audit into CI pipeline
+2. Run Clippy — `cargo clippy` runs the 5 default groups (correctness, suspicious, style, complexity, perf); add `-W clippy::pedantic` for stricter
+3. Decide policy — pick pedantic/restriction level by project type (see table above); paste the matching config from `references/clippy-lint-policy.md`
+4. Configure `clippy.toml` — set `msrv`, `disallowed-methods`, and any project-specific thresholds
+5. Use `#[expect]` for intentional suppressions — keeps CI honest about dead expectations
+6. Check Edition — Confirm edition in Cargo.toml is up-to-date
+7. CI integration — `cargo fmt --check` + `cargo clippy -- -D warnings` + `cargo audit` in CI
 
 ## Gotchas
 
@@ -176,6 +226,7 @@ Many `restriction` and `pedantic` lints are off by default — enable them expli
 
 - [Format and Clippy Examples](examples/examples.md)
 - [Lint Group Quick Reference](references/references.md)
+- [Clippy Lint Policy](references/clippy-lint-policy.md): Full `clippy.toml` reference, all 10 lint groups in depth, `#[expect]` patterns, `priority` layering, and ready-to-paste production CI configurations by project type.
 - [Production Rust Idioms](references/production-rust-idioms.md): Review let-else, Option combinators, newtype patterns, non-exhaustive APIs, lock scopes, and overflow strategies when reviewing production code.
 - [API Guidelines ↔ Clippy Lints Crosswalk](references/api-guidelines-to-clippy.md): Full mapping from Rust API Guidelines `C-*` rules to the Clippy lints that enforce them, plus the ~75 rules Clippy does not cover and where to review them.
 - `examples/golden-style/`: Golden examples for CI passing rustfmt and Clippy

@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 23 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 25 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 23 个可用技能，不执行安装：
+仅查看全部 25 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 23 个技能：
+无交互地为所有已检测智能体安装全部 25 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -54,14 +54,17 @@ npx skills add full-stack-skills/rust-skills --global --all
 
 ```mermaid
 flowchart TB
-    S["rust-stable<br/>语言与标准库入口"]
+    S["rust-stable<br/>语言语义"]
+    L["标准库与示例<br/>rust-stdlib / rust-by-example"]
     A["API 设计<br/>rust-api-design — Rust API Guidelines 主线"]
     P["项目工程<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation"]
     D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
 
+    S --> L
     S --> A
+    L --> A
     S --> P
     A --> P
     A --> Q
@@ -72,7 +75,9 @@ flowchart TB
 
 | 层级 | 技能 | 主要职责 |
 |---|---|---|
-| 核心 | `rust-stable` | 所有权、trait、集合、错误处理、标准库、版本判断 |
+| 核心 | `rust-stable` | 所有权、借用、生命周期、trait、泛型、模式匹配、闭包、错误传播 |
+| 核心 | `rust-stdlib` | 标准 API 选择 —— 集合、智能指针、字符串类型、内部可变性、I/O、迭代器、channel、时间、路径、进程 |
+| 核心 | `rust-by-example` | 具体代码模式 —— 类型转换、流程控制、闭包、模块、泛型、trait、错误处理、属性、unsafe、跨语言迁移 |
 | 设计 | `rust-api-design` | Rust API Guidelines（约 100 条 C-* 规则）：命名、互操作 trait、类型安全、可演进性 |
 | 工程 | `rust-workspace` | 多 crate workspace、虚拟 manifest、crate 边界、依赖方向 DAG、`[workspace.*]` 配置 |
 | 工程 | `rust-module-layout` | 单个 crate 内部 `src/` 目录树、`lib.rs` 门面、`mod` 声明、可见性、re-export —— 与 `rust-workspace` 配套 |
@@ -100,7 +105,7 @@ flowchart TB
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 23 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 25 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
@@ -128,6 +133,15 @@ python3 scripts/validate_skills.py --check-examples
 - Markdown 相对链接和代码围栏有效。
 - `agents/openai.yaml` 存在且默认提示显式引用对应技能。
 - 黄金示例通过 `cargo fmt`、`cargo check`、`cargo test` 和 `cargo clippy -D warnings`。
+
+## v3.4 标准库与示例驱动模式
+
+- 新增 `rust-stdlib`，处理 std API 选择 —— 集合（HashMap/BTreeMap/Vec/VecDeque/LinkedList/BinaryHeap）、智能指针（Box/Rc/Arc/RefCell/Mutex/OnceLock/LazyLock）、字符串类型（String/&str/OsString/PathBuf/Cow）、内部可变性（Cell/RefCell/OnceCell）、I/O 流、迭代器、Option/Result 组合子、线程与 mpsc channel、时间、路径、进程。含 10 份离线参考和 10 项测试覆盖每个主题。
+- 新增 `rust-by-example`，处理具体代码模式 —— 类型转换、流程控制、闭包、模块、泛型、trait、错误处理、属性、unsafe、过程宏概览、内联汇编、跨语言迁移表（Java/Python/Go/C++/JS）。含 11 份离线参考和 10 项测试。
+- 瘦身 `rust-stable`，聚焦**语言语义**（所有权、生命周期、trait、泛型、模式匹配、闭包、Edition 差异）。std API 问题路由到 `rust-stdlib`，「怎么写 X」路由到 `rust-by-example`。
+- 深化 `rust-style-clippy`，覆盖全部 10 个 lint 组（含 `cargo`、`suspicious`、`nursery`）、`#[expect]` 属性（Rust 1.81+）、lint `priority` 层级、完整 `clippy.toml` 参考、按项目类型（库/应用/嵌入式）的可粘贴生产 CI 策略。新增 `references/clippy-lint-policy.md`。
+- 深化 `rust-api-design` Type Safety 章节，从 3 条规则扩展到 9 条：新增 C-SIGNED、C-BITFLAG、C-WRAPPER、C-INTERVAL、C-COMMENT-HIDDEN。
+- 为 `rust-cargo-build` 新增 Cargo Guide 引导 —— cargo new/init、日常命令循环、依赖、包布局、Cargo.toml vs Cargo.lock 策略、CI 模板（GitHub Actions + GitLab CI）。新增 `references/cargo-guide-workflow.md`。
 
 ## v3.3 API 设计与供应链覆盖
 

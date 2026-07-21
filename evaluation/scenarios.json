@@ -396,6 +396,60 @@
       "prompt": "We need to build our Rust workspace on an air-gapped CI runner. Vendor all dependencies and configure the build.",
       "expected_skills": ["rust-dependencies", "rust-cargo-build"],
       "assertions": ["runs_cargo_vendor", "configures_source_replacement_to_vendored_sources", "builds_with_frozen_or_offline"]
+    },
+    {
+      "id": "stdlib-collection-choice",
+      "prompt": "I need a key-value store with O(1) lookup, iteration order doesn't matter. After that I need a sliding window (push/pop from both ends), then a priority queue. Which std collections?",
+      "expected_skills": ["rust-stdlib"],
+      "assertions": ["selects_hashmap_for_unordered_lookup", "selects_vecdeque_for_both_ends", "selects_binaryheap_for_priority"]
+    },
+    {
+      "id": "stdlib-pointer-choice",
+      "prompt": "I have a struct that needs to be shared across threads with occasional mutation, and another struct that's single-threaded but needs interior mutability behind a shared reference. Which std smart pointers?",
+      "expected_skills": ["rust-stdlib"],
+      "assertions": ["selects_arc_mutex_for_threaded_shared_mutable", "selects_refcell_for_single_thread_interior_mutability", "explains_poison_semantics"]
+    },
+    {
+      "id": "stdlib-combinator-chain",
+      "prompt": "I have nested match statements on Option<Result<...>>. Refactor to combinator chain using and_then, map_err, transpose.",
+      "expected_skills": ["rust-stdlib"],
+      "assertions": ["replaces_nested_match_with_combinators", "uses_transpose_for_option_result", "preserves_error_information"]
+    },
+    {
+      "id": "stdlib-oncelock-lazy",
+      "prompt": "I need a global config that loads once on first access, thread-safe, on Rust 1.85. Show OnceLock vs LazyLock and recommend one.",
+      "expected_skills": ["rust-stdlib"],
+      "assertions": ["selects_oncelock_or_lazylock_for_msrv", "demonstrates_get_or_init", "verifies_msrv_1_70_or_1_80"]
+    },
+    {
+      "id": "by-example-conversions",
+      "prompt": "How do I convert a &str to my custom Email type? Show From, TryFrom, FromStr, and explain when each applies.",
+      "expected_skills": ["rust-by-example"],
+      "assertions": ["shows_try_from_for_fallible", "shows_fromstr_for_string_parsing", "explains_when_from_is_lossless_vs_try_from_is_fallible"]
+    },
+    {
+      "id": "by-example-closures",
+      "prompt": "Explain Fn vs FnMut vs FnOnce with examples. I want to return a closure from a function — what trait bound?",
+      "expected_skills": ["rust-by-example"],
+      "assertions": ["explains_capture_modes", "shows_impl_fn_return_type", "demonstrates_move_keyword"]
+    },
+    {
+      "id": "by-example-error-handling",
+      "prompt": "Show me how to write a custom error type with thiserror, and how ? propagates with From conversion.",
+      "expected_skills": ["rust-by-example"],
+      "assertions": ["demonstrates_thiserror_derive", "shows_from_attribute_for_conversion", "uses_question_mark_for_propagation"]
+    },
+    {
+      "id": "by-example-migrate-from-java",
+      "prompt": "I'm a Java developer. Show me Rust equivalents of: interface, generics <T extends Foo>, Optional<T>, try/catch, abstract class with default methods.",
+      "expected_skills": ["rust-by-example"],
+      "assertions": ["maps_interface_to_trait", "maps_generics_to_trait_bounds", "maps_optional_to_option", "maps_try_catch_to_question_mark", "maps_abstract_to_trait_default_methods"]
+    },
+    {
+      "id": "by-example-modules",
+      "prompt": "I have src/network/client.rs and src/network/server.rs. How do mod declarations work? Show lib.rs and the file structure.",
+      "expected_skills": ["rust-by-example"],
+      "assertions": ["declares_mod_network_in_lib_rs", "declares_submodules_in_network_rs", "distinguishes_modern_vs_mod_rs_layout"]
     }
   ]
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Standard Library"
+  short_description: "Select and compose std APIs — collections, smart pointers, string types, interior mutability, I/O, iterators, channels"
+  default_prompt: "Use $rust-stdlib to choose the right standard-library type or module for a task — collections (HashMap/BTreeMap/Vec), smart pointers (Box/Rc/Arc/RefCell/Mutex), string types, Option/Result combinators, mpsc channels, scoped threads, time, path, process."

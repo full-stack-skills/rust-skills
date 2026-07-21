@@ -1,6 +1,6 @@
 ---
 name: rust-cargo-build
-description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Also covers the Cargo Book Reference depth: `.cargo/config.toml` (build, env, target, net, source, alias), `[lints]` table and workspace inheritance, `[build-dependencies]` vs `[dependencies]` scoping, Cargo Home and build cache layout, source replacement (mirrors, vendoring, private registries), `cargo metadata` for scripting, CI modes (`--locked`, `--frozen`, `--offline`), and `cargo tree` diagnostics (`--duplicates`, `--invert`, `-e features`). Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, `config.toml` sections, source mirroring, or crates.io publishing. Hand supply-chain governance (license/advisory/ban audits via cargo-deny) to rust-dependencies, semver versioning decisions to rust-semver, and module/crate topology to rust-workspace; hand test design to rust-testing.
+description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Also covers the Cargo Book Reference depth: `.cargo/config.toml` (build, env, target, net, source, alias), `[lints]` table and workspace inheritance, `[build-dependencies]` vs `[dependencies]` scoping, Cargo Home and build cache layout, source replacement (mirrors, vendoring, private registries), `cargo metadata` for scripting, CI modes (`--locked`, `--frozen`, `--offline`), and `cargo tree` diagnostics (`--duplicates`, `--invert`, `-e features`). Includes Cargo Guide onboarding (cargo new, build, check, test, run, dependencies, package layout, Cargo.toml vs Cargo.lock, and CI integration with GitHub Actions / GitLab CI templates). Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, `config.toml` sections, source mirroring, crates.io publishing, or beginner "how do I build/test/run my Rust project" questions. Hand supply-chain governance (license/advisory/ban audits via cargo-deny) to rust-dependencies, semver versioning decisions to rust-semver, and module/crate topology to rust-workspace; hand test design to rust-testing. Route standard-library API lookup ("how do I use HashMap/Vec/io?") to rust-stdlib and "how do I write X in Rust?" tutorial-style questions to rust-by-example.
 ---
 
 # Rust Cargo Build System
@@ -22,6 +22,21 @@ Additionally, verify:
 - Dependency sources (crates.io, Git paths, local paths) and whether they inherit from the workspace.
 - Build targets, feature combinations, target platforms, and publishing registry configuration.
 
+## Cargo Guide Workflow (Onboarding)
+
+For beginner and "getting started" questions, the first chapters of the [Cargo Guide](https://doc.rust-lang.org/cargo/guide/) cover the everyday Cargo loop. Reach for the deep reference when the answer turns into manifest field syntax, resolver internals, or module topology.
+
+1. **Why Cargo Exists** — Cargo unifies build, dependency resolution, test, doc gen, and publish into one tool, replacing make/cmake + vcpkg/conan + custom harnesses.
+2. **Creating a New Package** — `cargo new` (creates a subfolder) vs `cargo init` (adopts the cwd); defaults produce `src/lib.rs` or `src/main.rs` plus a minimal `Cargo.toml`.
+3. **Working on an Existing Package** — the everyday loop: `cargo check` (fast, no codegen), `build`, `run`, `test`, `doc`, `clean`, `update`, plus `fmt`/`clippy`.
+4. **Dependencies** — `[dependencies]`, `[dev-dependencies]`, `[build-dependencies]`, optional deps and features; crates.io, path, and git sources. Version-requirement syntax depth belongs to `rust-dependencies`.
+5. **Package Layout** — canonical `src/`, `tests/`, `benches/`, `examples/`, `build.rs`. Multi-crate layout goes to `rust-workspace`; in-crate module design to `rust-module-layout`.
+6. **Cargo.toml vs Cargo.lock** — apps commit the lockfile; libraries do not. Full policy and update workflow in `rust-dependencies`.
+7. **Continuous Integration** — standard GitHub Actions / GitLab CI templates with caching, plus `--locked` / `--frozen` / `--offline` discipline.
+8. **Cargo Home** — `$CARGO_HOME` layout and safe cleanup; full treatment in `references/cargo-reference-cheatsheet.md` §4.
+
+Full commands, file shapes, CI templates, and gotchas for all eight topics live in `references/cargo-guide-workflow.md`.
+
 ## Capabilities & Boundaries
 
 ### Suitable For Handling
@@ -41,6 +56,8 @@ Additionally, verify:
 - Testing strategies, doctests, coverage metrics → `rust-testing`
 - Rust formatting (`rustfmt`) and linting (Clippy), edition migrations → `rust-style-clippy`
 - Core Rust syntax and standard library usage → `rust-stable`
+- Standard-library API lookup ("how do I use `HashMap`/`Vec`/`io::Read`?") → `rust-stdlib`
+- "How do I write X in Rust?" tutorial-style questions (ownership, pattern matching, traits, concurrency idioms) → `rust-by-example`
 - Supply-chain governance: license/advisory/ban audits via `cargo-deny`, dependency review, allowed/banned crate lists → `rust-dependencies`
 - Semver versioning decisions, breaking-change classification, version bump strategy, `cargo-semver-checks` runs → `rust-semver`
 - Workspace topology, member listing, shared dependency inheritance, virtual manifest design → `rust-workspace`
@@ -123,6 +140,7 @@ cargo package --list
 
 ## On-Demand References
 
+- [Cargo Guide Workflow (Onboarding)](references/cargo-guide-workflow.md): Retrieve for beginner and "getting started" questions — `cargo new`/`init`, the everyday build/check/run/test loop, adding dependencies, canonical package layout, `Cargo.toml` vs `Cargo.lock` policy, and GitHub Actions / GitLab CI templates.
 - [Manifest and Targets](references/manifest-targets.md)
 - [Dependencies, Features, and Resolvers](references/dependencies-features-resolver.md)
 - [Production Dependency Selection and Governance](references/production-dependency-governance.md): Retrieve when selecting third-party crates, narrowing feature/platform scope, auditing supply chains, or explaining version lock behavior.

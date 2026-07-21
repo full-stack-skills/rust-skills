@@ -267,6 +267,61 @@ pub fn process(input: &String, data: &Vec<u8>) { /* */ }
 - Don't use `f64` for money — use a decimal type or integer cents
 - Don't use `usize` for non-size quantities — use `u32`/`u64`
 
+### C-BITFLAG — Use `bitflags!` for flag sets, not raw integers
+
+```rust
+use bitflags::bitflags;
+
+bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct Permissions: u32 {
+        const READ    = 0b001;
+        const WRITE   = 0b010;
+        const EXECUTE = 0b100;
+    }
+}
+
+let p = Permissions::READ | Permissions::WRITE;
+assert!(p.contains(Permissions::READ));   // built-in methods
+```
+
+Type-checked composition; rejects accidental mixing with unrelated `u32` values.
+
+### C-INTERVAL — Encode ranges as types, not loose pairs
+
+```rust
+// ✅ Dedicated range with invariant enforced in constructor
+pub struct ChunkRange { start: u32, end: u32 }   // invariant: end >= start
+
+impl ChunkRange {
+    pub fn new(start: u32, end: u32) -> Result<Self, RangeError> {
+        if end < start { return Err(RangeError::Inverted); }
+        Ok(Self { start, end })
+    }
+    pub fn contains(&self, x: u32) -> bool { (self.start..=self.end).contains(&x) }
+}
+
+// ❌ Loose pair — caller can pass end < start
+pub fn process_chunk(start: u32, end: u32) { /* */ }
+```
+
+For std ranges use `RangeInclusive`/`Range`. For domain ranges wrap in a newtype.
+
+### C-COMMENT-HIDDEN — `#[doc(hidden)]` does NOT exclude from public API
+
+```rust
+// ❌ Hides from rustdoc but is still semver-relevant public API
+#[doc(hidden)]
+pub mod unstable { /* */ }
+// Downstream can still write `use crate::unstable::Foo;`
+
+// ✅ For actually-unstable items, gate behind a feature
+#[cfg(feature = "unstable")]
+pub mod unstable { /* */ }
+```
+
+`#[doc(hidden)]` only hides from `cargo doc`. For semver/stability use feature flags or module privacy.
+
 ---
 
 ## 6. Dependability

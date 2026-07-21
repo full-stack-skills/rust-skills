@@ -1,9 +1,9 @@
 {
   "name": "rust-skills",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "Stable Rust language and engineering skills",
   "author": {
-    "name": "PartMeAI",
+    "name": "PartMe.AI",
     "email": "partmeai@gmail.com"
   },
   "homepage": "https://github.com/full-stack-skills/rust-skills",
@@ -11,6 +11,8 @@
   "source": "./",
   "skills": [
     "./skills/rust-stable",
+    "./skills/rust-stdlib",
+    "./skills/rust-by-example",
     "./skills/rust-api-design",
     "./skills/rust-workspace",
     "./skills/rust-module-layout",

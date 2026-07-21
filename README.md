@@ -16,11 +16,11 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 23 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 25 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
-List the 23 available skills without installing them:
+List the 25 available skills without installing them:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ Choose skills and target agents interactively for the current project:
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install all 23 skills for all detected agents without prompts:
+Install all 25 skills for all detected agents without prompts:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -54,14 +54,17 @@ npx skills add full-stack-skills/rust-skills --global --all
 
 ```mermaid
 flowchart TB
-    S["rust-stable<br/>language and std entry"]
+    S["rust-stable<br/>language semantics"]
+    L["std & examples<br/>rust-stdlib / rust-by-example"]
     A["api design<br/>rust-api-design — Rust API Guidelines spine"]
     P["project engineering<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation"]
     D["specialized domains<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["operational evidence<br/>testing / performance / observability"]
     Q["quality gates<br/>code-review / style-clippy"]
 
+    S --> L
     S --> A
+    L --> A
     S --> P
     A --> P
     A --> Q
@@ -72,7 +75,9 @@ flowchart TB
 
 | Layer | Skill | Responsibility |
 |---|---|---|
-| Core | `rust-stable` | Ownership, traits, collections, errors, std, version checks |
+| Core | `rust-stable` | Ownership, borrowing, lifetimes, traits, generics, pattern matching, closures, error propagation |
+| Core | `rust-stdlib` | Std API selection — collections, smart pointers, string types, interior mutability, I/O, iterators, channels, time, path, process |
+| Core | `rust-by-example` | Concrete code patterns — type conversions, flow control, closures, modules, generics, traits, errors, attributes, unsafe, migrations |
 | Design | `rust-api-design` | Rust API Guidelines (~100 C-* rules): naming, interop traits, type safety, future-proofing |
 | Engineering | `rust-workspace` | Multi-crate workspaces, virtual manifests, crate boundaries, dependency direction DAGs, `[workspace.*]` configuration |
 | Engineering | `rust-module-layout` | In-crate `src/` directory tree, `lib.rs` facade, `mod` declarations, visibility, re-exports — the companion to `rust-workspace` |
@@ -121,6 +126,15 @@ python3 scripts/validate_skills.py --check-examples
 ```
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
+
+## v3.4 Standard Library and Example-Driven Patterns
+
+- Adds `rust-stdlib` for std API selection — collections (HashMap/BTreeMap/Vec/VecDeque/LinkedList/BinaryHeap), smart pointers (Box/Rc/Arc/RefCell/Mutex/OnceLock/LazyLock), string types (String/&str/OsString/PathBuf/Cow), interior mutability (Cell/RefCell/OnceCell), I/O streams, iterators, Option/Result combinators, threads and mpsc channels, time, path, process. Includes 10 reference files and a `golden-stdlib` crate with 10 tests exercising each topic.
+- Adds `rust-by-example` for concrete code patterns — type conversions, flow control, closures, modules, generics, traits, error handling, attributes, unsafe, procedural macros overview, inline assembly, and a cross-language migration table (Java/Python/Go/C++/JS). Includes 11 reference files and a `golden-by-example` crate with 10 tests.
+- Slims `rust-stable` to focus on **language semantics** (ownership, lifetimes, traits, generics, pattern matching, closures, Edition differences). Routes std API questions to `rust-stdlib` and "how do I write X" questions to `rust-by-example`.
+- Deepens `rust-style-clippy` with all 10 lint groups (including `cargo`, `suspicious`, `nursery`), `#[expect]` attribute (Rust 1.81+), lint `priority` layering, full `clippy.toml` reference, and ready-to-paste production CI policies by project type (library / application / embedded). Adds `references/clippy-lint-policy.md`.
+- Deepens `rust-api-design` Type Safety chapter from 3 to 9 rules: adds C-SIGNED, C-BITFLAG, C-WRAPPER, C-INTERVAL, C-COMMENT-HIDDEN with code examples.
+- Adds Cargo Guide onboarding to `rust-cargo-build` — cargo new/init, everyday command loop, dependencies, package layout, Cargo.toml vs Cargo.lock policy, and CI templates (GitHub Actions + GitLab CI). Adds `references/cargo-guide-workflow.md`.
 
 ## v3.3 API Design and Supply-Chain Coverage
 

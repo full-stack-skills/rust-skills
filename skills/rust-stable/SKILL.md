@@ -1,11 +1,13 @@
 ---
 name: rust-stable
-description: Implement and explain stable Rust language and standard-library code with explicit toolchain and MSRV checks, covering ownership, borrowing, lifetimes, traits, generics, conversions, collections, errors, paths, files, interior mutability, and stable API selection. Use as the core Rust language skill when users ask for Rust syntax, compiler-error fixes, standard-library choices, or version-sensitive stable code; hand specialized domains to their dedicated skills.
+description: Implement and explain stable Rust language semantics with explicit toolchain and MSRV checks — ownership, borrowing, lifetimes, move semantics, traits, generics, associated types, pattern matching, closures, error propagation, and Edition differences. Use as the core Rust language skill when users ask for Rust syntax, compiler-error fixes, ownership/borrowing diagnoses, or version-sensitive stable code; hand std API selection (which collection, which smart pointer, which string type) to rust-stdlib, "how do I write X" pattern questions to rust-by-example, and specialized domains to their dedicated skills.
 ---
 
-# Rust Stable Language and Standard Library
+# Rust Stable Language Semantics
 
-Use this skill as the primary entry point for stable Rust language features and standard-library APIs. First verify the project's actual toolchain and Minimum Supported Rust Version (MSRV), then select general language resources or hand the task to a specialized skill; do not infer the user's version from the skill name.
+Use this skill for **language semantics**: ownership, borrowing, lifetimes, traits, generics, pattern matching, error propagation, and Edition differences. First verify the project's actual toolchain and Minimum Supported Rust Version (MSRV).
+
+For **standard-library API selection** (which collection, which smart pointer, which string type, which I/O trait), use `rust-stdlib`. For **concrete pattern examples** ("how do I write X"), use `rust-by-example`.
 
 ## Prerequisites Before Starting
 
@@ -22,28 +24,34 @@ Use this skill as the primary entry point for stable Rust language features and 
 ### Suitable For Handling
 - Ownership, borrowing, lifetimes, and move semantics.
 - `struct`, `enum`, pattern matching, traits, generics, and associated types.
-- `Option`, `Result` error propagation, and custom errors.
-- `Vec`, `String`, `HashMap`, iterators, closures.
-- `Box`, `Rc`, `Arc`, `Cell`, `RefCell`, `OnceLock`, `LazyLock`.
-- Modules, visibility modifiers, attributes, formatting, and common standard library I/O.
+- `Option`, `Result` error propagation, and custom errors (the *language mechanism*).
+- Closures (`Fn`/`FnMut`/`FnOnce`), attribute syntax, format strings (the *language mechanism*).
+- Modules, visibility modifiers, `pub`/`pub(crate)`/`pub(super)`.
+- Edition differences (language-level — `unsafe extern`, RPIT capture, match ergonomics).
 - Common compilation errors, borrowing check failures, and stable migration judgments.
 
-### Transfer to Specialized Skills
+### Hand Off to Specialized Skills
 
-| User Intent | Preferred Skill | Jointly Load If Necessary |
-|---|---|---|
-| Project layout, module trees, workspace structure | `rust-workspace` | `rust-cargo-build` |
-| Cargo.toml dependencies, features, profiles, publishing | `rust-cargo-build` | `rust-testing` |
-| Threads, locks, atomics, channels, Tokio | `rust-concurrency` | `rust-stable` |
-| Unit tests, integration tests, doctests, coverage | `rust-testing` | `rust-workspace` |
-| Raw pointers, memory layout, FFI, Miri | `rust-unsafe-ffi` | `rust-code-review` |
-| macro_rules, derive, procedural macros | `rust-macros` | `rust-stable` |
-| Command contracts, standard streams, exit codes, CLI process behavior | `rust-cli` | `rust-testing`, `rust-cargo-build` |
-| Server-side HTTP APIs, handlers, middleware, lifetimes | `rust-web` | `rust-concurrency`, `rust-testing` |
-| SQL/ORMs, schemas, migrations, transactions, connection pools | `rust-database` | `rust-testing`, `rust-concurrency` |
-| Web authentication, authorization, sessions, tokens, browser security | `rust-web-security` | `rust-web`, `rust-database` |
-| Bare-metal firmware, portable no_std drivers, hardware acceptance testing | `rust-embedded` | `rust-unsafe-ffi`, `rust-cargo-build` |
-| Risk, correctness, API and safety review | `rust-code-review` | `rust-style-clippy` |
+| User Intent | Preferred Skill |
+|---|---|
+| **"Which std collection / smart pointer / string type should I use?"** | `rust-stdlib` |
+| **"How do I write X in Rust?"** (concrete pattern) | `rust-by-example` |
+| API design (naming, traits, future-proofing, ~100 C-* rules) | `rust-api-design` |
+| Project layout, module trees, workspace structure | `rust-workspace`, `rust-module-layout` |
+| Cargo.toml dependencies, features, profiles, publishing | `rust-cargo-build` |
+| Dependency governance, supply chain, cargo-deny | `rust-dependencies` |
+| Semver, breaking-change classification, publish workflow | `rust-semver` |
+| Threads, locks, atomics, channels, Tokio | `rust-concurrency` |
+| Unit tests, integration tests, doctests, coverage | `rust-testing` |
+| Raw pointers, memory layout, FFI, Miri | `rust-unsafe-ffi` |
+| macro_rules, derive, procedural macros | `rust-macros` |
+| Command contracts, standard streams, exit codes, CLI | `rust-cli` |
+| Server-side HTTP APIs, handlers, middleware | `rust-web` |
+| SQL/ORMs, schemas, migrations, transactions, pools | `rust-database` |
+| Web authentication, authorization, sessions, tokens | `rust-web-security` |
+| Bare-metal firmware, no_std drivers, hardware validation | `rust-embedded` |
+| Risk, correctness, API and safety review | `rust-code-review` |
+| rustfmt, Clippy, Edition migration, lint policy | `rust-style-clippy` |
 
 Do not replace the complete workflow of domain-specific skills with this skill.
 
@@ -82,19 +90,17 @@ If the project does not support `--all-features` or contains platform-specific t
 
 ## Required Documentation to Read On-Demand
 
-### Version & Language
+### Version & Language Semantics
 - [Current Stable Baseline](references/release-current.md): Latest version, compatibility notes, update steps.
 - [Ownership & Lifetimes](references/ownership-lifetimes.md): Borrowing design, return values and lifetime judgment rules.
 - [Traits & Generics](references/traits-generics.md): Bounds, associated types, trait objects, API trade-offs.
 - [Patterns & Idiomatic Style](references/patterns.md): Builder patterns, newtypes, RAII, typestate management.
 - [Style Guide](references/style-guide.md): Naming conventions, module organization, documentation style, and API design principles.
 
-### Standard Library Modules
-- [Standard Library Index](references/std-index.md): Select modules based on task requirements.
-- `Vec`, `String`, `HashMap`: Core collection types with usage patterns.
-- Iterators & Formatting (`fmt`): Iterator-based iteration strategies and output formatting rules.
-- I/O, Filesystem, Path: Standard library file system operations.
-- Error Handling, Smart Pointers, Interior Mutability, Conversions: Advanced runtime behavior and type manipulation.
+### Cross-references (load the right skill instead)
+- **"Which std collection / smart pointer / string type?"** → `rust-stdlib` (its `references/` covers collections, smart-pointers, string-types, iterators, I/O, interior-mutability, combinators, std-concurrency, process-and-fs, std-module-index)
+- **"How do I write X?"** → `rust-by-example` (its `references/` covers conversions, flow-control, closures, modules, generics-traits, error-handling, attributes, unsafe, procedural-macros-overview, inline-asm, migrating-from-other-languages)
+- **API design** → `rust-api-design`; **Cargo manifest** → `rust-cargo-build`; **dependency governance** → `rust-dependencies`
 
 ### Reproducible Examples
 - [Quick Start Workflows](examples/quickstart-workflows.md)

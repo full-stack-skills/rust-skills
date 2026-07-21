@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust by Example"
+  short_description: "Show Rust patterns through compilable snippets — conversions, flow control, closures, generics, traits, errors, attributes"
+  default_prompt: "Use $rust-by-example when users ask 'how do I write X in Rust' or need concrete copy-pasteable patterns for type conversion, flow control, closures, modules, generics, traits, error handling, attributes, or unsafe."

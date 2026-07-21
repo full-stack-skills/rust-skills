@@ -211,7 +211,9 @@ use my_crate::StringExt;
 
 Don't put methods directly on `String`/`Vec`/`HttpRequest` from other crates — use an `Ext` trait.
 
-## 5. Type Safety (C-BOOL, C-NONZERO, C-STR)
+## 5. Type Safety (C-BOOL, C-NONZERO, C-STR, C-SIGNED, C-BITFLAG, C-WRAPPER, C-INTERVAL)
+
+> Authority: [API Guidelines — Type Safety](https://rust-lang.github.io/api-guidelines/type-safety.html). See `references/api-guidelines-checklist.md` for canonical wording.
 
 ### C-BOOL — replace bool parameters with enums
 
@@ -226,7 +228,7 @@ pub fn parse(input: &str, trim: bool) -> Result<Foo> { /* */ }
 parse("  x  ", true);   // true = ??
 ```
 
-Two bool params compound: `f(true, false, true)` is incomprehensible. Two-arg enums are the floor.
+Two bool params compound: `f(true, false, true)` is incomprehensible. Two-arg enums are the floor. Set `clippy.toml` `max-fn-params-bools = 1` and `max-struct-bools = 1` to enforce mechanically.
 
 ### C-NONZERO — `NonZeroUsize` when zero is invalid
 
@@ -237,7 +239,7 @@ use std::num::NonZeroUsize;
 pub fn chunk_size(&self) -> NonZeroUsize { /* */ }
 ```
 
-Enables niche optimization: `Option<NonZeroU32>` is the same size as `u32`.
+Enables niche optimization: `Option<NonZeroU32>` is the same size as `u32`. Use `NonZeroU8`/`NonZeroU16`/`NonZeroU32`/`NonZeroU64`/`NonZeroUsize` and the `NonZeroI*` variants.
 
 ### C-STR — `&str` not `&String`; `&[T]` not `&Vec<T>`
 
@@ -248,6 +250,86 @@ pub fn process(data: &[u8], name: &str) { /* */ }
 // ❌ Forces caller to have owned collections
 pub fn process(data: &Vec<u8>, name: &String) { /* */ }
 ```
+
+### C-SIGNED — prefer unsigned types when values can't be negative
+
+```rust
+// ✅ u64 — semantically "count" can't be negative
+pub struct Counter { count: u64 }
+
+// ❌ i64 — implies negative values are valid (they aren't)
+pub struct Counter { count: i64 }
+```
+
+For special ranges (e.g., `Age` 0..=150), use a newtype with validating constructor — let the type system prevent invalid values.
+
+### C-BITFLAG — use the `bitflags!` macro for flag sets
+
+```rust
+use bitflags::bitflags;
+
+bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct Permissions: u32 {
+        const READ = 0b001;
+        const WRITE = 0b010;
+        const EXECUTE = 0b100;
+    }
+}
+
+let p = Permissions::READ | Permissions::WRITE;   // type-checked composition
+assert!(p.contains(Permissions::READ));            // built-in methods
+```
+
+Avoid raw `u32` for flag sets — lose type safety, lose `contains`/`insert`/`remove`/`intersects`.
+
+### C-WRAPPER — newtype to give primitive types meaningful semantics
+
+```rust
+pub struct UserId(pub u64);
+pub struct AccountId(pub u64);
+pub struct OrderId(pub u64);
+
+// Compiler rejects wrong-id bugs:
+fn transfer(from: AccountId, to: AccountId, amount: Cents) { /* */ }
+// transfer(UserId(1), UserId(2), Cents(100))  ← compile error
+```
+
+Zero-cost at runtime (compile to underlying type). Use `#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]` by default.
+
+### C-INTERVAL — encode ranges as types, not loose pairs
+
+```rust
+// ✅ Dedicated range type with validating constructor
+pub struct ChunkRange { start: u32, end: u32 }   // invariant: end >= start
+
+impl ChunkRange {
+    pub fn new(start: u32, end: u32) -> Result<Self, RangeError> {
+        if end < start { return Err(RangeError::Inverted); }
+        Ok(Self { start, end })
+    }
+    pub fn contains(&self, x: u32) -> bool { self.start <= x && x <= self.end }
+}
+
+// ❌ Loose pair — caller might pass end < start
+pub fn process_chunk(start: u32, end: u32) { /* */ }
+```
+
+For std ranges, use `RangeInclusive`/`Range`/`RangeTo`. For domain ranges (pagination, time windows), wrap in a newtype.
+
+### C-COMMENT-HIDDEN — `#[doc(hidden)]` does NOT exclude from public API
+
+```rust
+// ❌ Hides from rustdoc but is still semver-relevant
+#[doc(hidden)]
+pub mod unstable { /* */ }   // downstream can still `use crate::unstable::Foo;`
+
+// ✅ For actually-unstable items, gate behind a feature
+#[cfg(feature = "unstable")]
+pub mod unstable { /* */ }
+```
+
+`#[doc(hidden)]` only hides from `cargo doc`. For semver/stability, use feature flags or module privacy.
 
 For owned inputs, accept `String`/`Vec` or `impl Into<String>`/`impl IntoIterator`.
 
