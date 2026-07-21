@@ -1,0 +1,12 @@
+[package]
+name = "my-net"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+my-core.workspace = true
+
+[lints]
+workspace = true

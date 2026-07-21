@@ -1,0 +1,37 @@
+# Root-package workspace (Pattern D in SKILL.md).
+#
+# This is a 2-3 crate workspace where one crate is unambiguously primary
+# (the `my-app` library at the root). For larger workspaces, prefer the
+# virtual-manifest Pattern A — see references/workspace-layouts.md.
+
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+
+[package]
+name = "my-app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+description = "Golden example: root-package workspace with shared core types"
+
+[dependencies]
+my-core = { path = "crates/my-core" }
+my-net = { path = "crates/my-net" }
+
+[workspace.dependencies]
+my-core = { path = "crates/my-core" }
+my-net = { path = "crates/my-net" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = "warn"

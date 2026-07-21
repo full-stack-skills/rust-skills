@@ -50,6 +50,36 @@
       "assertions": ["flat_facade", "private_internal_tree", "targeted_pub_use", "runs_cargo_check"]
     },
     {
+      "id": "workspace-virtual-vs-root",
+      "prompt": "我的 8 个 crate 的项目到底应该用虚拟 manifest 还是 root package workspace？解释 trade-off 并给出最终建议。",
+      "expected_skills": ["rust-project-structure"],
+      "assertions": ["explains_root_pollution", "explains_command_ergonomics", "recommends_virtual_manifest_for_large"]
+    },
+    {
+      "id": "workspace-mixed-root-migration",
+      "prompt": "我的项目根 Cargo.toml 同时有 [workspace] 和 [package]，src/ 里写了 642 行的核心代码。给出迁移到虚拟 manifest 的完整步骤。",
+      "expected_skills": ["rust-project-structure"],
+      "assertions": ["diagnoses_mixed_root_pattern", "plans_six_step_migration", "preserves_published_crate_name", "runs_cargo_check_workspace"]
+    },
+    {
+      "id": "workspace-shared-deps",
+      "prompt": "我每个 member crate 都重复定义了 serde、tokio 版本，经常版本漂移。用 [workspace.dependencies] 重构。",
+      "expected_skills": ["rust-project-structure"],
+      "assertions": ["uses_workspace_dependencies_table", "uses_workspace_inheritance_syntax", "single_source_of_truth", "runs_cargo_check_workspace"]
+    },
+    {
+      "id": "workspace-dep-direction",
+      "prompt": "我的 core crate 依赖了 cli crate，这是不是反向？给出正确的依赖方向 DAG 并修正 Cargo.toml。",
+      "expected_skills": ["rust-project-structure"],
+      "assertions": ["identifies_reverse_dependency", "proposes_dag_layering", "uses_cargo_tree_for_verification"]
+    },
+    {
+      "id": "workspace-layout-decision",
+      "prompt": "我现在有 25 个 crate，包括 10 个 lib、5 个 bin、10 个 plugin，应该用平铺 crates/ 还是分组 crates/<category>/?",
+      "expected_skills": ["rust-project-structure"],
+      "assertions": ["evaluates_crate_count_threshold", "proposes_grouped_pattern_with_glob", "documents_category_in_readme"]
+    },
+    {
       "id": "cargo-resolver",
       "prompt": "解释 resolver 2 和 3，并为 Edition 2024 virtual workspace 配置正确值。",
       "expected_skills": ["rust-cargo-build"],

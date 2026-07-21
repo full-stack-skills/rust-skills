@@ -1,0 +1,17 @@
+[package]
+name = "my-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[[bin]]
+name = "my-cli"
+path = "src/main.rs"
+
+[dependencies]
+my-core.workspace = true
+my-net.workspace = true
+
+[lints]
+workspace = true
