@@ -1,5 +1,5 @@
 [package]
-name = "rust-project-structure-golden"
+name = "rust-workspace-golden-layout"
 version = "0.0.0"
 edition = "2024"
 rust-version = "1.85"

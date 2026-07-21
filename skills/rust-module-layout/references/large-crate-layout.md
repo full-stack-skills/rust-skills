@@ -223,7 +223,7 @@ Decision rule:
 | Subdomain's code is large but tightly coupled with the rest | Keep in-crate |
 | Subdomain's types appear in every other module's signatures | Keep in-crate |
 
-See `rust-project-structure` for the workspace-level decision.
+See `rust-workspace` for the workspace-level decision.
 
 ---
 

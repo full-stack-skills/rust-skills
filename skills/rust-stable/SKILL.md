@@ -32,10 +32,10 @@ Use this skill as the primary entry point for stable Rust language features and 
 
 | User Intent | Preferred Skill | Jointly Load If Necessary |
 |---|---|---|
-| Project layout, module trees, workspace structure | `rust-project-structure` | `rust-cargo-build` |
+| Project layout, module trees, workspace structure | `rust-workspace` | `rust-cargo-build` |
 | Cargo.toml dependencies, features, profiles, publishing | `rust-cargo-build` | `rust-testing` |
 | Threads, locks, atomics, channels, Tokio | `rust-concurrency` | `rust-stable` |
-| Unit tests, integration tests, doctests, coverage | `rust-testing` | `rust-project-structure` |
+| Unit tests, integration tests, doctests, coverage | `rust-testing` | `rust-workspace` |
 | Raw pointers, memory layout, FFI, Miri | `rust-unsafe-ffi` | `rust-code-review` |
 | macro_rules, derive, procedural macros | `rust-macros` | `rust-stable` |
 | Command contracts, standard streams, exit codes, CLI process behavior | `rust-cli` | `rust-testing`, `rust-cargo-build` |

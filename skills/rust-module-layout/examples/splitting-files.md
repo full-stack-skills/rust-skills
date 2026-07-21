@@ -185,7 +185,7 @@ Same content as `mod.rs` goes in `executor.rs`. Pick one layout per crate.
 
 ### Variation C — Extract to a workspace member
 
-If `executor/` grows past 2000 lines and has its own stability trajectory, promote to a separate crate. See `rust-project-structure`.
+If `executor/` grows past 2000 lines and has its own stability trajectory, promote to a separate crate. See `rust-workspace`.
 
 ---
 

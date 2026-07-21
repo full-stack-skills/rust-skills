@@ -21,7 +21,7 @@ description: Design, implement, and validate Rust tests, including unit, integra
 9. Asynchronous race conditions, backpressure, timeouts, process/daemon models, platform matrices, and resource-constrained testing
 
 ### ⚠️ Prerequisites
-1. Understanding of Rust module system (rust-project-structure)
+1. Understanding of Rust module system (rust-workspace)
 
 ### ❌ Out of Scope
 1. Property-based tests (`proptest`) → Not currently covered

@@ -11,7 +11,7 @@ Use macros for syntax transformation or mechanical generation that functions, tr
 
 Use this skill for `macro_rules!`, declarative DSLs, derive macros, attribute macros, function-like procedural macros, parsing, token generation, hygiene, diagnostics, and expansion tests.
 
-Route ordinary generic design to `rust-stable`, crate layout and proc-macro companion crates to `rust-project-structure`, feature and publishing policy to `rust-cargo-build`, compile-fail strategy to `rust-testing`, and use of the third-party Lombok-like derives to `rust-lombok-macros`.
+Route ordinary generic design to `rust-stable`, crate layout and proc-macro companion crates to `rust-workspace`, feature and publishing policy to `rust-cargo-build`, compile-fail strategy to `rust-testing`, and use of the third-party Lombok-like derives to `rust-lombok-macros`.
 
 ## Workflow
 

@@ -1,6 +1,6 @@
 {
   "name": "rust-skills",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Stable Rust language and engineering skills",
   "author": {
     "name": "PartMeAI",
@@ -11,7 +11,7 @@
   "source": "./",
   "skills": [
     "./skills/rust-stable",
-    "./skills/rust-project-structure",
+    "./skills/rust-workspace",
     "./skills/rust-module-layout",
     "./skills/rust-cargo-build",
     "./skills/rust-documentation",

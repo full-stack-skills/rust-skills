@@ -1,9 +1,9 @@
 ---
-name: rust-project-structure
+name: rust-workspace
 description: Design Rust project topology — single-crate packages, multi-crate workspaces (virtual manifests, flat/grouped/nested layouts), workspace-level configuration (shared deps, lints, package metadata), dependency direction DAGs, and crate boundary decisions. Use when users ask how to split a project into crates, configure a workspace, avoid dependency cycles, refactor a mixed root-package workspace (rbatis-style), or decide between modules-in-one-crate vs separate crates. For in-crate src/ layout, see rust-module-layout.
 ---
 
-# Rust Project Structure and Topology
+# Rust Workspace and Project Topology
 
 > Authority: [Cargo Book — Workspaces](https://doc.rust-lang.org/cargo/reference/workspaces.html), [The Book ch7](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html) and [ch14-03](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html), [Rust Reference ch7](https://doc.rust-lang.org/reference/items/modules.html), [RFC 1525](https://rust-lang.github.io/rfcs/1525-cargo-workspace.html), [matklad — Large Rust Workspaces](https://matklad.github.io/2021/08/22/large-rust-workspaces.html).
 

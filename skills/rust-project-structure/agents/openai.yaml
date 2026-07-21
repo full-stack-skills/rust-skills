@@ -1,4 +1,0 @@
-interface:
-  display_name: "Rust Project Structure"
-  short_description: "Design Rust crates, modules, workspaces, and APIs"
-  default_prompt: "Use $rust-project-structure to design and validate this Rust package or workspace layout."

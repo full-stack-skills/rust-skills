@@ -1,4 +1,4 @@
-# Project Structure References
+# Workspace References
 
 ## Key concepts
 - Package: one Cargo.toml, one or more crates

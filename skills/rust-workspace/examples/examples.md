@@ -1,4 +1,4 @@
-# Project Structure Examples
+# Workspace Examples
 
 ## Binary + lib crate
 ```rust

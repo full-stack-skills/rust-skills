@@ -55,7 +55,7 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>language and std entry"]
-    P["project engineering<br/>project-structure / module-layout / cargo-build / documentation"]
+    P["project engineering<br/>rust-workspace / module-layout / cargo-build / documentation"]
     D["specialized domains<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["operational evidence<br/>testing / performance / observability"]
     Q["quality gates<br/>code-review / style-clippy"]
@@ -70,8 +70,8 @@ flowchart TB
 | Layer | Skill | Responsibility |
 |---|---|---|
 | Core | `rust-stable` | Ownership, traits, collections, errors, std, version checks |
-| Engineering | `rust-project-structure` | Packages, crates, workspace layout, dependency direction |
-| Engineering | `rust-module-layout` | In-crate `src/` directory tree, `lib.rs` facade, `mod` declarations, visibility, re-exports — the companion to `rust-project-structure` |
+| Engineering | `rust-workspace` | Multi-crate workspaces, virtual manifests, crate boundaries, dependency direction DAGs, `[workspace.*]` configuration |
+| Engineering | `rust-module-layout` | In-crate `src/` directory tree, `lib.rs` facade, `mod` declarations, visibility, re-exports — the companion to `rust-workspace` |
 | Engineering | `rust-cargo-build` | Manifests, dependencies, features, resolver, build and publish |
 | Engineering | `rust-documentation` | Rustdoc API contracts, doctests, mdBook guides and documentation release gates |
 | Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |

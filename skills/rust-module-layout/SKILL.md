@@ -7,7 +7,7 @@ description: Design and enforce the internal layout of a single Rust crate — l
 
 > Authority: [The Rust Book ch7](https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html), [Rust Reference ch7](https://doc.rust-lang.org/reference/items/modules.html), [Rust API Guidelines — Organization](https://rust-lang.github.io/api-guidelines/about.html) (C-HIERARCHY, C-REEXPORT), [Rust Style Guide](https://doc.rust-lang.org/style-guide/).
 
-This skill is the **crate-internal** counterpart to `rust-project-structure`. That skill decides *crate boundaries* (workspace, packages, dependency direction). This skill decides *what lives inside one crate's `src/`*: the file tree, the `mod` declarations, the visibility, and the public re-export surface.
+This skill is the **crate-internal** counterpart to `rust-workspace`. That skill decides *crate boundaries* (workspace, packages, dependency direction). This skill decides *what lives inside one crate's `src/`*: the file tree, the `mod` declarations, the visibility, and the public re-export surface.
 
 ## Capability Boundaries
 
@@ -24,11 +24,11 @@ This skill is the **crate-internal** counterpart to `rust-project-structure`. Th
 
 ### ⚠️ Prerequisites
 1. Rust ownership and basic module syntax — see the `rust-stable` skill
-2. Crate vs package vs workspace — see the `rust-project-structure` skill
+2. Crate vs package vs workspace — see the `rust-workspace` skill
 
 ### ❌ Out of Scope
 1. Cargo.toml / dependencies / features → use `rust-cargo-build`
-2. Splitting a crate into workspace members → use `rust-project-structure`
+2. Splitting a crate into workspace members → use `rust-workspace`
 3. Visibility of `unsafe` blocks → use `rust-unsafe-ffi`
 
 ## Data Privacy
@@ -255,7 +255,7 @@ For a worked 600-line → directory example, see [`examples/splitting-files.md`]
 - **Split into a directory** (within the same crate): subdomains share types, are always used together, or are tightly coupled. One version, one publish.
 - **Split into a workspace** (separate crates): subdomains are *independently useful*, have *different stability* trajectories, or have *different dependency footprints*.
 
-See `rust-project-structure` for the workspace-level decision.
+See `rust-workspace` for the workspace-level decision.
 
 ---
 

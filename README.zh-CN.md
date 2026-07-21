@@ -55,7 +55,7 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>语言与标准库入口"]
-    P["项目工程<br/>project-structure / module-layout / cargo-build / documentation"]
+    P["项目工程<br/>rust-workspace / module-layout / cargo-build / documentation"]
     D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
@@ -70,8 +70,8 @@ flowchart TB
 | 层级 | 技能 | 主要职责 |
 |---|---|---|
 | 核心 | `rust-stable` | 所有权、trait、集合、错误处理、标准库、版本判断 |
-| 工程 | `rust-project-structure` | package、crate、workspace 布局、依赖方向 |
-| 工程 | `rust-module-layout` | 单个 crate 内部 `src/` 目录树、`lib.rs` 门面、`mod` 声明、可见性、re-export —— 与 `rust-project-structure` 配套 |
+| 工程 | `rust-workspace` | 多 crate workspace、虚拟 manifest、crate 边界、依赖方向 DAG、`[workspace.*]` 配置 |
+| 工程 | `rust-module-layout` | 单个 crate 内部 `src/` 目录树、`lib.rs` 门面、`mod` 声明、可见性、re-export —— 与 `rust-workspace` 配套 |
 | 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、构建与发布 |
 | 工程 | `rust-documentation` | rustdoc API 契约、doctest、mdBook 指南和文档发布门禁 |
 | 领域 | `rust-concurrency` | 线程、异步运行时、CPU 并行、同步、背压、任务监督和模型测试 |

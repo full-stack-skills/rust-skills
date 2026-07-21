@@ -1,6 +1,6 @@
 ---
 name: rust-cargo-build
-description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, or crates.io publishing; hand module layout to rust-project-structure and test design to rust-testing.
+description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, or crates.io publishing; hand module layout to rust-workspace and test design to rust-testing.
 ---
 
 # Rust Cargo Build System
@@ -37,7 +37,7 @@ Additionally, verify:
 
 ### Offload to Other Skills
 
-- Module tree structure, crate API definitions, file layouts → `rust-project-structure`
+- Module tree structure, crate API definitions, file layouts → `rust-workspace`
 - Testing strategies, doctests, coverage metrics → `rust-testing`
 - Rust formatting (`rustfmt`) and linting (Clippy), edition migrations → `rust-style-clippy`
 - Core Rust syntax and standard library usage → `rust-stable`
