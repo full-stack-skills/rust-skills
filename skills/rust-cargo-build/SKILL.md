@@ -1,6 +1,6 @@
 ---
 name: rust-cargo-build
-description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, or crates.io publishing; hand module layout to rust-workspace and test design to rust-testing.
+description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Also covers the Cargo Book Reference depth: `.cargo/config.toml` (build, env, target, net, source, alias), `[lints]` table and workspace inheritance, `[build-dependencies]` vs `[dependencies]` scoping, Cargo Home and build cache layout, source replacement (mirrors, vendoring, private registries), `cargo metadata` for scripting, CI modes (`--locked`, `--frozen`, `--offline`), and `cargo tree` diagnostics (`--duplicates`, `--invert`, `-e features`). Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, `config.toml` sections, source mirroring, or crates.io publishing. Hand supply-chain governance (license/advisory/ban audits via cargo-deny) to rust-dependencies, semver versioning decisions to rust-semver, and module/crate topology to rust-workspace; hand test design to rust-testing.
 ---
 
 # Rust Cargo Build System
@@ -41,6 +41,9 @@ Additionally, verify:
 - Testing strategies, doctests, coverage metrics → `rust-testing`
 - Rust formatting (`rustfmt`) and linting (Clippy), edition migrations → `rust-style-clippy`
 - Core Rust syntax and standard library usage → `rust-stable`
+- Supply-chain governance: license/advisory/ban audits via `cargo-deny`, dependency review, allowed/banned crate lists → `rust-dependencies`
+- Semver versioning decisions, breaking-change classification, version bump strategy, `cargo-semver-checks` runs → `rust-semver`
+- Workspace topology, member listing, shared dependency inheritance, virtual manifest design → `rust-workspace`
 
 ## Workflow
 
@@ -83,6 +86,28 @@ Additionally, verify:
 - Profile configuration applies only at the workspace root level.
 - Do not infer debug behavior from release builds; do not assume reverse inference between them without explicit testing.
 
+## Cargo Reference Deep Dive
+
+The Cargo Book Reference covers advanced topics beyond the basic manifest. Use these summaries as entry points and consult `references/cargo-reference-cheatsheet.md` for full TOML shapes, gotchas, and validation commands. Pin a toolchain (`cargo --version`) before relying on any feature with a version gate.
+
+1. **`[lints]` table** — Declares rustc and Clippy lint levels directly in `Cargo.toml` (Cargo 1.74+). Supports `[workspace.lints.rust]` / `[workspace.lints.clippy]` with member opt-in via `[lints] workspace = true`; per-lint `priority` controls layering. See reference Section 1.
+
+2. **`[build-dependencies]` vs `[dependencies]`** — Four scopes (`[dependencies]`, `[dev-dependencies]`, `[build-dependencies]`, target-scoped). Build-deps compile for the **host** triple and are invisible to the final artifact; dev-deps cannot be used by `build.rs`. Same crate name in both tables resolves independently. See reference Section 2.
+
+3. **`.cargo/config.toml`** — Sections: `[build]` (jobs, target-dir, rustflags), `[env]` (with `force = true` to override shell env), `[target.<triple>]` and `[target.'cfg(...)']`, `[net]` (git-fetch-with-cli, retry), `[source]` (replacement), `[alias]`, `[term]`. Precedence: CLI > cwd `.cargo/config.toml` walking up > `$CARGO_HOME/config.toml`. See reference Section 3.
+
+4. **Cargo Home and build cache** — `CARGO_HOME` (default `~/.cargo/`) holds `bin/`, `registry/{index,cache,src}/`, `git/{db,checkouts}/`, and `credentials`. Pin its location in CI and cache `registry/cache` + `git/db` keyed on `Cargo.lock`. Never `rm -rf ~/.cargo` wholesale — use `cargo cache -a`. See reference Section 4.
+
+5. **Source replacement** — Mirror crates.io via `[source.crates-io] replace-with = "mirror"` plus a `[source.mirror] registry = "sparse+https://..."`. Use `cargo vendor` + `[source.vendored-sources] directory = "vendor"` for air-gapped builds. Inject registry tokens via `CARGO_REGISTRIES_<NAME>_TOKEN` in CI, not files. License/advisory/ban governance belongs in `rust-dependencies`. See reference Section 5.
+
+6. **`cargo metadata` for scripting** — Stable JSON (format-version 1) describing every resolved package; pair with `jq` for release tooling, dashboards, and migration audits. Use `--no-deps` for workspace-only and `--locked` in CI to stay deterministic. See reference Section 6.
+
+7. **CI modes** — `--locked` fails if `Cargo.lock` would change (every CI job); `--frozen` adds `--offline` for air-gapped/hermetic builds; `--offline` allows lock updates against the local cache only. Fix `--locked` failures by running `cargo update` locally, never in CI. See reference Section 7.
+
+8. **`cargo tree` deep usage** — `-e normal|dev|build|features|no-dev` selects edge kinds; `-d` (`--duplicates`) lists crates with multiple versions; `-i <crate>` (`--invert`) answers "who depends on X?"; `-e features -i <crate>` proves which features each consumer enables after unification. See reference Section 8.
+
+Full TOML, semantics, worked examples, and per-topic gotchas live in `references/cargo-reference-cheatsheet.md`.
+
 ## Validation Commands
 
 ```bash
@@ -107,6 +132,7 @@ cargo package --list
 - [Cross-compilation](references/cross-compilation.md)
 - [Packaging and Publishing](references/publishing.md)
 - [Command Reference Guide](references/references.md)
+- [Cargo Book Reference Cheatsheet](references/cargo-reference-cheatsheet.md): Retrieve when configuring `.cargo/config.toml` sections, `[lints]` tables, source replacement/mirroring, `cargo metadata` scripting, CI modes (`--locked`/`--frozen`/`--offline`), or advanced `cargo tree` diagnostics (`--duplicates`, `--invert`, `-e features`).
 - [Copy-Pasteable Examples](examples/examples.md)
 - `examples/golden-features/`: Feature examples compiled for CI.
 

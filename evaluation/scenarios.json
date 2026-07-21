@@ -318,6 +318,84 @@
       "prompt": "A small lock-free state machine fails once a month. Add deterministic concurrency verification and explain what Loom can and cannot prove.",
       "expected_skills": ["rust-concurrency", "rust-testing"],
       "assertions": ["builds_bounded_loom_model", "avoids_real_io_and_time_in_model", "states_model_limits", "keeps_stress_and_integration_tests"]
+    },
+    {
+      "id": "api-design-naming-and-getter",
+      "prompt": "Review this public API: `pub fn get_data(&self) -> Vec<u8>` and `pub fn process(input: &String, opts: &Vec<u8>)`. Rewrite following Rust API Guidelines C-CASE, C-CONV, C-GETTER, C-STR.",
+      "expected_skills": ["rust-api-design"],
+      "assertions": ["removes_get_prefix", "uses_borrowed_slices_for_input", "renames_string_to_str", "preserves_caller_api_compatibility_or_documents_break"]
+    },
+    {
+      "id": "api-design-bool-and-newtype",
+      "prompt": "Refactor `fn transfer(amount: u64, from: u64, to: u64, immediate: bool)` following C-BOOL and C-NEWTYPE — the bool and raw u64s are a footgun.",
+      "expected_skills": ["rust-api-design"],
+      "assertions": ["introduces_distinct_id_newtypes", "replaces_bool_with_named_enum", "documents_argument_order_safety", "runs_cargo_check"]
+    },
+    {
+      "id": "api-design-panic-and-traits",
+      "prompt": "This library has `pub fn parse(input: &str) -> Config` that calls `.unwrap()` on serde, and a public `trait Handler { fn handle(&self); }` users are expected to impl. Apply C-PANIC, C-UNWRAP, C-SEALED.",
+      "expected_skills": ["rust-api-design"],
+      "assertions": ["returns_result_instead_of_unwrap", "seals_or_adds_default_method", "documents_safety_invariants", "runs_cargo_check"]
+    },
+    {
+      "id": "api-design-future-proofing",
+      "prompt": "I'm about to publish v1.0.0 of my error library. The error enum is `pub enum Error { Io, Parse }` and a struct `pub struct Config { pub timeout: u64 }`. Apply C-NON-EXHAUSTIVE and C-STRUCT-FIELD before I commit to 1.0.",
+      "expected_skills": ["rust-api-design"],
+      "assertions": ["adds_non_exhaustive_to_error_enum", "makes_struct_fields_private_with_builder", "preserves_existing_constructors", "runs_cargo_check"]
+    },
+    {
+      "id": "semver-classify-change",
+      "prompt": "I removed `pub fn old_api()` and added a new field `retry_count: u32` to my public struct. What version bump? Run cargo-semver-checks and explain.",
+      "expected_skills": ["rust-semver"],
+      "assertions": ["classifies_both_as_major", "runs_cargo_semver_checks", "explains_non_exhaustive_mitigation"]
+    },
+    {
+      "id": "semver-pre-1.0-rules",
+      "prompt": "My crate is at 0.3.5. I added a new pub fn and changed an internal (private) module layout. What bump?",
+      "expected_skills": ["rust-semver"],
+      "assertions": ["identifies_minor_bump_for_additive", "explains_0x_minor_treated_as_major", "documents_changelog_entry"]
+    },
+    {
+      "id": "semver-workspace-publish",
+      "prompt": "My workspace has 4 crates with internal path deps. I want to bump everything from 0.2.x to 0.3.0 and publish. Walk me through cargo-workspaces.",
+      "expected_skills": ["rust-semver", "rust-workspace"],
+      "assertions": ["uses_cargo_workspaces_version_minor", "updates_internal_path_dep_versions", "publishes_in_topological_order", "does_not_publish_without_authorization"]
+    },
+    {
+      "id": "semver-yank-advisory",
+      "prompt": "v1.2.0 of my crate has a critical security bug. Walk me through yanking, patching, republishing, and filing a RustSec advisory.",
+      "expected_skills": ["rust-semver"],
+      "assertions": ["yanks_broken_version", "publishes_fix_at_patch_or_minor", "files_or_links_rustsec_advisory", "documents_user_communication"]
+    },
+    {
+      "id": "dependencies-version-syntax",
+      "prompt": "Explain the difference between `serde = \"1\"`, `serde = \"1.2\"`, `serde = \"=1.2.3\"`, `serde = \"~1.2\"`, and when each is appropriate.",
+      "expected_skills": ["rust-dependencies"],
+      "assertions": ["explains_caret_default_behavior", "explains_tilde_within_minor", "explains_exact_pin_use_case", "discourages_wildcard"]
+    },
+    {
+      "id": "dependencies-cargo-deny-policy",
+      "prompt": "Set up cargo-deny for an Apache-2.0-only project: forbid GPL/SSPL, deny openssl (prefer rustls), fail on yanked crates, and warn on duplicates.",
+      "expected_skills": ["rust-dependencies"],
+      "assertions": ["configures_licenses_allow_deny_lists", "bans_openssl_family", "sets_yanked_to_deny", "configures_multiple_versions_warning"]
+    },
+    {
+      "id": "dependencies-duplicate-versions",
+      "prompt": "`cargo tree --duplicates` shows serde 1.0.180 and 1.0.195 both in the graph. How do I diagnose and resolve?",
+      "expected_skills": ["rust-dependencies"],
+      "assertions": ["uses_cargo_tree_invert_to_trace_dependents", "attempts_cargo_update_precise", "evaluates_whether_duplicate_is_acceptable"]
+    },
+    {
+      "id": "dependencies-private-registry",
+      "prompt": "Set up a private Cargo registry for our company's internal crates. Cover credentials, .cargo/config.toml, and publishing.",
+      "expected_skills": ["rust-dependencies"],
+      "assertions": ["configures_registries_index_with_sparse_protocol", "uses_env_var_for_token_not_hardcoded", "demonstrates_cargo_publish_registry_flag"]
+    },
+    {
+      "id": "dependencies-vendor-airgap",
+      "prompt": "We need to build our Rust workspace on an air-gapped CI runner. Vendor all dependencies and configure the build.",
+      "expected_skills": ["rust-dependencies", "rust-cargo-build"],
+      "assertions": ["runs_cargo_vendor", "configures_source_replacement_to_vendored_sources", "builds_with_frozen_or_offline"]
     }
   ]
 }

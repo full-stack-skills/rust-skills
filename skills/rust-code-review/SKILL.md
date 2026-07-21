@@ -1,6 +1,6 @@
 ---
 name: rust-code-review
-description: Review Rust changes for correctness, memory and thread safety, error semantics, unnecessary allocation or cloning, lock scope, API compatibility, test gaps, documentation, and dependency risk. Use when reviewing Rust diffs, pull requests, libraries, unsafe boundaries, or production incidents; report actionable findings by severity before summaries and route automated formatting or lint policy to rust-style-clippy.
+description: Review Rust changes for correctness, memory and thread safety, error semantics, unnecessary allocation or cloning, lock scope, API compatibility, test gaps, documentation, and dependency risk, applying the Rust API Guidelines checklist (C-PANIC, C-UNWRAP, C-TRANSMUTE, C-BOOL, C-NEWTYPE, C-COMMON-TRAITS, C-CONVERT, C-SEALED, C-NON-EXHAUSTIVE). Use when reviewing Rust diffs, pull requests, libraries, unsafe boundaries, or production incidents; report actionable findings by severity before summaries, route automated formatting or lint policy to rust-style-clippy, and route API shape decisions (trait sealing, error taxonomy, newtype design, builder patterns) to rust-api-design.
 ---
 
 # Rust Code Review
@@ -19,7 +19,7 @@ Use this skill to review:
 - allocation, cloning, blocking, serialization, and hot-path costs;
 - tests, documentation, dependencies, and operational failure paths.
 
-Route format and lint configuration to `rust-style-clippy`, deep unsafe or ABI analysis to `rust-unsafe-ffi`, concurrency design to `rust-concurrency`, dependency resolution to `rust-cargo-build`, and test implementation to `rust-testing`.
+Route format and lint configuration to `rust-style-clippy`, deep unsafe or ABI analysis to `rust-unsafe-ffi`, concurrency design to `rust-concurrency`, dependency resolution to `rust-cargo-build`, test implementation to `rust-testing`, and API shape decisions (trait sealing, newtype design, error taxonomy, builder patterns) to `rust-api-design`.
 
 ## Workflow
 
@@ -78,6 +78,17 @@ For each changed path, follow input, state transitions, side effects, errors, cl
 - Treat generated methods, serialization shapes, error variants, and public feature names as API surface.
 - Require explicit migration for persisted or transmitted formats.
 
+### 3a. API Guidelines Review Lens
+
+For every touched public item, scan the diff against the four chapters of the Rust API Guidelines checklist. Confirm each match with a concrete caller before raising it, and route design-level fixes to `rust-api-design`. The full table per chapter, severities, and suggested comments live in [API Guidelines Checklist](references/api-guidelines-checklist.md).
+
+- **Dependability** — flag `panic!`, `unwrap`, `expect`, `unreachable!`, slice indexing, and `transmute` inside public methods that accept caller input (C-PANIC, C-UNWRAP, C-TRANSMUTE).
+- **Type safety** — flag functions taking multiple `bool` parameters or interchangeable bare primitives where enums or newtypes would prevent argument-order bugs (C-BOOL, C-NEWTYPE).
+- **Interoperability** — flag public types missing `Debug`/`Clone`/`PartialEq`, and non-smart-pointer types implementing `Deref` to borrow methods (C-COMMON-TRAITS, C-CONVERT).
+- **Future-proofing** — flag extensible public traits that are not sealed and library error or config enums without `#[non_exhaustive]` (C-SEALED, C-NON-EXHAUSTIVE).
+
+Do not flag `unwrap`/`expect` in `#[cfg(test)]` modules, idiomatic infallible `unsafe` in FFI shims with documented invariants, or single-purpose `bool` setters; see the false-positives list in the checklist.
+
 ### 4. Review performance with evidence
 
 Report an allocation, clone, lock, or algorithm as a performance finding only when it is plausibly material on the changed path. Prefer measurements over aesthetic rewrites. Check blocking work on async executors, accidental quadratic behavior, repeated parsing, oversized enum variants, unnecessary buffering, and unbounded growth.
@@ -86,7 +97,7 @@ Report an allocation, clone, lock, or algorithm as a performance finding only wh
 
 Require tests at the boundary where regressions are observable. Cover success, invalid input, failure after partial progress, cancellation, concurrency, feature and platform variants, and public examples. Ensure public safety requirements, errors, panics, and compatibility constraints are documented and doctests remain executable.
 
-Read [Review Tools and Checklist](references/references.md) when choosing additional analysis tools. Read [Review Scenarios](examples/examples.md) for expected finding shape.
+Read [Review Tools and Checklist](references/references.md) when choosing additional analysis tools. Read [Review Scenarios](examples/examples.md) for expected finding shape. Read [API Guidelines Checklist](references/api-guidelines-checklist.md) when applying the C-PANIC / C-UNWRAP / C-TRANSMUTE / C-BOOL / C-NEWTYPE / C-COMMON-TRAITS / C-CONVERT / C-SEALED / C-NON-EXHAUSTIVE rules to a public API surface.
 
 ## Finding Format
 

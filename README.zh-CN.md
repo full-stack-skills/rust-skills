@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 20 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 23 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 20 个可用技能，不执行安装：
+仅查看全部 23 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 20 个技能：
+无交互地为所有已检测智能体安装全部 23 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -55,13 +55,16 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>语言与标准库入口"]
-    P["项目工程<br/>rust-workspace / module-layout / cargo-build / documentation"]
+    A["API 设计<br/>rust-api-design — Rust API Guidelines 主线"]
+    P["项目工程<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation"]
     D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
 
+    S --> A
     S --> P
-    S --> D
+    A --> P
+    A --> Q
     P --> D
     D --> O
     O --> Q
@@ -70,10 +73,13 @@ flowchart TB
 | 层级 | 技能 | 主要职责 |
 |---|---|---|
 | 核心 | `rust-stable` | 所有权、trait、集合、错误处理、标准库、版本判断 |
+| 设计 | `rust-api-design` | Rust API Guidelines（约 100 条 C-* 规则）：命名、互操作 trait、类型安全、可演进性 |
 | 工程 | `rust-workspace` | 多 crate workspace、虚拟 manifest、crate 边界、依赖方向 DAG、`[workspace.*]` 配置 |
 | 工程 | `rust-module-layout` | 单个 crate 内部 `src/` 目录树、`lib.rs` 门面、`mod` 声明、可见性、re-export —— 与 `rust-workspace` 配套 |
-| 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、构建与发布 |
-| 工程 | `rust-documentation` | rustdoc API 契约、doctest、mdBook 指南和文档发布门禁 |
+| 工程 | `rust-cargo-build` | manifest、依赖、features、resolver、profiles、build scripts、`.cargo/config.toml`、Cargo Home、source replacement |
+| 工程 | `rust-dependencies` | 版本要求语法、依赖治理（cargo-deny、cargo-audit）、私有仓库、离线 vendor |
+| 工程 | `rust-semver` | 破坏性变更判定、`cargo-semver-checks`、workspace 同步发版、yank/advisory 流程 |
+| 工程 | `rust-documentation` | rustdoc API 契约、doctest、API Guidelines 文档章节、mdBook 指南和发布门禁 |
 | 领域 | `rust-concurrency` | 线程、异步运行时、CPU 并行、同步、背压、任务监督和模型测试 |
 | 领域 | `rust-testing` | 单元、集成、doctest、基准与覆盖率 |
 | 领域 | `rust-performance` | 测量方案、Criterion 基准、CPU/延迟/内存分析和回归证明 |
@@ -87,14 +93,14 @@ flowchart TB
 | 领域 | `rust-database` | SQL/ORM、schema migration、事务、连接池和真实数据库验证 |
 | 领域 | `rust-web-security` | 威胁模型、认证、授权、session/token 和浏览器安全 |
 | 领域 | `rust-embedded` | 裸机固件、可移植 no_std 驱动和真实硬件验收 |
-| 质量 | `rust-code-review` | 正确性、安全、性能、API 与依赖审查 |
-| 质量 | `rust-style-clippy` | rustfmt、Clippy、Edition 迁移和错误码 |
+| 质量 | `rust-code-review` | 正确性、安全、性能、API 与依赖审查 —— 含 Rust API Guidelines 评审视角 |
+| 质量 | `rust-style-clippy` | rustfmt、Clippy、Edition 迁移、错误码，以及 API Guidelines ↔ Clippy lint 映射 |
 
 ## 仓库结构
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 20 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 23 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
@@ -122,6 +128,16 @@ python3 scripts/validate_skills.py --check-examples
 - Markdown 相对链接和代码围栏有效。
 - `agents/openai.yaml` 存在且默认提示显式引用对应技能。
 - 黄金示例通过 `cargo fmt`、`cargo check`、`cargo test` 和 `cargo clippy -D warnings`。
+
+## v3.3 API 设计与供应链覆盖
+
+- 新增 `rust-api-design` 作为承接 [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) 的主线技能 —— 覆盖约 100 条 C-* 规则：命名、互操作、类型安全、可预测性、灵活性、可依赖性、可调试性、可演进性。附带可编译的 `golden-api` 工程，演示每一条规则。
+- 新增 `rust-dependencies`，处理规模化依赖治理 —— 版本要求语法、依赖来源（crates.io / git / path / 私有仓库 / vendor）、`cargo-deny`（4 张表）、`cargo-audit`、`cargo-outdated`、Renovate/Dependabot 自动化和供应链策略。
+- 新增 `rust-semver`，处理破坏性变更判定、`cargo-semver-checks`、基于 `cargo-workspaces` 的 workspace 同步发版、yank/deprecate 流程和 RustSec advisory 响应。
+- 强化 `rust-documentation`，纳入 API Guidelines 文档章节（C-DOC、C-DOC-COMMENT、C-META、C-EXAMPLE、C-LINK）和新的 `references/api-guidelines-documentation.md`。
+- 强化 `rust-cargo-build`，补充 Cargo Book Reference 深度 —— `.cargo/config.toml` 各段、`[lints]` 表、Cargo Home、source replacement、`cargo metadata` 脚本化，新增 `references/cargo-reference-cheatsheet.md`。
+- 强化 `rust-code-review`，注入 API Guidelines 评审视角（可依赖性、类型安全、互操作性、可演进性），新增 `references/api-guidelines-checklist.md`。
+- 强化 `rust-style-clippy`，新增 API Guidelines ↔ Clippy lint 映射（SKILL.md 中 12 条高频映射，`references/api-guidelines-to-clippy.md` 中 25+ 条）。
 
 ## v3.0 工程工具补强
 
@@ -161,7 +177,12 @@ python3 scripts/validate_skills.py --check-examples
 - [The Rust Programming Language](https://doc.rust-lang.org/book/)
 - [Rust Standard Library](https://doc.rust-lang.org/std/)
 - [Rust Reference](https://doc.rust-lang.org/reference/)
+- [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) —— crate API 设计的事实标准清单
 - [Cargo Book](https://doc.rust-lang.org/cargo/)
+- [Cargo Semver Reference](https://doc.rust-lang.org/cargo/reference/semver.html)
+- [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks)
+- [cargo-deny](https://embarkstudios.github.io/cargo-deny/)
+- [RustSec Advisory Database](https://rustsec.org/)
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
 - [crates.io 上的 lombok-macros](https://crates.io/crates/lombok-macros) 与 [2.0.32 版本化 docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)

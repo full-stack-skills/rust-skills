@@ -16,11 +16,11 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 20 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 23 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
-List the 20 available skills without installing them:
+List the 23 available skills without installing them:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ Choose skills and target agents interactively for the current project:
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install all 20 skills for all detected agents without prompts:
+Install all 23 skills for all detected agents without prompts:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -55,13 +55,16 @@ npx skills add full-stack-skills/rust-skills --global --all
 ```mermaid
 flowchart TB
     S["rust-stable<br/>language and std entry"]
-    P["project engineering<br/>rust-workspace / module-layout / cargo-build / documentation"]
+    A["api design<br/>rust-api-design — Rust API Guidelines spine"]
+    P["project engineering<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation"]
     D["specialized domains<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["operational evidence<br/>testing / performance / observability"]
     Q["quality gates<br/>code-review / style-clippy"]
 
+    S --> A
     S --> P
-    S --> D
+    A --> P
+    A --> Q
     P --> D
     D --> O
     O --> Q
@@ -70,10 +73,13 @@ flowchart TB
 | Layer | Skill | Responsibility |
 |---|---|---|
 | Core | `rust-stable` | Ownership, traits, collections, errors, std, version checks |
+| Design | `rust-api-design` | Rust API Guidelines (~100 C-* rules): naming, interop traits, type safety, future-proofing |
 | Engineering | `rust-workspace` | Multi-crate workspaces, virtual manifests, crate boundaries, dependency direction DAGs, `[workspace.*]` configuration |
 | Engineering | `rust-module-layout` | In-crate `src/` directory tree, `lib.rs` facade, `mod` declarations, visibility, re-exports — the companion to `rust-workspace` |
-| Engineering | `rust-cargo-build` | Manifests, dependencies, features, resolver, build and publish |
-| Engineering | `rust-documentation` | Rustdoc API contracts, doctests, mdBook guides and documentation release gates |
+| Engineering | `rust-cargo-build` | Manifests, dependencies, features, resolver, profiles, build scripts, `.cargo/config.toml`, Cargo Home, source replacement |
+| Engineering | `rust-dependencies` | Version requirement syntax, supply-chain governance (cargo-deny, cargo-audit), private registries, vendoring |
+| Engineering | `rust-semver` | Breaking-change classification, `cargo-semver-checks`, workspace publishing, yank/advisory workflows |
+| Engineering | `rust-documentation` | Rustdoc API contracts, doctests, API Guidelines Documentation chapter, mdBook guides and release gates |
 | Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
 | Domain | `rust-performance` | Measurement plans, Criterion benchmarks, CPU/latency/memory profiling and regression proof |
@@ -87,8 +93,8 @@ flowchart TB
 | Domain | `rust-database` | SQL/ORM, schema migrations, transactions, pools and real database verification |
 | Domain | `rust-web-security` | Threat modeling, authentication, authorization, sessions, tokens and browser security |
 | Domain | `rust-embedded` | Bare-metal firmware, portable no_std drivers and hardware validation |
-| Quality | `rust-code-review` | Correctness, safety, performance, APIs and dependencies |
-| Quality | `rust-style-clippy` | rustfmt, Clippy, Edition migration and diagnostics |
+| Quality | `rust-code-review` | Correctness, safety, performance, APIs and dependencies — with Rust API Guidelines review lens |
+| Quality | `rust-style-clippy` | rustfmt, Clippy, Edition migration, diagnostics, and API Guidelines ↔ Clippy lint mapping |
 
 ## Repository Layout
 
@@ -115,6 +121,16 @@ python3 scripts/validate_skills.py --check-examples
 ```
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
+
+## v3.3 API Design and Supply-Chain Coverage
+
+- Adds `rust-api-design` as the spine skill covering the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) — ~100 C-* rules across naming, interop, type safety, predictability, flexibility, dependability, debuggability, and future-proofing. Comes with a compiled `golden-api` crate demonstrating every rule.
+- Adds `rust-dependencies` for dependency governance at scale — version requirement syntax, sources (crates.io / git / path / private registry / vendor), `cargo-deny` (4 tables), `cargo-audit`, `cargo-outdated`, Renovate/Dependabot automation, and supply-chain policy.
+- Adds `rust-semver` for breaking-change classification, `cargo-semver-checks`, workspace lockstep publishing via `cargo-workspaces`, yank/deprecate workflows, and RustSec advisory response.
+- Enriches `rust-documentation` with the API Guidelines Documentation chapter (C-DOC, C-DOC-COMMENT, C-META, C-EXAMPLE, C-LINK) and a new `references/api-guidelines-documentation.md`.
+- Enriches `rust-cargo-build` with Cargo Book Reference depth — `.cargo/config.toml` sections, `[lints]` table, Cargo Home, source replacement, `cargo metadata` scripting, and a new `references/cargo-reference-cheatsheet.md`.
+- Enriches `rust-code-review` with the API Guidelines review lens (Dependability, Type safety, Interoperability, Future-proofing) and a new `references/api-guidelines-checklist.md`.
+- Enriches `rust-style-clippy` with the API Guidelines ↔ Clippy lint mapping (12 high-value mappings in SKILL.md, 25+ in `references/api-guidelines-to-clippy.md`).
 
 ## v3.0 Engineering Tooling
 
@@ -154,7 +170,12 @@ Validation covers manifest/directory parity, frontmatter, the 500-line limit, re
 - [The Rust Programming Language](https://doc.rust-lang.org/book/)
 - [Rust Standard Library](https://doc.rust-lang.org/std/)
 - [Rust Reference](https://doc.rust-lang.org/reference/)
+- [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) — the de-facto standard checklist for crate API design
 - [Cargo Book](https://doc.rust-lang.org/cargo/)
+- [Cargo Semver Reference](https://doc.rust-lang.org/cargo/reference/semver.html)
+- [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks)
+- [cargo-deny](https://embarkstudios.github.io/cargo-deny/)
+- [RustSec Advisory Database](https://rustsec.org/)
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
 - [lombok-macros on crates.io](https://crates.io/crates/lombok-macros) and [versioned docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)

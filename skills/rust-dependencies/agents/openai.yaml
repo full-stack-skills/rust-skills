@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Dependency Governance"
+  short_description: "Manage Rust dependencies — version requirements, sources, cargo-deny, cargo-audit, Renovate, supply-chain policy"
+  default_prompt: "Use $rust-dependencies to design dependency governance policy, configure cargo-deny/cargo-audit, set up private registries or source replacement, diagnose duplicate versions or cycles, or automate updates."

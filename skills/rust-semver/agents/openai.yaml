@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Semver & Release"
+  short_description: "Manage Rust crate versioning, cargo-semver-checks, workspace publishing, and yank/advisory workflows"
+  default_prompt: "Use $rust-semver to determine whether a change is breaking, run cargo-semver-checks, publish single or workspace crates via cargo-workspaces/cargo-release, or handle yanked/advisory situations."

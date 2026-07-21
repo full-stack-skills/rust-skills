@@ -1,6 +1,6 @@
 ---
 name: rust-style-clippy
-description: Apply and diagnose Rust style, rustfmt, Clippy, compiler diagnostics, Edition migrations, lint policy, idiomatic control flow, error handling, allocation behavior, and production Rust conventions. Use when users ask to format or lint Rust, fix warning or error codes, migrate editions, review unwrap or clone usage, improve idioms, or establish CI quality gates.
+description: Apply and diagnose Rust style, rustfmt, Clippy, compiler diagnostics, Edition migrations, lint policy, idiomatic control flow, error handling, allocation behavior, production Rust conventions, and the Rust API Guidelines ↔ Clippy lint mapping. Use when users ask to format or lint Rust, fix warning or error codes, migrate editions, review unwrap or clone usage, improve idioms, map a C-* API guideline rule to the enforcing Clippy lint, or establish CI quality gates. Route API shape decisions (naming conventions, type/trait design, module layout, full C-* guideline review) to the rust-api-design skill.
 ---
 
 # Rust Style Formatting and Static Analysis
@@ -22,6 +22,7 @@ description: Apply and diagnose Rust style, rustfmt, Clippy, compiler diagnostic
 ### ❌ Out of Scope
 1. Rust syntax basics → Use `rust-stable` skill
 2. Code review → Use `rust-code-review` skill
+3. API shape design (naming, type/trait design, module layout) and the full ~100 C-* API Guidelines checklist → Use the `rust-api-design` skill. This skill only maps the ~25 C-* rules that Clippy can mechanically enforce; the rest are design decisions.
 
 ## When to Use
 
@@ -131,6 +132,28 @@ rustc --explain E0277
 | E0499 | Simultaneous mutable borrow | Only one `&mut` allowed per expression |
 | E0716 | Insufficient lifetime for temporary values | Reference on temporary exceeds its scope |
 
+## V. API Guidelines ↔ Clippy Lints
+
+The [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/) checklist uses `C-*` rules (about 100 total). Clippy mechanically enforces roughly 25 of them; the remaining ~75 are design judgments (naming, type/trait shape, module layout) that belong to the `rust-api-design` skill, or require `cargo-semver-checks` for breaking-change detection. The table below lists the 12 highest-leverage mappings reviewers ask about most. The full crosswalk, including "lints not yet covered" guidance, lives in [`references/api-guidelines-to-clippy.md`](references/api-guidelines-to-clippy.md).
+
+| C-* Rule | Clippy Lint | Group | Effect |
+|----------|-------------|-------|--------|
+| C-UNWRAP | `clippy::unwrap_used` | restriction | Flags `unwrap()` calls |
+| C-UNWRAP | `clippy::expect_used` | restriction | Flags `expect()` calls |
+| C-PANIC | `clippy::panic` | restriction | Flags `panic!()` |
+| C-INDEXING | `clippy::indexing_slicing` | restriction | Flags `[i]` indexing (panics) |
+| C-BOOL-ARG | `clippy::fn_params_excessive_bools` | pedantic | Functions with ≥3 bool params |
+| C-NEWTYPE | `clippy::new_without_default` | style | `new()` exists but no `Default` |
+| C-NEWTYPE | `clippy::new_ret_no_self` | style | `new()` returns non-`Self` |
+| C-CONV / C-WRONG-SELF | `clippy::wrong_self_convention` | style | `as_X(self)` taking `&self`, or `to_X(&self)` consuming self |
+| C-STRING-PATTERNS | `clippy::single_char_pattern` | perf | `.contains("a")` → `.contains('a')` |
+| C-COMMON-TRAITS | `clippy::derivable_impls` | perf | Manual impl that could be derived |
+| C-LARGE-NUMERIC | `clippy::unreadable_literal` | style | `1000000` should be `1_000_000` |
+| C-MUTABLE-KEY | `clippy::mutable_key_type` | suspicious | `HashMap` key type is mutable |
+| C-CLONE-ON-REF | `clippy::clone_on_ref_ptr` | restriction | `.clone()` on `Rc`/`Arc` |
+
+Many `restriction` and `pedantic` lints are off by default — enable them explicitly via `#![warn(clippy::unwrap_used)]` or in `clippy.toml` when enforcing a guideline in CI.
+
 ## Workflow
 
 1. Format code — `cargo fmt` ensures consistent style
@@ -154,6 +177,7 @@ rustc --explain E0277
 - [Format and Clippy Examples](examples/examples.md)
 - [Lint Group Quick Reference](references/references.md)
 - [Production Rust Idioms](references/production-rust-idioms.md): Review let-else, Option combinators, newtype patterns, non-exhaustive APIs, lock scopes, and overflow strategies when reviewing production code.
+- [API Guidelines ↔ Clippy Lints Crosswalk](references/api-guidelines-to-clippy.md): Full mapping from Rust API Guidelines `C-*` rules to the Clippy lints that enforce them, plus the ~75 rules Clippy does not cover and where to review them.
 - `examples/golden-style/`: Golden examples for CI passing rustfmt and Clippy
 
 ## Official References

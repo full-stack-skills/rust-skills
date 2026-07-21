@@ -1,6 +1,6 @@
 ---
 name: rust-documentation
-description: Design, write, build, test, and publish Rust documentation with rustdoc, cargo doc, doctests, intra-doc links, crate-level guides, examples, README synchronization, mdBook, docs.rs metadata, link checking, and documentation CI. Use when users ask for Rust API docs, a project book, runnable examples, docs.rs readiness, missing-doc policy, documentation architecture, or stale documentation repair.
+description: Design, write, build, test, and publish Rust documentation with rustdoc, cargo doc, doctests, intra-doc links, crate-level guides, examples, README synchronization, mdBook, docs.rs metadata, link checking, documentation CI, and the Rust API Guidelines Documentation chapter (C-DOC, C-LINK, C-META, C-EXAMPLE). Use when users ask for Rust API docs, a project book, runnable examples, docs.rs readiness, missing-doc policy, API guideline compliance, documentation architecture, or stale documentation repair.
 ---
 
 # Rust Documentation
@@ -11,7 +11,7 @@ Treat documentation as an executable interface. Keep API reference close to code
 
 Use this skill for rustdoc comments, crate and module documentation, doctests, intra-doc links, README generation, mdBook, docs.rs configuration, link checking, spelling, and documentation release gates.
 
-Route general test architecture to `rust-testing`, public API compatibility to `rust-code-review`, Cargo metadata and publishing to `rust-cargo-build`, and non-Rust office document formats to their dedicated document skills.
+Route general test architecture to `rust-testing`, public API compatibility to `rust-code-review`, Cargo metadata and publishing to `rust-cargo-build`, API shape and trait design decisions to `rust-api-design`, and non-Rust office document formats to their dedicated document skills. This skill documents what already exists; `rust-api-design` decides what the API should be.
 
 ## Workflow
 
@@ -48,6 +48,62 @@ Prefer intra-doc links such as ``[`Client::send`]`` over brittle hand-written UR
 ```
 
 Adopt `missing_docs` deliberately; do not enable it globally before deciding which public compatibility surface requires documentation.
+
+## Rust API Guidelines — Documentation Rules
+
+The [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/documentation.html) define five documentation rules (C-DOC, C-DOC-COMMENT, C-META, C-EXAMPLE, C-LINK) that high-quality crates are expected to satisfy. Treat them as the acceptance bar for documentation of any public crate. Full rationale, anti-patterns, and worked examples live in [API Guidelines — Documentation](references/api-guidelines-documentation.md); this section is the routing summary.
+
+### C-DOC — Document all items
+
+Every public item (function, struct, enum, trait, module, etc.) carries a doc comment. Enforce mechanically with the `missing_docs` lint:
+
+```rust
+// src/lib.rs
+#![deny(missing_docs)]
+```
+
+Decide the scope deliberately. `#![deny(missing_docs)]` at the crate root is the strongest policy; if some surfaces (sealed modules, generated code, deliberately unstable APIs) need exemptions, scope the lint with `#[allow(missing_docs)]` on the smallest possible item and record why.
+
+### C-DOC-COMMENT — `///` versus `//!`
+
+- `///` documents the **next item** (function, struct, field, module declared by name below it).
+- `//!` documents the **current module or crate** (placed at the top of a file, or inside a module body).
+- Both render Markdown and support intra-doc links `[`Foo`]`.
+
+Use `//!` at the top of `src/lib.rs` and any module root that needs an overview; use `///` for every documented item.
+
+### C-META — Crate-level docs must cover essentials
+
+`src/lib.rs` must open with `//!` documentation covering:
+
+- what the crate does and a link to usage examples;
+- how to get started (link to setup/integration docs or a quick start);
+- feature flags and what each enables;
+- Minimum Supported Rust Version (MSRV);
+- license, conventionally dual `MIT OR Apache-2.0`.
+
+Run `cargo doc --no-deps -p <crate>` and check that the crate landing page reads as a self-contained overview, not just a module list.
+
+### C-EXAMPLE — Runnable examples with `# Examples`
+
+Every public item should have a `# Examples` section. Examples should compile and run as doctests. Pick fence attributes precisely:
+
+- no attribute — compile and run;
+- ```` ```no_run ```` — compile but skip execution (network, files, hardware);
+- ```` ```ignore ```` — skip entirely, with a documented reason;
+- ```` ```compile_fail ```` — only in proc-macro crates to demonstrate rejected input.
+
+Avoid `no_run` as a disguise for broken examples; if a workflow needs files or credentials, move it into `examples/` and test it as a real target.
+
+### C-LINK — Intra-doc links
+
+Use `[`ItemType`]` and `[`ItemType::method`]` syntax so rustdoc resolves targets and tracks renames. Never hand-write paths to types in the same crate. Enable broken-link enforcement at the crate boundary:
+
+```rust
+#![deny(rustdoc::broken_intra_doc_links)]
+```
+
+For full examples, anti-patterns, the lint matrix, and the verification commands per rule, read [API Guidelines — Documentation](references/api-guidelines-documentation.md).
 
 ### 3. Make examples executable
 
@@ -105,6 +161,7 @@ Run only tools present in the project or approved for installation. Pin non-Rust
 - [rustdoc and Doctests](references/rustdoc-and-doctests.md)
 - [mdBook and Project Guides](references/mdbook-and-guides.md)
 - [Documentation Release Quality](references/documentation-release-quality.md)
+- [API Guidelines — Documentation](references/api-guidelines-documentation.md)
 - [Execution Scenarios](examples/examples.md)
 - `examples/golden-docs/`: a compilable crate with enforced intra-doc links and doctests.
 
@@ -115,6 +172,7 @@ Run only tools present in the project or approved for installation. Pin non-Rust
 - [Cargo doc](https://doc.rust-lang.org/cargo/commands/cargo-doc.html)
 - [mdBook](https://rust-lang.github.io/mdBook/)
 - [docs.rs metadata](https://docs.rs/about/metadata)
+- [Rust API Guidelines — Documentation](https://rust-lang.github.io/api-guidelines/documentation.html)
 
 ## Data Privacy
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust API Design"
+  short_description: "Design Rust library APIs following the Rust API Guidelines (~100 C-* rules)"
+  default_prompt: "Use $rust-api-design to design or review a public Rust crate API — naming, conversions, trait derives, sealed traits, non_exhaustive enums, newtype wrappers, Result-vs-panic, bool-to-enum, and other Rust API Guidelines rules."
