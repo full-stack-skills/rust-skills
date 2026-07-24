@@ -1,6 +1,6 @@
 ---
 name: rust-macros
-description: Design, implement, debug, test, and review Rust declarative and procedural macros, including macro_rules matchers and repetition, hygiene, $crate paths, derive, attribute and function-like macros, syn parsing, quote generation, diagnostics, cargo-expand, doctests, and trybuild. Use when users need compile-time code generation or a Rust DSL; keep ordinary trait, generic, or handwritten APIs outside macros unless generation has a clear maintenance benefit.
+description: Design, name, implement, debug, test, and review Rust declarative and procedural macros, including macro_rules matchers and repetition, hygiene, $crate paths, derive, attribute and function-like macros, proc-macro crate naming, syn parsing, quote generation, diagnostics, cargo-expand, doctests, and trybuild. Use when users need compile-time code generation, a Rust DSL, or guidance choosing -derive versus -macros; keep ordinary trait, generic, or handwritten APIs outside macros unless generation has a clear maintenance benefit.
 ---
 
 # Rust Macros
@@ -30,7 +30,40 @@ Write representative invocations and expected expansions first. Prefer a functio
 
 Use a dedicated `proc-macro = true` crate for procedural macros. Put shared runtime traits and types in a normal library crate so generated code does not depend on private proc-macro implementation details.
 
-### 3. Implement declarative macros hygienically
+### 3. Name procedural-macro crates by their public surface
+
+Treat the suffix as an API promise, not a compiler requirement:
+
+| Public macro surface | Preferred package suffix | Examples |
+|---|---|---|
+| Only `#[proc_macro_derive]` entry points | `-derive` or the established family spelling such as `_derive` | `serde_derive` |
+| A broader suite, especially attribute or function-like macros, or mixed macro kinds | `-macros` | `tokio-macros`, `actix-macros` |
+| Unclear or unspecified macro scope | Avoid singular `-macro`; choose a more descriptive name | — |
+
+Choose `-derive` when every public entry point is a derive macro. The crate may expose several closely related derives; the deciding factor is macro kind, not the exact count. Choose `-macros` when the crate exposes attribute macros, function-like macros, mixed macro kinds, or intentionally serves as the package family's general macro collection.
+
+Do not publish both `<name>-derive` and `<name>-macros` by default. A single proc-macro crate can register any number of derive, attribute, and function-like macros. Prefer one of these layouts:
+
+```text
+<name>            # public runtime API or facade; may re-export macros
+<name>-derive     # derive-only proc-macro crate
+```
+
+```text
+<name>            # public runtime API or facade; may re-export macros
+<name>-macros     # general proc-macro collection
+<name>-macro-core # optional normal library for parsing and generation logic
+```
+
+Split `-derive` and `-macros` into separate published crates only when users can adopt them independently and the split materially reduces dependencies or compile time, separates release or compatibility policies, or isolates distinct ownership boundaries. Keep their exported macro names and responsibilities non-overlapping. Do not split merely by macro kind or for naming symmetry.
+
+Before publishing, also:
+
+- Follow the separator already used by the crate family; Cargo package names may contain `-` or `_`, while Rust crate identifiers normalize hyphens to underscores.
+- Prefer a facade crate and feature-gated re-exports when most users should not depend on the implementation crate directly.
+- Treat a published crate rename as a migration with ecosystem and semver cost; choose the intended long-term scope early, but do not claim planned macro kinds before they exist.
+
+### 4. Implement declarative macros hygienically
 
 ```rust
 #[macro_export]
@@ -50,7 +83,7 @@ macro_rules! string_list {
 - Avoid repeated evaluation, hidden moves, surprising control flow, and identifiers that collide with caller code.
 - Avoid quadratic TT munchers for large inputs; prefer repetitions or procedural parsing when token volume matters.
 
-### 4. Parse procedural macros structurally
+### 5. Parse procedural macros structurally
 
 ```rust
 use proc_macro::TokenStream;
@@ -78,7 +111,7 @@ pub fn derive_describe(input: TokenStream) -> TokenStream {
 - Preserve generics, lifetimes, const parameters, where clauses, attributes, and visibility.
 - Do not panic on invalid user input; emit compile errors at the relevant span.
 
-### 5. Test the public expansion contract
+### 6. Test the public expansion contract
 
 Use several layers:
 
