@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Java Migration"
+  short_description: "Evidence-driven Java-to-Rust parity migration workflow"
+  default_prompt: "Use $rust-java-migration to plan and execute an evidence-driven Java-to-Rust module migration."

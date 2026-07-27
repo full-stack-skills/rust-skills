@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Cargo Build"
-  short_description: "Configure Cargo builds, dependencies, and releases"
-  default_prompt: "Use $rust-cargo-build to configure and validate this Cargo build or dependency change."
+  short_description: "Configure, diagnose, and automate Cargo workflows"
+  default_prompt: "Use $rust-cargo-build to configure, diagnose, and validate this Cargo workflow against the installed toolchain."

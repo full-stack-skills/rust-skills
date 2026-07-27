@@ -1,24 +1,54 @@
-# Packaging and Publishing
+# Cargo Packaging and Publishing
 
-## Pre-release Gatekeeping
+Use [Publishing on crates.io](https://doc.rust-lang.org/cargo/reference/publishing.html) and the command pages for [cargo package](https://doc.rust-lang.org/cargo/commands/cargo-package.html), [cargo publish](https://doc.rust-lang.org/cargo/commands/cargo-publish.html), [cargo owner](https://doc.rust-lang.org/cargo/commands/cargo-owner.html), and [cargo yank](https://doc.rust-lang.org/cargo/commands/cargo-yank.html).
+
+## Pre-publication gate
 
 ```bash
 cargo fmt --all --check
-cargo test --all-targets --all-features
-cargo clippy --all-targets --all-features -- -D warnings
+cargo test --workspace --all-targets --all-features --locked
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo package --list
-cargo publish
+cargo package
 ```
 
-Additional checks:
+Adapt the feature and target matrix when `--all-features` is not supported. Route SemVer classification to `rust-semver`.
 
-- Version compatibility with SemVer.
-- `license` or `license-file`.
-- README, repository URL, description, and documentation links.
-- Package contents must not include secrets, fixture private data, or large irrelevant files.
-- All non-dev dependencies must be resolvable from the target registry.
-- Workspace internal dependency declarations should specify publishable versions.
+Review:
 
-`cargo publish` is an external state change that requires confirmation of the registry URL, account credentials, token source, and user authorization. On crates.io, a published version cannot be deleted and can only be yanked; verify the policy of any other registry separately.
+- package name, version, description, documentation, repository, README, keywords, and categories;
+- `package.publish` restrictions when publication must be limited to named registries;
+- `license` or `license-file`;
+- selected files, generated content, fixtures, secrets, and archive size;
+- package-normalized manifest and lockfile behavior;
+- non-dev dependencies resolvable from the target registry;
+- workspace dependencies with publishable versions;
+- MSRV and supported target validation;
+- README and doctest behavior from the packaged crate, not only the workspace checkout.
 
-Official documentation: https://doc.rust-lang.org/cargo/reference/publishing.html
+## Dry run and registry selection
+
+`cargo package` performs package assembly and verification without upload. Use `cargo publish --dry-run` when its installed-version behavior adds a useful final check.
+
+Resolve explicitly:
+
+- registry name and index;
+- credential provider and account;
+- package ownership;
+- whether dependent workspace crates must publish first;
+- publication order and propagation delay.
+
+For a package that must never publish to crates.io, restrict the allowed registry names in `package.publish` and still pass `--registry <name>` in release commands so the external target is explicit.
+
+## External mutations
+
+Require explicit user authorization before:
+
+- `cargo login` or `cargo logout`;
+- adding or removing owners;
+- publishing a version;
+- yanking or unyanking a version.
+
+A published crates.io version cannot be deleted. Yanking prevents new dependency resolution from selecting it by default but does not remove the archive or break existing lockfiles. Use a follow-up release for corrected code.
+
+After publication, verify the registry version, owners, rendered documentation, and installation or dependency resolution from a clean environment.

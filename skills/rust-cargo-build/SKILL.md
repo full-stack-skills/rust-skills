@@ -1,180 +1,159 @@
 ---
 name: rust-cargo-build
-description: Configure and diagnose Rust Cargo builds, including Cargo.toml manifests, dependency sources and versions, features, resolvers, profiles, build.rs, workspaces, cross-compilation, packaging, and publishing. Also covers the Cargo Book Reference depth: `.cargo/config.toml` (build, env, target, net, source, alias), `[lints]` table and workspace inheritance, `[build-dependencies]` vs `[dependencies]` scoping, Cargo Home and build cache layout, source replacement (mirrors, vendoring, private registries), `cargo metadata` for scripting, CI modes (`--locked`, `--frozen`, `--offline`), and `cargo tree` diagnostics (`--duplicates`, `--invert`, `-e features`). Includes Cargo Guide onboarding (cargo new, build, check, test, run, dependencies, package layout, Cargo.toml vs Cargo.lock, and CI integration with GitHub Actions / GitLab CI templates). Use when users ask about Cargo manifests, dependency resolution, feature unification, build output, MSRV-aware resolution, Cargo commands, `config.toml` sections, source mirroring, crates.io publishing, or beginner "how do I build/test/run my Rust project" questions. Hand supply-chain governance (license/advisory/ban audits via cargo-deny) to rust-dependencies, semver versioning decisions to rust-semver, and module/crate topology to rust-workspace; hand test design to rust-testing. Route standard-library API lookup ("how do I use HashMap/Vec/io?") to rust-stdlib and "how do I write X in Rust?" tutorial-style questions to rust-by-example.
+description: Configure, operate, diagnose, and automate Cargo for Rust packages and workspaces. Cover manifests and targets, commands, dependency resolution and features, profiles, build scripts, configuration and environment variables, caches and build diagnostics, cross-compilation, registries, packaging, publishing, metadata, CI reproducibility, and stable-versus-nightly feature gates. Use for Cargo.toml, Cargo.lock, .cargo/config.toml, cargo build/check/run/tree/metadata/package/publish, resolver or feature problems, build output and performance, private registries, and beginner Cargo workflows. Route crate selection and supply-chain audits to rust-dependencies, workspace topology to rust-workspace, test design to rust-testing, documentation design to rust-documentation, lint policy to rust-style-clippy, and API compatibility decisions to rust-semver.
 ---
 
 # Rust Cargo Build System
 
-Configure the build based on the project's actual Cargo version, MSRV (Minimum Supported Rust Version), and workspace root manifest. Read detailed fields as needed; do not generate unvalidated configurations from memory.
+Use Cargo as a versioned package manager, build orchestrator, and automation interface. Base decisions on the project's actual Cargo version, MSRV, workspace root, targets, and release model. Use the official Cargo Book as the authority; keep this skill focused on task selection, execution, and validation.
 
-## Pre-Flight Checks
+## Preflight
+
+Run the smallest relevant subset:
 
 ```bash
 rustc --version --verbose
 cargo --version
+cargo locate-project --workspace
 cargo metadata --no-deps --format-version 1
 ```
 
-Additionally, verify:
+Determine:
 
-- The root `Cargo.toml` is a package or virtual workspace.
-- Consistency of `edition`, `rust-version`, `resolver`, and `Cargo.lock`.
-- Dependency sources (crates.io, Git paths, local paths) and whether they inherit from the workspace.
-- Build targets, feature combinations, target platforms, and publishing registry configuration.
+- whether the root manifest is a package or virtual workspace;
+- the declared `edition`, `rust-version`, resolver, and lockfile policy;
+- selected packages, targets, features, profiles, and target triples;
+- dependency sources, registry configuration, and offline constraints;
+- whether the requested behavior is stable on the installed Cargo version.
 
-## Cargo Guide Workflow (Onboarding)
+## Route to the Right Reference
 
-For beginner and "getting started" questions, the first chapters of the [Cargo Guide](https://doc.rust-lang.org/cargo/guide/) cover the everyday Cargo loop. Reach for the deep reference when the answer turns into manifest field syntax, resolver internals, or module topology.
+Read only the reference needed for the current task:
 
-1. **Why Cargo Exists** — Cargo unifies build, dependency resolution, test, doc gen, and publish into one tool, replacing make/cmake + vcpkg/conan + custom harnesses.
-2. **Creating a New Package** — `cargo new` (creates a subfolder) vs `cargo init` (adopts the cwd); defaults produce `src/lib.rs` or `src/main.rs` plus a minimal `Cargo.toml`.
-3. **Working on an Existing Package** — the everyday loop: `cargo check` (fast, no codegen), `build`, `run`, `test`, `doc`, `clean`, `update`, plus `fmt`/`clippy`.
-4. **Dependencies** — `[dependencies]`, `[dev-dependencies]`, `[build-dependencies]`, optional deps and features; crates.io, path, and git sources. Version-requirement syntax depth belongs to `rust-dependencies`.
-5. **Package Layout** — canonical `src/`, `tests/`, `benches/`, `examples/`, `build.rs`. Multi-crate layout goes to `rust-workspace`; in-crate module design to `rust-module-layout`.
-6. **Cargo.toml vs Cargo.lock** — apps commit the lockfile; libraries do not. Full policy and update workflow in `rust-dependencies`.
-7. **Continuous Integration** — standard GitHub Actions / GitLab CI templates with caching, plus `--locked` / `--frozen` / `--offline` discipline.
-8. **Cargo Home** — `$CARGO_HOME` layout and safe cleanup; full treatment in `references/cargo-reference-cheatsheet.md` §4.
+| Task | Reference |
+|---|---|
+| Find the authoritative Cargo Guide, Reference, command, or changelog page | [Official Documentation Map](references/official-doc-map.md) |
+| Select a Cargo command and understand its side effects | [Cargo Command Map](references/cargo-command-map.md) |
+| Start, build, run, test, document, or add CI to a package | [Cargo Guide Workflow](references/cargo-guide-workflow.md) |
+| Configure package metadata and lib/bin/example/test/bench targets | [Manifest and Targets](references/manifest-targets.md) |
+| Configure dependency sources, features, overrides, or resolvers | [Dependencies, Features, and Resolvers](references/dependencies-features-resolver.md) |
+| Configure members and inherited workspace fields | [Workspaces](references/workspaces.md) |
+| Configure `.cargo/config.toml`, environment variables, aliases, network, or target settings | [Configuration and Environment](references/configuration-environment.md) |
+| Tune dev/release/custom profiles | [Profiles](references/profiles.md) |
+| Generate code, compile native dependencies, or emit Cargo instructions from `build.rs` | [Build Scripts](references/build-scripts.md) |
+| Diagnose rebuilds, duplicate compilation, cache layout, timings, or future incompatibilities | [Build Cache and Diagnostics](references/build-cache-diagnostics.md) |
+| Configure a linker, runner, or non-host target | [Cross-compilation](references/cross-compilation.md) |
+| Configure registries, source replacement, vendoring, credentials, or authentication | [Registries and Authentication](references/registries-authentication.md) |
+| Inspect package contents, publish, manage owners, or yank a version | [Packaging and Publishing](references/publishing.md) |
+| Build scripts and tooling around stable Cargo JSON or package IDs | [Metadata and Automation](references/metadata-automation.md) |
+| Evaluate `cargo-features`, `-Z`, or other nightly-only behavior | [Unstable Cargo Features](references/unstable-features.md) |
 
-Full commands, file shapes, CI templates, and gotchas for all eight topics live in `references/cargo-guide-workflow.md`.
+## Core Workflow
 
-## Capabilities & Boundaries
+1. **Locate the root** — Confirm the workspace root and effective manifest before editing.
+2. **Declare compatibility** — Record edition, MSRV, supported targets, stable/nightly policy, and feature contract.
+3. **Inspect effective state** — Use `cargo metadata`, `cargo tree`, and the effective configuration rather than inferring from one manifest.
+4. **Make the smallest change** — Prefer conventional targets, additive features, workspace inheritance, and stable Cargo behavior.
+5. **Exercise the requested matrix** — Select packages, targets, features, profiles, and target triples explicitly.
+6. **Diagnose before optimizing** — Use timings, dependency edges, verbose output, and rebuild evidence before changing profiles or caches.
+7. **Verify artifacts and side effects** — Inspect generated files, package contents, lockfile changes, registry targets, and credentials handling.
 
-### Suitable For Handling
+## Decision Rules
 
-- Package (`lib`), binary (`bin`), example, test, bench, and library targets.
-- Regular development builds with dependencies across multiple platforms and workspaces.
-- Additive features, optional dependencies, feature unification strategies.
-- Dev, release, and custom profiles for artifact-size or performance optimization.
-- `build.rs`, native linking, generated files, conditional rebuilds based on build script inputs.
-- Workspace members, shared dependencies, shared package fields.
-- Target selection, linker configuration, runner setup, and cross-compilation settings.
-- Commands: `cargo package`, `cargo publish`, yank operations, pre-publish validation steps.
+### Manifest, MSRV, and Resolver
 
-### Offload to Other Skills
+- Do not equate an edition with MSRV; declare `package.rust-version` and test that toolchain.
+- Treat the resolver as workspace-wide. Explicitly set it in virtual workspaces.
+- Verify resolver defaults and version-gated fields against the installed Cargo documentation or changelog.
+- Keep explicit target tables only when Cargo's conventional paths are insufficient.
 
-- Module tree structure, crate API definitions, file layouts → `rust-workspace`
-- Testing strategies, doctests, coverage metrics → `rust-testing`
-- Rust formatting (`rustfmt`) and linting (Clippy), edition migrations → `rust-style-clippy`
-- Core Rust syntax and standard library usage → `rust-stable`
-- Standard-library API lookup ("how do I use `HashMap`/`Vec`/`io::Read`?") → `rust-stdlib`
-- "How do I write X in Rust?" tutorial-style questions (ownership, pattern matching, traits, concurrency idioms) → `rust-by-example`
-- Supply-chain governance: license/advisory/ban audits via `cargo-deny`, dependency review, allowed/banned crate lists → `rust-dependencies`
-- Semver versioning decisions, breaking-change classification, version bump strategy, `cargo-semver-checks` runs → `rust-semver`
-- Workspace topology, member listing, shared dependency inheritance, virtual manifest design → `rust-workspace`
+### Cargo.lock and Reproducibility
 
-## Workflow
+- When in doubt, commit `Cargo.lock`; the current Cargo Guide recommends version control by default.
+- Decide exceptions from the repository's release, CI, and dependency-verification policy, not from a blanket “applications yes, libraries no” rule.
+- Use `--locked` when a committed lockfile must not change.
+- Use `--frozen` only when both lockfile mutation and network access must be prohibited.
+- Review lockfile diffs; do not delete the lockfile or run broad updates merely to bypass CI failures.
 
-1. **Locate Root Manifest** — Use `cargo locate-project --workspace` to confirm the active workspace configuration.
-2. **Declare Compatibility Boundaries** — Explicitly define edition, MSRV, supported platforms, and feature strategy.
-3. **Design Dependencies** — Prioritize crates.io versions; use Git or local paths only when explicitly required, limiting features where possible.
-4. **Configure Build Settings** — Set targets, profiles, build scripts, and `.cargo/config.toml` as needed.
-5. **Validate Parsing Results** — Run `cargo metadata`, `cargo tree -e features`, and `cargo tree -d`.
-6. **Execute Quality Gates** — Execute `fmt`, `check`, `test`, `clippy`; perform actual target builds for the specified platform(s).
-7. **Verify Package Contents** — Before publishing, run `cargo package --list` and execute `cargo package`.
+### Dependencies and Features
 
-## Critical Decisions
+- Treat features as additive and validate unification with `cargo tree -e features`.
+- Use target-specific dependencies for platform selection; do not put `cfg(feature = "...")` in target dependency tables.
+- Pin Git dependencies to a revision when reproducibility requires them.
+- Use `[patch]`, source replacement, and vendoring only for their documented purposes; do not treat them as interchangeable.
 
-### Edition, MSRV, and Resolver
+### Configuration and Environment
 
-- The edition controls language compatibility but does not equate to the compiler's minimum version requirement.
-- Declare MSRV using `package.rust-version`, then validate on that toolchain.
-- The resolver is a workspace-wide setting; resolver values in dependency manifests do not override the root workspace resolver.
-- Default behavior: Edition 2021 uses resolver 2; Edition 2024 defaults to resolver 3.
-- Resolver 3 makes `incompatible-rust-versions = "fallback"` the default; it does not replace resolver 2's feature-unification behavior.
-- For virtual workspaces, explicitly declare a resolver in `[workspace]`.
+- Distinguish manifest configuration from hierarchical Cargo configuration.
+- Verify `.cargo/config.toml` discovery from the command's working directory.
+- Keep secrets out of committed configuration and command history.
+- Separate host settings for build scripts and proc macros from target settings used for final artifacts.
 
-### Features
+### Build Scripts
 
-- Treat features as additive capabilities; avoid designing mutually exclusive feature sets unless necessary.
-- Use `dep:name` to control whether an optional dependency becomes a named feature.
-- Forward dependencies via `crate/feature`, `crate?/feature`, or similar patterns depending on the crate type and resolver behavior.
-- Validate actual enabled sources using `cargo tree -e features`.
+- Write generated artifacts only to `OUT_DIR`.
+- Emit precise `cargo::rerun-if-changed` and `cargo::rerun-if-env-changed` instructions.
+- Keep outputs reproducible and avoid network access during builds.
+- Treat native link directives and `links` metadata as public integration contracts.
 
-### Build Scripts (`build.rs`)
+### Profiles, Cache, and Diagnostics
 
-- Generate outputs only to `OUT_DIR`; use them with `include!` macros or environment variables as needed.
-- Declare rerun conditions for each input: `cargo::rerun-if-changed` (for file changes) or `cargo::rerun-if-env-changed`.
-- Limit the scope of native linking parameters to avoid polluting entire workspace configurations.
-- Do not download non-reproducible resources within build scripts; instead, use fixed dependencies or pre-generated assets.
+- Measure the workflow being optimized: `check`, incremental development, tests, CI, release linking, runtime, or binary size.
+- Keep profile definitions at the workspace root.
+- Treat the build-directory layout as Cargo-internal unless the Reference documents an output location.
+- Prefer `cargo build --timings`, `cargo tree -d`, and future-incompatibility reports over speculative cache deletion.
 
-### Profiles
+### Registries and Publishing
 
-- Measure bottlenecks first before adjusting linker (`lto`), codegen units, stripping (`strip`), and panic handling settings.
-- Profile configuration applies only at the workspace root level.
-- Do not infer debug behavior from release builds; do not assume reverse inference between them without explicit testing.
+- Distinguish registries, source replacement, directory sources, and vendoring.
+- Resolve credential providers and registry identity before login or publish operations.
+- Run `cargo package --list` and package verification before publishing.
+- Require explicit authorization before login, owner changes, publishing, yanking, or modifying credentials.
 
-## Cargo Reference Deep Dive
+### Stable and Nightly
 
-The Cargo Book Reference covers advanced topics beyond the basic manifest. Use these summaries as entry points and consult `references/cargo-reference-cheatsheet.md` for full TOML shapes, gotchas, and validation commands. Pin a toolchain (`cargo --version`) before relying on any feature with a version gate.
+- Prefer stable Cargo behavior.
+- Before recommending nightly, identify the exact unstable feature, invocation form, tracking issue, fallback, and removal condition.
+- Never present `cargo-features`, `-Z`, or `[unstable]` configuration as stable.
+- Re-check the changelog because unstable interfaces can stabilize, change, or disappear.
 
-1. **`[lints]` table** — Declares rustc and Clippy lint levels directly in `Cargo.toml` (Cargo 1.74+). Supports `[workspace.lints.rust]` / `[workspace.lints.clippy]` with member opt-in via `[lints] workspace = true`; per-lint `priority` controls layering. See reference Section 1.
+## Validation
 
-2. **`[build-dependencies]` vs `[dependencies]`** — Four scopes (`[dependencies]`, `[dev-dependencies]`, `[build-dependencies]`, target-scoped). Build-deps compile for the **host** triple and are invisible to the final artifact; dev-deps cannot be used by `build.rs`. Same crate name in both tables resolves independently. See reference Section 2.
-
-3. **`.cargo/config.toml`** — Sections: `[build]` (jobs, target-dir, rustflags), `[env]` (with `force = true` to override shell env), `[target.<triple>]` and `[target.'cfg(...)']`, `[net]` (git-fetch-with-cli, retry), `[source]` (replacement), `[alias]`, `[term]`. Precedence: CLI > cwd `.cargo/config.toml` walking up > `$CARGO_HOME/config.toml`. See reference Section 3.
-
-4. **Cargo Home and build cache** — `CARGO_HOME` (default `~/.cargo/`) holds `bin/`, `registry/{index,cache,src}/`, `git/{db,checkouts}/`, and `credentials`. Pin its location in CI and cache `registry/cache` + `git/db` keyed on `Cargo.lock`. Never `rm -rf ~/.cargo` wholesale — use `cargo cache -a`. See reference Section 4.
-
-5. **Source replacement** — Mirror crates.io via `[source.crates-io] replace-with = "mirror"` plus a `[source.mirror] registry = "sparse+https://..."`. Use `cargo vendor` + `[source.vendored-sources] directory = "vendor"` for air-gapped builds. Inject registry tokens via `CARGO_REGISTRIES_<NAME>_TOKEN` in CI, not files. License/advisory/ban governance belongs in `rust-dependencies`. See reference Section 5.
-
-6. **`cargo metadata` for scripting** — Stable JSON (format-version 1) describing every resolved package; pair with `jq` for release tooling, dashboards, and migration audits. Use `--no-deps` for workspace-only and `--locked` in CI to stay deterministic. See reference Section 6.
-
-7. **CI modes** — `--locked` fails if `Cargo.lock` would change (every CI job); `--frozen` adds `--offline` for air-gapped/hermetic builds; `--offline` allows lock updates against the local cache only. Fix `--locked` failures by running `cargo update` locally, never in CI. See reference Section 7.
-
-8. **`cargo tree` deep usage** — `-e normal|dev|build|features|no-dev` selects edge kinds; `-d` (`--duplicates`) lists crates with multiple versions; `-i <crate>` (`--invert`) answers "who depends on X?"; `-e features -i <crate>` proves which features each consumer enables after unification. See reference Section 8.
-
-Full TOML, semantics, worked examples, and per-topic gotchas live in `references/cargo-reference-cheatsheet.md`.
-
-## Validation Commands
+Adapt the matrix instead of running unsupported combinations blindly:
 
 ```bash
+cargo metadata --format-version 1
 cargo fmt --all --check
-cargo metadata --format-version 1 --locked
 cargo check --workspace --all-targets --all-features
 cargo test --workspace --all-targets --all-features
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo package --list
-
-# If the workspace explicitly does not support `--all-features`, define a feature matrix instead of silently skipping.
 ```
 
-## On-Demand References
+Append `--locked` to supported Cargo commands when the repository commits or requires a lockfile. If the workspace intentionally excludes some features or targets, define an explicit matrix and record why.
 
-- [Cargo Guide Workflow (Onboarding)](references/cargo-guide-workflow.md): Retrieve for beginner and "getting started" questions — `cargo new`/`init`, the everyday build/check/run/test loop, adding dependencies, canonical package layout, `Cargo.toml` vs `Cargo.lock` policy, and GitHub Actions / GitLab CI templates.
-- [Manifest and Targets](references/manifest-targets.md)
-- [Dependencies, Features, and Resolvers](references/dependencies-features-resolver.md)
-- [Production Dependency Selection and Governance](references/production-dependency-governance.md): Retrieve when selecting third-party crates, narrowing feature/platform scope, auditing supply chains, or explaining version lock behavior.
-- [Workspaces](references/workspaces.md)
-- [Profiles and Optimization Strategies](references/profiles.md)
-- [Build Scripts](references/build-scripts.md)
-- [Cross-compilation](references/cross-compilation.md)
-- [Packaging and Publishing](references/publishing.md)
-- [Command Reference Guide](references/references.md)
-- [Cargo Book Reference Cheatsheet](references/cargo-reference-cheatsheet.md): Retrieve when configuring `.cargo/config.toml` sections, `[lints]` tables, source replacement/mirroring, `cargo metadata` scripting, CI modes (`--locked`/`--frozen`/`--offline`), or advanced `cargo tree` diagnostics (`--duplicates`, `--invert`, `-e features`).
-- [Copy-Pasteable Examples](examples/examples.md)
-- `examples/golden-features/`: Feature examples compiled for CI.
+## Boundaries
 
-## Common Pitfalls to Avoid
+- Crate selection, advisories, licenses, bans, and supply-chain policy → `rust-dependencies`
+- Workspace and crate topology → `rust-workspace`
+- Test architecture, fixtures, property tests, and coverage → `rust-testing`
+- rustdoc content and documentation architecture → `rust-documentation`
+- rustfmt, Clippy policy, and edition migration → `rust-style-clippy`
+- Runtime performance and allocation behavior → `rust-performance`
+- API compatibility and version-bump decisions → `rust-semver`
+- Embedded target runtime and hardware integration → `rust-embedded`
 
-1. Omitting the resolver in a virtual workspace, causing member crates' editions to fail when selecting the root crate's resolver settings.
-2. Assuming that disabling features at one dependency location cancels out already-enabled features elsewhere.
-3. Simultaneously using both `include` and `exclude`, or failing to verify final published package contents after changes.
-4. Applying workspace-level profile configurations in member crates, expecting them to override root configuration.
-5. Modifying build script inputs without declaring corresponding rerun conditions (`cargo::rerun-if-changed`).
-6. Treating `Cargo.lock` strategies universally: applications typically commit the lock file; CI pipelines must still validate locked dependencies against current versions and latest releases.
-7. Relying solely on host machine `cargo check`, which does not verify target platform linkers, system libraries, or runtime environments in isolation.
-8. Using broad Git branches without fixed sources, compromising reproducibility of builds across different environments.
+Cargo command mechanics may remain here even when the higher-level decision belongs to another skill.
 
-## Official Sources
+## Completion Criteria
 
-- [Cargo Book](https://doc.rust-lang.org/cargo/)
-- [Manifest Format Reference](https://doc.rust-lang.org/cargo/reference/manifest.html)
-- [Dependency Resolution Guide](https://doc.rust-lang.org/cargo/reference/resolver.html)
-- [Features Documentation](https://doc.rust-lang.org/cargo/reference/features.html)
-- [Build Scripts Docs](https://doc.rust-lang.org/cargo/reference/build-scripts.html)
-- [Workspaces Reference](https://doc.rust-lang.org/cargo/reference/workspaces.html)
-- [Publishing Guide](https://doc.rust-lang.org/cargo/reference/publishing.html)
+- Identify the effective workspace, Cargo version, MSRV, target, feature, and profile context.
+- Link the relevant official Cargo page for version-sensitive behavior.
+- Separate stable behavior from nightly experiments.
+- Validate the effective dependency graph and configuration.
+- Preserve reproducibility and credential safety.
+- Confirm artifact, package, or registry side effects before declaring success.
 
-## Data Privacy Policy
+## Data Privacy
 
-This skill does not collect, store, or transmit user data. Before executing `cargo publish`, accessing private registries, or modifying credentials, confirm explicit user authorization and target environment compliance with applicable security policies.
+This skill does not collect, store, or transmit user data. Treat registry tokens, Git credentials, environment variables, generated artifacts, and package contents as potentially sensitive.

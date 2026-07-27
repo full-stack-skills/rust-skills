@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 26 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 27 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 26 个可用技能，不执行安装：
+仅查看全部 27 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 26 个技能：
+无交互地为所有已检测智能体安装全部 27 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -57,7 +57,7 @@ flowchart TB
     S["rust-stable<br/>语言语义"]
     L["标准库与示例<br/>rust-stdlib / rust-by-example"]
     A["API 设计<br/>rust-api-design — Rust API Guidelines 主线"]
-    P["项目工程<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation"]
+    P["项目工程<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation / rust-java-migration"]
     D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
@@ -86,6 +86,7 @@ flowchart TB
 | 工程 | `rust-dependencies` | 版本要求语法、依赖治理（cargo-deny、cargo-audit）、私有仓库、离线 vendor |
 | 工程 | `rust-semver` | 破坏性变更判定、`cargo-semver-checks`、workspace 同步发版、yank/advisory 流程 |
 | 工程 | `rust-documentation` | rustdoc API 契约、doctest、API Guidelines 文档章节、mdBook 指南和发布门禁 |
+| 工程 | `rust-java-migration` | 证据驱动的 Java 模块到 Rust crate 迁移：每模块四文档、对象/方法/参数对齐、语义映射、差分验证、宿主集成与回滚 |
 | 领域 | `rust-concurrency` | 线程、异步运行时、CPU 并行、同步、背压、任务监督和模型测试 |
 | 领域 | `rust-testing` | 单元、集成、doctest、基准与覆盖率 |
 | 领域 | `rust-performance` | 测量方案、Criterion 基准、CPU/延迟/内存分析和回归证明 |
@@ -106,7 +107,7 @@ flowchart TB
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 26 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 27 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
@@ -134,6 +135,14 @@ python3 scripts/validate_skills.py --check-examples
 - Markdown 相对链接和代码围栏有效。
 - `agents/openai.yaml` 存在且默认提示显式引用对应技能。
 - 黄金示例通过 `cargo fmt`、`cargo check`、`cargo test` 和 `cargo clippy -D warnings`。
+
+## v3.6 Java 到 Rust 迁移
+
+- 新增 `rust-java-migration`，用于可重复的 Maven/Gradle → Cargo 迁移，以及已有未完成 Rust 端口的证据化审计。
+- 提供每个源模块必备的四个中文模板：迁移路线图、对象级对照表、语义迁移对照表、对象名称一致性检查。
+- 提供确定性脚本，用于生成四文档，并检测 facade 文件集中定义迁移对象、生产代码通配导入、未经批准的 `todo!()`/`unimplemented!()` 等结构红线。
+- 分开统计结构登记、真实实现、行为对齐、真实宿主集成与生产就绪，避免占位模块或 API 清单虚增完成度。
+- 覆盖 CodeGraph 调用链对照、重载映射、注解到宏的边界、Java/Rust 自动差分、真实脚本回放、并发验收、负载/稳定性、安全 fuzz、业务宿主集成和灰度回滚演练。
 
 ## v3.5 Crate 发现与评估
 

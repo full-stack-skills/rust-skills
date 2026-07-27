@@ -480,6 +480,12 @@
       "prompt": "This new crate has great docs but only 50 downloads. Should I trust it?",
       "expected_skills": ["rust-crate-discovery"],
       "assertions": ["explains_cold_start_limitation", "checks_maintainer_track_record", "notes_score_underestimates_new_crates", "recommends_caution_not_block"]
+    },
+    {
+      "id": "rust-java-full-module-migration",
+      "prompt": "Use CodeGraph to plan an incomplete Java Maven module migration to Rust. Preserve one Java object per Rust file, produce the four module documents, map overloads and annotations, and define differential, concurrency, load, fuzz, host-integration, and rollback acceptance without counting placeholders as complete.",
+      "expected_skills": ["rust-java-migration"],
+      "assertions": ["pins_java_and_rust_baselines", "creates_four_per_module_documents", "inventories_objects_methods_overloads_and_parameters", "separates_structural_implementation_behavior_and_production_evidence", "isolates_and_excludes_approved_placeholders", "uses_codegraph_for_call_chain_parity", "defines_differential_replay_concurrency_load_fuzz_host_and_rollback_gates"]
     }
   ]
 }

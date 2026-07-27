@@ -1,6 +1,6 @@
 ---
 name: rust-dependencies
-description: Manage Rust dependency governance at scale — version requirement syntax (`"1"` vs `"1.2"` vs `"=1.2.3"` vs `~1.2` vs `*`), dependency sources (crates.io / git / path / private registry / source replacement), feature minimization, transitive dependency analysis via cargo tree, cargo-deny (licenses / bans / advisories / sources tables), cargo-audit, cargo-outdated, Renovate/Dependabot automation, the resolver v2/v3 effect on the dep graph, cycle detection, and supply-chain security policy. Use when users ask about dependency strategy, supply-chain governance, license compliance, advisories, lockfile policy, multi-source replacement, or dependency-cycle diagnosis; hand Cargo manifest field semantics to rust-cargo-build, semver to rust-semver, and Clippy config to rust-style-clippy.
+description: Manage Rust dependency governance at scale — version requirement strategy, crate and source selection, feature minimization, transitive dependency analysis, cargo-deny license/ban/advisory/source policy, cargo-audit, cargo-outdated, Renovate/Dependabot automation, dependency update cadence, cycle diagnosis, and supply-chain security. Use for dependency strategy, crate approval, license compliance, advisories, allowed sources, automated updates, or dependency-graph governance; hand Cargo manifest and registry configuration, lockfile mechanics, resolvers, and Cargo command behavior to rust-cargo-build, semver compatibility decisions to rust-semver, and lint policy to rust-style-clippy.
 ---
 
 # Rust Dependency Management and Governance
@@ -222,15 +222,11 @@ You have a real design bug — restructure (often by extracting a shared crate `
 
 ---
 
-# Part 4: Cargo.lock Policy
+# Part 4: Dependency Update Governance
 
-| Project type | Commit Cargo.lock? |
-|-------------|---------------------|
-| Binary / application | **Yes** — ensures reproducible builds |
-| Library (published to crates.io) | **No** — downstream manages the lock |
-| Workspace with both | Yes — apps need it; libs ignore |
+Use `rust-cargo-build` for current Cargo.lock version-control guidance and the exact behavior of `--locked`, `--offline`, and `--frozen`. The current Cargo Guide recommends committing `Cargo.lock` when in doubt; do not apply an application-versus-library prohibition here.
 
-Update policy:
+This skill owns how resolved dependency changes are proposed, reviewed, and approved:
 
 ```bash
 cargo update                      # bump all to latest within reqs
@@ -238,15 +234,12 @@ cargo update --precise 1.0.200 -p serde   # pin a specific version
 cargo update --dry-run            # see what would change
 ```
 
-## CI flags
-
-```bash
-cargo build --locked       # fail if Cargo.lock needs update
-cargo build --frozen       # --locked + --offline
-cargo build --offline      # don't hit the network
-```
-
-CI should use `--locked` to catch Cargo.lock drift in PRs.
+- Prefer package-scoped updates over unrelated graph churn.
+- Review lockfile source, checksum, version, feature, and duplicate-version changes.
+- Run advisories, licenses, bans, and source-policy checks on the proposed graph.
+- Keep automated update pull requests bounded and observable.
+- Use a separate scheduled compatibility lane when libraries need to test newly resolved dependency ranges.
+- Never add an unconditional `cargo update` to required CI merely to make a stale lockfile pass.
 
 ---
 

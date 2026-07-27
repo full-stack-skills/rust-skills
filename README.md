@@ -16,11 +16,11 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 26 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 27 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
-List the 26 available skills without installing them:
+List the 27 available skills without installing them:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ Choose skills and target agents interactively for the current project:
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install all 26 skills for all detected agents without prompts:
+Install all 27 skills for all detected agents without prompts:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -57,7 +57,7 @@ flowchart TB
     S["rust-stable<br/>language semantics"]
     L["std & examples<br/>rust-stdlib / rust-by-example"]
     A["api design<br/>rust-api-design — Rust API Guidelines spine"]
-    P["project engineering<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation"]
+    P["project engineering<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation / rust-java-migration"]
     D["specialized domains<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["operational evidence<br/>testing / performance / observability"]
     Q["quality gates<br/>code-review / style-clippy"]
@@ -86,6 +86,7 @@ flowchart TB
 | Engineering | `rust-dependencies` | Version requirement syntax, supply-chain governance (cargo-deny, cargo-audit), private registries, vendoring |
 | Engineering | `rust-semver` | Breaking-change classification, `cargo-semver-checks`, workspace publishing, yank/advisory workflows |
 | Engineering | `rust-documentation` | Rustdoc API contracts, doctests, API Guidelines Documentation chapter, mdBook guides and release gates |
+| Engineering | `rust-java-migration` | Evidence-driven Java module to Rust crate migration: four per-module documents, object/method/parameter parity, semantic mapping, differential verification, host integration, and rollback |
 | Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
 | Domain | `rust-performance` | Measurement plans, Criterion benchmarks, CPU/latency/memory profiling and regression proof |
@@ -127,6 +128,14 @@ python3 scripts/validate_skills.py --check-examples
 ```
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
+
+## v3.6 Java-to-Rust Migration
+
+- Adds `rust-java-migration`, an evidence-driven workflow for repeatable Maven/Gradle-to-Cargo migrations and incomplete-port audits.
+- Ships four Chinese per-module document templates: migration roadmap, object mapping, semantic mapping, and object/name consistency audit.
+- Adds deterministic scripts to scaffold those documents and flag structural red lines such as migration objects in facade files, wildcard imports, and unapproved `todo!()`/`unimplemented!()` bodies.
+- Separates structural registration, real implementation, behavioral parity, real-host integration, and production readiness so placeholder modules and API manifests cannot inflate completion claims.
+- Covers CodeGraph-guided call-chain comparison, overload mapping, annotation-to-macro boundaries, differential tests, real script replay, concurrency acceptance, load/soak tests, fuzzing, host integration, and gray rollback drills.
 
 ## v3.5 Crate Discovery and Evaluation
 
