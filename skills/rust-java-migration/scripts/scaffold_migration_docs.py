@@ -78,8 +78,10 @@ def main() -> int:
         output_dir = args.output_dir.expanduser().resolve()
         values = {
             "MODULE_NAME": args.module,
-            "JAVA_ROOT": str(java_root),
-            "RUST_ROOT": str(rust_root),
+            # Preserve the caller's repository-relative spelling in generated
+            # documents instead of leaking machine-specific absolute paths.
+            "JAVA_ROOT": args.java_root.as_posix(),
+            "RUST_ROOT": args.rust_root.as_posix(),
             "BASELINE": args.baseline,
             "GENERATED_DATE": args.date,
         }

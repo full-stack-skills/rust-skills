@@ -66,11 +66,16 @@ Create separate machine-readable or tabular inventories for:
 
 Exclude `package-info`, generated sources, BOMs, aggregators, test support, facades, and Rust-only infrastructure only through explicit categories. Do not hide them by changing the denominator.
 
+Resolve `SKILL_DIR` to the directory containing this `SKILL.md`; never assume a
+fixed installation or mount path. Run the following commands from the Rust
+migration repository root and prefer repository-relative paths for project
+inputs and generated artifacts.
+
 Run the static Rust layout audit as an early signal:
 
 ```bash
-python3 /mnt/skills/user/rust-java-migration/scripts/audit_migration_layout.py \
-  --rust-root /absolute/path/to/rust-project
+python3 "$SKILL_DIR/scripts/audit_migration_layout.py" \
+  --rust-root .
 ```
 
 The script detects structural red flags; it does not prove Java/Rust semantic parity.
@@ -80,11 +85,11 @@ The script detects structural red flags; it does not prove Java/Rust semantic pa
 When documentation writes are authorized, generate a documentation directory for each Java module before implementation:
 
 ```bash
-python3 /mnt/skills/user/rust-java-migration/scripts/scaffold_migration_docs.py \
+python3 "$SKILL_DIR/scripts/scaffold_migration_docs.py" \
   --module source-module \
-  --java-root /absolute/path/to/java/source-module \
-  --rust-root /absolute/path/to/rust/crate \
-  --output-dir /absolute/path/to/rust/docs/source-module \
+  --java-root ../java-project/source-module \
+  --rust-root crates/source_module \
+  --output-dir docs/source-module \
   --baseline "java=<sha-or-tag>; rust=<sha>"
 ```
 
