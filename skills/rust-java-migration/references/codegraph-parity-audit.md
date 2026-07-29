@@ -15,9 +15,10 @@ Record:
 
 If `.codegraph/` is absent, do not create it without authorization. State that the fallback inventory lacks graph-level dynamic call evidence.
 
-## Initial Java queries
+## Initial full-batch Java queries
 
-Ask one architecture question before opening individual files:
+Build the complete module inventory before editing any target file. Ask broad
+architecture and inventory questions first:
 
 ```text
 Survey Maven/Gradle modules, public packages, factories, registries, SPI,
@@ -25,14 +26,15 @@ serialization, persistence, networking, concurrency, annotations, examples,
 and tests. Identify high-blast-radius public symbols and their call paths.
 ```
 
-Then query concrete vertical paths:
+Then query representative vertical paths by subsystem to resolve shared
+contracts and dynamic boundaries:
 
 ```text
 <PublicFacade> <Factory> <StrategyInterface> <ConcreteStrategy>
 Show overloads, callers, implementations, error paths, side effects, and tests.
 ```
 
-For every in-scope Java method capture:
+From these queries, produce a frozen manifest for every in-scope Java method:
 
 - fully qualified owner and exact signature;
 - visibility, static/instance nature, generic bounds, annotations;
@@ -41,13 +43,20 @@ For every in-scope Java method capture:
 - downstream collaborators and dynamic boundaries;
 - Java tests/examples that exercise the behavior.
 
-## Rust counterpart queries
+Do not start implementing after the first useful path. Finish the full module
+manifest, dependency topology, overload table, exception list, and test/example
+inventory first.
 
-Query the Java and Rust symbol names together:
+## Consolidated Rust counterpart audit
+
+Do not repeatedly query each Rust object immediately after editing it. After the
+entire declared implementation batch is frozen, query Java and Rust symbols in
+module- or subsystem-sized groups:
 
 ```text
-<JavaTypeName> <rust_type_name> <javaMethod> <rust_method>
-Show source, callers, tests, and behavior differences.
+For every row in <batch manifest>, compare the Java owner/signature with its Rust
+file/type/function. Show missing or extra APIs, callers, implementations, tests,
+side effects, error paths, and behavior differences grouped by subsystem.
 ```
 
 Inspect ownership, borrowing, error type, async boundary, trait objects, locks/channels, feature gates, platform cfgs, and crate re-exports. A similarly named Rust function is not evidence of semantic parity.
@@ -75,6 +84,11 @@ For each public operation maintain one row:
 
 Status must be one of the states defined by the skill. Do not infer `BEHAVIOR_VERIFIED` from source similarity.
 
-## Re-query rules
+## Post-implementation query rules
 
-Re-query the exact edited symbols after implementation if the index is fresh. If CodeGraph reports pending re-index, read only the listed stale files directly. Use compiler, tests, lints, and runtime probes for correctness; CodeGraph is structural evidence, not execution proof.
+Run one consolidated post-implementation audit if the index is fresh. Use
+targeted symbol queries only to explain findings from that audit, not as
+per-object completion gates. If CodeGraph reports pending re-index, read only
+the listed stale files directly and disclose the limitation. Use compiler,
+tests, lints, and runtime probes only in the final unified verification phase;
+CodeGraph is structural evidence, not execution proof.

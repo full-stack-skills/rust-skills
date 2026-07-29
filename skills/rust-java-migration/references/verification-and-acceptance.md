@@ -1,5 +1,19 @@
 # Verification and Acceptance
 
+## Execution timing
+
+Verification begins only after every non-exempt row in the frozen migration
+batch has a real Rust implementation and the implementation batch is frozen.
+Writing the complete test suite may be part of implementation, but do not run
+formatting, compilation, tests, lints, coverage, differential comparison, load,
+fuzz, host, or rollback gates after each object.
+
+Run one full static parity audit, then execute the applicable evidence ladder as
+a unified batch. If failures occur, cluster them by shared root cause, repair
+the implementation batch, and rerun the affected gate plus any downstream gate
+whose evidence was invalidated. Do not turn failure repair into an
+object-by-object migrate-compare-test loop.
+
 ## Evidence levels
 
 | Level | Evidence | What it proves |
@@ -122,5 +136,7 @@ Include:
 - failed/flaky/skipped tests;
 - unverified external dependencies;
 - next evidence required for completion.
+- confirmation that implementation preceded acceptance and that the parity
+  audit and verification used the complete frozen denominator.
 
 Use `rust-java-migration-testing` to disposition every source test, add Rust-specific test obligations, design risk-driven value-add tests, and report mutation/coverage results without promoting heuristics to proof.

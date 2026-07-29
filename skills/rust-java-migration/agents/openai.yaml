@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration"
-  short_description: "Plan and verify Java-to-Rust migrations"
-  default_prompt: "Use $rust-java-migration to plan a behavior-preserving Java-to-Rust migration with pinned baselines, four synchronized documents, contract-led common replacements, crates.io discovery and evidence-based candidate evaluation, and explicit test ledgers."
+  short_description: "Migrate complete Java modules to Rust in one batch"
+  default_prompt: "Use $rust-java-migration to freeze a complete Java module inventory, implement the full Rust semantic batch, then run one consolidated parity audit and unified final verification."

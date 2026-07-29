@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, concurrency, or runtime-behavior level; selecting known Rust replacements for Java frameworks and components; searching crates.io and evaluating unfamiliar alternatives by contract fit, adoption, maintenance, compatibility, security, and executable evidence; producing per-module migration roadmaps and parity tables; or continuing an incomplete port without deleting existing work. Enforces one-Java-object-per-Rust-file layout, explicit semantic contracts, evidence-gated component decisions, CodeGraph-guided call-chain analysis, honest differential-test labels, replay, fuzzing, load tests, host integration, and rollback drills.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, concurrency, or runtime-behavior level; selecting Rust replacements for Java frameworks and components; searching crates.io and evaluating unfamiliar alternatives; producing per-module migration roadmaps and parity tables; or continuing an incomplete port without deleting existing work. Enforces a complete upfront inventory, one continuous module-level semantic implementation batch, one consolidated post-implementation parity audit, and final unified build, differential, replay, concurrency, load, fuzz, host-integration, and rollback verification. Forbids inefficient object-by-object migrate-compare-test loops.
 ---
 
 # Java to Rust Migration
@@ -40,6 +40,22 @@ Never silently infer that the newest branch, a generated manifest, or an API reg
 
 ## Workflow
 
+Treat one declared Java source module and its Rust target crate/module as the
+default migration batch. A user-authorized multi-module scope may be one batch,
+but its complete boundary must be frozen before implementation. Follow this
+execution invariant:
+
+```text
+freeze full scope and contracts
+    -> implement the complete batch once
+    -> freeze implementation
+    -> audit the complete batch once
+    -> run unified verification
+```
+
+Dependency-ordered editing inside the implementation batch is allowed. Per-object
+completion loops are not.
+
 ### 1. Freeze baselines and inspect repository state
 
 Record both repository SHAs, dirty worktrees, Java/Rust toolchains, module manifests, enabled features, and generated-code boundaries. Preserve existing Rust work and unrelated changes.
@@ -50,7 +66,8 @@ If a repository contains `.codegraph/`, use CodeGraph before text search or file
 2. Query representative public types and overloaded methods.
 3. Trace high-value call chains across factories, registries, interceptors, serializers, persistence, networking, and concurrency.
 4. Query the Rust counterparts and their callers/tests.
-5. Re-query the exact symbols before changing them if the index reports staleness.
+5. Refresh or re-query the module inventory once before implementation if the
+   index reports staleness.
 
 If no index exists, do not initialize one without authorization. Use language-aware tooling or targeted source inspection and disclose the weaker evidence.
 
@@ -70,6 +87,11 @@ Create separate machine-readable or tabular inventories for:
 - Call paths and externally observable side effects.
 
 Exclude `package-info`, generated sources, BOMs, aggregators, test support, facades, and Rust-only infrastructure only through explicit categories. Do not hide them by changing the denominator.
+
+Freeze the inventory as the batch manifest before editing production code. It
+must cover the complete denominator, dependency order, shared mechanisms,
+component decisions, test disposition, and approved exceptions. Do not start
+with one object and discover the rest while implementing.
 
 Resolve `SKILL_DIR` to the directory containing this `SKILL.md`; never assume a
 fixed installation or mount path. Run the following commands from the Rust
@@ -113,7 +135,14 @@ Populate every placeholder from source evidence. Keep documents synchronized wit
 - [Semantic mapping](assets/templates/语义迁移对照表.md)
 - [Name consistency audit](assets/templates/对象名称一致性检查.md)
 
-Every document must show separate Java and Rust baselines, its last-audited date, and a document status. Every migrated/verified row needs an evidence anchor: source file or symbol, target file or symbol, test/oracle, exact command, and artifact where applicable. Before upgrading any row, cross-check all four documents against the current Rust SHA. A later count table must not silently contradict a technical-requirements document or an earlier semantic gap.
+Every document must show separate Java and Rust baselines, its last-audited date,
+and a document status. Every migrated/verified row needs an evidence anchor:
+source file or symbol, target file or symbol, test/oracle, exact command, and
+artifact where applicable. During implementation, do not upgrade rows one at a
+time. After the batch freeze, cross-check all four documents against the current
+Rust SHA and update statuses in one consolidated pass. A later count table must
+not silently contradict a technical-requirements document or an earlier semantic
+gap.
 
 ### 4. Classify every object honestly
 
@@ -154,20 +183,33 @@ For multiple target frameworks, define a framework-neutral contract and thin ada
 
 Read [Component replacement decision SOP](references/component-replacement-sop.md), [crate replacement discovery and evaluation](references/crate-replacement-discovery.md), and [Component candidate catalog](references/component-candidate-catalog.md) before choosing or approving a third-party replacement. The catalog is discovery input, never an approval list; re-verify release, maintenance, license, MSRV, targets, advisories, unsafe/build-script surface, and required contracts at decision time.
 
-### 6. Migrate one vertical slice at a time
+### 6. Complete the declared batch in one semantic implementation pass
 
-Choose a coherent slice containing source object, collaborators, tests, examples, and documentation. For each Java object:
+Read [Layout and migration rules](references/layout-and-governance.md) and
+[Semantic mappings](references/semantic-mappings.md) before changing code. Then
+execute the entire frozen batch without object-level acceptance pauses:
 
-1. Create exactly one primary `.rs` file.
-2. Copy and translate the JavaDoc semantics into Chinese Rust doc comments.
-3. Map all constructors/methods/overloads and parameters before coding.
-4. Trace the Java method body and collaborators with CodeGraph.
-5. Apply an approved component decision without deleting observable behavior.
-6. Implement real logic in the object's file or explicit collaborator files.
-7. Disposition the original Java test cases, add applicable Rust-specific obligations, and then add risk-driven tests; label mirrored tests honestly.
-8. Update all four documents.
+1. Establish the target module tree, shared errors, traits, registries, adapters,
+   serialization rules, concurrency model, and dependency boundaries once.
+2. Implement every mapped Java object and operation in dependency order. Keep
+   exactly one primary `.rs` file per Java object and real logic in the
+   corresponding object or explicit collaborator files.
+3. Copy and translate JavaDoc semantics into Chinese Rust doc comments across
+   the batch. Preserve parameter, default, nullability, error, side-effect,
+   ordering, lifecycle, and concurrency intent.
+4. Implement all mapped overload variants, examples, fixtures, source-test
+   counterparts, Rust-specific obligations, and risk-driven tests as batch
+   artifacts, but do not execute validation yet.
+5. Maintain one deferred-issues ledger. Continue through local uncertainties;
+   pause only for a blocker that changes the frozen public contract,
+   architecture, dependency policy, or authorized scope.
+6. When every non-exempt manifest row has real implementation, freeze the Rust
+   batch. Only then update the four documents in bulk and enter audit.
 
-Read [Layout and migration rules](references/layout-and-governance.md) and [Semantic mappings](references/semantic-mappings.md) before changing code.
+During this pass, do **not** run `cargo check`, tests, Clippy, coverage,
+differential comparison, per-object CodeGraph re-queries, or per-object
+completion reviews. Do not report an object as accepted merely because its file
+was edited. Recovery commits are allowed, but they are not verification gates.
 
 ### 7. Preserve naming and overload intent
 
@@ -234,20 +276,37 @@ Use `-derive` only for a derive-only public surface; use `-macros` for attribute
 
 Java runtime annotations do not automatically become Rust macros. Use middleware, traits, registries, or explicit builders when runtime state and dynamic dispatch own the behavior.
 
-### 10. Verify in increasing evidence levels
+### 10. Audit once, then verify the complete batch
 
-Do not stop at compilation. Execute the applicable ladder:
+After the implementation freeze, execute the applicable ladder for the whole
+declared batch:
 
-1. Static object/file/method/parameter inventory.
-2. Rust formatting, check, unit, doc, integration, Clippy, and platform gates.
-3. Ported/mirrored Java contract tests, clearly labeled as non-differential evidence.
-4. Java golden exporter or live Java/Rust execution over the same deterministic cases.
-5. Real user script/example replay against both implementations.
-6. Concurrency acceptance: ordering, cancellation, backpressure, races, shutdown, and Loom/model tests where useful.
-7. Load/stability tests: throughput, latency percentiles, memory, handles/tasks, reconnects, and long soak.
-8. Security: property tests, malformed inputs, `cargo-fuzz`, unsafe review, dependency advisories, and secret-redaction checks across every public error/log surface.
-9. Real business-host integration with databases, networks, files, frameworks, and deployment topology.
-10. Gray rollout and rollback drill with recorded recovery time and state compatibility.
+1. Run one consolidated CodeGraph/static parity audit over all objects, files,
+   exact signatures, parameters, overloads, call paths, dynamic boundaries,
+   examples, tests, docs, and placeholders. Reconcile all four documents in one
+   pass.
+2. Run Rust formatting, check, unit, doc, integration, Clippy, feature, target,
+   and platform gates as one unified engineering suite.
+3. Run every ported/mirrored Java contract test, clearly labeled as
+   non-differential evidence.
+4. Run the complete Java golden exporter or live Java/Rust differential suite
+   over the same deterministic cases.
+5. Replay the complete set of real user scripts and examples against both
+   implementations.
+6. Run concurrency acceptance for ordering, cancellation, backpressure, races,
+   shutdown, and Loom/model properties where useful.
+7. Run load/stability tests for throughput, latency percentiles, memory,
+   handles/tasks, reconnects, and soak.
+8. Run security property tests, malformed-input suites, `cargo-fuzz`, unsafe
+   review, dependency advisories, and secret-redaction checks.
+9. Run real business-host integration with databases, networks, files,
+   frameworks, and deployment topology.
+10. Run the gray rollout and rollback drill with recorded recovery time and
+    state compatibility.
+
+When a gate fails, group failures by shared subsystem or root cause, repair the
+batch, and rerun the affected consolidated gate plus downstream invalidated
+gates. Never fall back to migrate-compare-test one object at a time.
 
 Read [Verification and acceptance](references/verification-and-acceptance.md) for evidence design and use `rust-java-migration-testing` for the three-ledger testing SOP.
 
@@ -280,6 +339,12 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - Do not let the four migration documents carry different baselines or contradictory completion states.
 - Do not claim real testing when only mocks, compilation, or static inspection ran.
 - Do not edit reference source repositories while extracting patterns.
+- Do not alternate migration, comparison, and testing for each object, file, or
+  method.
+- Do not run object-scoped acceptance during the semantic implementation pass;
+  finish the frozen batch before consolidated audit and unified verification.
+- Do not convert recovery commits or local edit milestones into completion
+  checkpoints.
 
 ## Completion Criteria
 
@@ -287,6 +352,9 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - Every Java object, method, overload, and parameter has a disposition.
 - Every exception and Rust extension is categorized and excluded from misleading denominators.
 - Production Rust files satisfy layout, documentation, import, and no-stub rules.
+- The complete declared batch was implemented before any acceptance gate ran.
+- One consolidated post-implementation parity audit covers the full frozen
+  denominator; no object-by-object verification loop was used.
 - High-value call chains have source-linked semantic mappings.
 - Applicable differential, replay, concurrency, load, fuzz, host, and rollback gates have evidence or explicit open gaps.
 - The final report separates structural, implementation, behavioral, integration, and production-readiness claims.

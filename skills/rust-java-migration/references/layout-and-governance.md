@@ -10,6 +10,18 @@
 - Keep `lib.rs` and `mod.rs` limited to module declarations, visibility, documentation, and re-exports.
 - Keep runtime compatibility facades thin. Put real object behavior in the corresponding object files.
 
+## Execution granularity
+
+- Treat the complete declared source module as the default implementation batch.
+- Freeze all object, signature, dependency, test, example, and exception mappings
+  before editing production code.
+- Implement files in dependency order without object-level comparison or test
+  pauses.
+- Freeze the complete implementation before running the consolidated parity
+  audit and unified verification suite.
+- Use per-object rows for traceability and final accounting, not as execution
+  checkpoints.
+
 ## Documentation contract
 
 Every migrated type must include Chinese Rust doc comments:
@@ -71,11 +83,12 @@ For an approved placeholder module, label the module exception `PLANNED_BLOCKED`
 Before editing an existing Rust port:
 
 1. Record dirty files and current tests.
-2. Query callers and blast radius.
-3. Identify real behavior already implemented, even if its shape is imperfect.
-4. Add missing compatibility wrappers or split files incrementally.
-5. Preserve tests and observable behavior.
-6. Do not replace a rich implementation with a generated facade merely to improve counts.
+2. Query the complete module's callers and blast radius.
+3. Identify all real behavior already implemented, even if its shape is imperfect.
+4. Plan every missing compatibility wrapper and file split in the frozen batch manifest.
+5. Apply the complete semantic batch while preserving tests and observable behavior.
+6. Run one consolidated post-batch audit and final verification suite.
+7. Do not replace a rich implementation with a generated facade merely to improve counts.
 
 ## Red-flag patterns
 

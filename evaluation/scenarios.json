@@ -483,9 +483,9 @@
     },
     {
       "id": "rust-java-full-module-migration",
-      "prompt": "Use CodeGraph to plan an incomplete Java Maven module migration to Rust. Preserve one Java object per Rust file, produce the four module documents, map overloads and annotations, and define differential, concurrency, load, fuzz, host-integration, and rollback acceptance without counting placeholders as complete.",
+      "prompt": "Use CodeGraph to migrate an incomplete Java Maven module to Rust efficiently. Freeze the complete module inventory and four documents first, then finish every mapped object's semantic implementation in one continuous dependency-ordered batch. Do not migrate, compare, or test one object at a time. After the whole implementation is frozen, run one consolidated parity audit and then the unified build, differential, replay, concurrency, load, fuzz, host-integration, and rollback verification suite. Preserve one Java object per Rust file and do not count placeholders as complete.",
       "expected_skills": ["rust-java-migration"],
-      "assertions": ["pins_java_and_rust_baselines", "creates_four_per_module_documents", "inventories_objects_methods_overloads_and_parameters", "separates_structural_implementation_behavior_and_production_evidence", "isolates_and_excludes_approved_placeholders", "uses_codegraph_for_call_chain_parity", "defines_differential_replay_concurrency_load_fuzz_host_and_rollback_gates"]
+      "assertions": ["pins_java_and_rust_baselines", "creates_four_per_module_documents", "freezes_complete_module_inventory_before_implementation", "inventories_objects_methods_overloads_and_parameters", "implements_all_non_exempt_objects_in_one_semantic_batch", "does_not_compare_or_test_object_by_object", "runs_one_consolidated_post_implementation_parity_audit", "runs_unified_final_build_differential_replay_concurrency_load_fuzz_host_and_rollback_gates", "separates_structural_implementation_behavior_and_production_evidence", "isolates_and_excludes_approved_placeholders"]
     },
     {
       "id": "rust-java-component-replacement-decision",
