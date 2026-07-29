@@ -2,6 +2,8 @@
 
 Use these mappings as decision prompts, not mechanical substitutions.
 
+For third-party discovery, consult [Component candidate catalog](component-candidate-catalog.md), then apply the [Component replacement decision SOP](component-replacement-sop.md). A catalog entry is never an approved dependency.
+
 ## Types and ownership
 
 | Java | Rust questions and common mapping |
@@ -53,8 +55,8 @@ Test interleavings, cancellation, timeout, queue bounds, slow consumers, shutdow
 ## Frameworks and extension points
 
 - Keep the domain core framework-neutral.
-- Map Spring Boot entry points to separate `axum` adapter crates when approved.
-- Map Quarkus entry points to separate `actix-web` adapters when approved.
+- Map Spring Boot, Quarkus, or other Java host entry points to framework-neutral Rust contracts plus separate approved adapter crates.
+- Select Axum, Actix Web, Poem, Salvo, Tonic, or another host from target constraints and contract evidence; never infer the Rust framework from the Java framework name.
 - Replace classpath scanning with explicit module registration, generated registration, or `inventory`.
 - Replace lifecycle annotations with explicit start/stop ownership and cancellation-safe cleanup.
 - Preserve interceptor order and before/after/error semantics through middleware tests.

@@ -16,11 +16,11 @@
 
 `rust-skills` 是面向 AI 编码智能体的 Rust 知识与工程技能包，不是 Rust crate。仓库通过 `SKILL.md` 提供触发规则、任务路由、操作流程、验证门禁、离线参考和可编译示例。
 
-本包包含 27 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
+本包包含 29 个技能。主入口 `rust-stable` 当前离线基线为 **Rust 1.97.1**；使用时仍会先检查项目工具链和 MSRV，不会把仓库快照误认为用户环境。
 
 ## 安装
 
-仅查看全部 27 个可用技能，不执行安装：
+仅查看全部 29 个可用技能，不执行安装：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ npx skills add full-stack-skills/rust-skills --list
 npx skills add full-stack-skills/rust-skills
 ```
 
-无交互地为所有已检测智能体安装全部 27 个技能：
+无交互地为所有已检测智能体安装全部 29 个技能：
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -58,7 +58,7 @@ flowchart TB
     L["标准库与示例<br/>rust-stdlib / rust-by-example"]
     A["API 设计<br/>rust-api-design — Rust API Guidelines 主线"]
     P["项目工程<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation / rust-java-migration"]
-    D["领域专项<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
+    D["领域专项<br/>concurrency / unsafe-ffi / uniffi-building / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["运行证据<br/>testing / performance / observability"]
     Q["质量门禁<br/>code-review / style-clippy"]
 
@@ -86,12 +86,14 @@ flowchart TB
 | 工程 | `rust-dependencies` | 版本要求语法、依赖治理（cargo-deny、cargo-audit）、私有仓库、离线 vendor |
 | 工程 | `rust-semver` | 破坏性变更判定、`cargo-semver-checks`、workspace 同步发版、yank/advisory 流程 |
 | 工程 | `rust-documentation` | rustdoc API 契约、doctest、API Guidelines 文档章节、mdBook 指南和发布门禁 |
-| 工程 | `rust-java-migration` | 证据驱动的 Java 模块到 Rust crate 迁移：每模块四文档、对象/方法/参数对齐、语义映射、差分验证、宿主集成与回滚 |
+| 工程 | `rust-java-migration` | 证据驱动的 Java 模块到 Rust crate 迁移：每模块四文档、对象/方法/参数对齐、契约驱动的组件替换、宿主集成与回滚 |
+| 工程 | `rust-java-migration-testing` | Java→Rust 三本账测试 SOP：源测试逐条处置、Rust 特有义务、风险增量测试、诚实差分证据与同口径覆盖率 |
 | 领域 | `rust-concurrency` | 线程、异步运行时、CPU 并行、同步、背压、任务监督和模型测试 |
 | 领域 | `rust-testing` | 单元、集成、doctest、基准与覆盖率 |
 | 领域 | `rust-performance` | 测量方案、Criterion 基准、CPU/延迟/内存分析和回归证明 |
 | 领域 | `rust-observability` | 结构化 tracing、指标、OpenTelemetry 上下文和运行时诊断 |
 | 领域 | `rust-unsafe-ffi` | unsafe、裸指针、内存布局、FFI、Miri |
+| 领域 | `rust-uniffi-building` | UniFFI 接口建模、脚手架、绑定生成、Kotlin/Swift/Python/Ruby/WASM 集成、打包与跨语言测试 |
 | 领域 | `rust-macros` | 声明宏与过程宏 |
 | 领域 | `rust-lombok-macros` | 受控生成 `lombok-macros` 访问器、构造器和调试格式 |
 | 领域 | `rust-cli` | CLI 契约、标准流、退出码、真实进程测试和发布验证 |
@@ -107,7 +109,7 @@ flowchart TB
 
 ```text
 rust-skills/
-├── .claude-plugin/plugin.json   # 插件元数据和 27 个技能的发布清单
+├── .claude-plugin/plugin.json   # 插件元数据和 29 个技能的发布清单
 ├── .github/workflows/quality.yml
 ├── scripts/validate_skills.py   # 结构、链接、行数和元数据校验
 ├── skills/
@@ -135,6 +137,29 @@ python3 scripts/validate_skills.py --check-examples
 - Markdown 相对链接和代码围栏有效。
 - `agents/openai.yaml` 存在且默认提示显式引用对应技能。
 - 黄金示例通过 `cargo fmt`、`cargo check`、`cargo test` 和 `cargo clippy -D warnings`。
+
+## v3.9 Java→Rust 迁移测试与组件候选目录
+
+- 将迁移测试技能重命名为 `rust-java-migration-testing`，触发语义明确覆盖源测试对齐、Rust 特有义务与有价值的覆盖率增长。
+- 新增三本账 SOP（`SOURCE_PARITY`、`RUST_OBLIGATION`、`VALUE_ADD`）、Java/Rust 测试盘点脚本、迁移测试对照表模板与人工测试价值量表。
+- 从 Vernal Framework 迁移中提炼精确断言、共享 adapter 合同等正向模式，以及忽略结果、只解析、泛化错误、未观测缓存和覆盖率冲刺等反向模式。
+- 将搜集的 Rust 组件资料改造成带来源与研究状态的候选目录；候选发现、manifest 声明、合同证据、真实宿主验证和生产就绪严格分开。
+- 为映射表外的 Java 依赖增加可执行 crates.io 发现与评估 SOP：能力/协议搜索词族、硬门禁、合同适配度与生态健康分离、使用量/活跃度的上下文解释、解析后依赖图审查及高风险候选 POC。
+- 四份迁移模板增加独立 Java/Rust 基线、最近审计日期、证据锚点、跨文档一致性、组件研究状态与测试三本账。
+
+## v3.8 Java 到 Rust 决策与验证 SOP
+
+- 扩展 `rust-java-migration`：新增契约驱动的组件选型、硬约束过滤、高风险 POC、明确采用状态、共享适配器合同与回滚/退出决策。
+- 新增迁移验证基础：严格区分 Java 镜像合同、golden/live 差分、真实宿主与非功能验收。
+- 升级四个迁移文档模板，加入组件归属、证据级别、生命周期/取消/错误公开面矩阵和可信完成度统计。
+- 新增不会自动删测试的启发式审计脚本、变异测试包装脚本，以及验证公开错误脱敏并保留 source 链的零依赖黄金示例。
+
+## v3.7 UniFFI 多语言绑定
+
+- 新增 `rust-uniffi-building`，用于通过 Mozilla UniFFI 将 Rust 库暴露给 Kotlin/Android、Swift/Apple 平台、Python、Ruby 和实验性 WASM。
+- 覆盖过程宏与 UDL 选型、record/enum/error/object/trait/callback/custom type、脚手架、`uniffi.toml`、library mode 生成、异步取消、宿主集成、打包和升级。
+- 将 UniFFI 官方指南的全部 68 个页面映射为按需加载的参考资料，不把整套文档复制进 `SKILL.md`。
+- 提供锁定 UniFFI 0.32.0 的黄金示例库和本地 bindgen CLI；验证会编译 Rust API，并从真实动态库生成 Python 绑定。
 
 ## v3.6 Java 到 Rust 迁移
 
@@ -213,6 +238,7 @@ python3 scripts/validate_skills.py --check-examples
 - [RustSec Advisory Database](https://rustsec.org/)
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
+- [UniFFI 用户指南](https://mozilla.github.io/uniffi-rs/latest/) 与 [mozilla/uniffi-rs](https://github.com/mozilla/uniffi-rs)
 - [crates.io 上的 lombok-macros](https://crates.io/crates/lombok-macros) 与 [2.0.32 版本化 docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)
 - [Rustdoc](https://doc.rust-lang.org/rustdoc/)、[mdBook](https://rust-lang.github.io/mdBook/)、[Tokio](https://tokio.rs/)、[Rayon](https://docs.rs/rayon/)
 - [reqwest](https://docs.rs/reqwest/)、[Tower](https://docs.rs/tower/)、[tracing](https://docs.rs/tracing/)、[OpenTelemetry Rust](https://opentelemetry.io/docs/languages/rust/)

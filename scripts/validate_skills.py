@@ -244,8 +244,9 @@ def main() -> int:
             print(f"- {error}", file=sys.stderr)
         return 1
 
+    skill_count = sum(1 for path in SKILLS_DIR.iterdir() if path.is_dir())
     print(
-        f"Validated {len(list(SKILLS_DIR.iterdir()))} skills, "
+        f"Validated {skill_count} skills, "
         f"{len(manifests)} golden examples, and all local Markdown links."
     )
     return 0

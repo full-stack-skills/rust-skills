@@ -1,6 +1,6 @@
 {
   "name": "rust-skills",
-  "version": "3.6.0",
+  "version": "3.9.0",
   "description": "Stable Rust language and engineering skills",
   "author": {
     "name": "PartMe.AI",
@@ -22,11 +22,13 @@
     "./skills/rust-semver",
     "./skills/rust-documentation",
     "./skills/rust-java-migration",
+    "./skills/rust-java-migration-testing",
     "./skills/rust-concurrency",
     "./skills/rust-testing",
     "./skills/rust-performance",
     "./skills/rust-observability",
     "./skills/rust-unsafe-ffi",
+    "./skills/rust-uniffi-building",
     "./skills/rust-macros",
     "./skills/rust-lombok-macros",
     "./skills/rust-cli",

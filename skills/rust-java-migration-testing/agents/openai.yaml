@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust Java Migration Testing"
+  short_description: "Align source tests and add Rust-specific evidence"
+  default_prompt: "Use $rust-java-migration-testing to disposition every Java test, add mandatory Rust-specific tests, design risk-driven value-add tests, and compare coverage without inflating migration evidence."

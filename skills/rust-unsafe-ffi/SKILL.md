@@ -11,7 +11,7 @@ Treat `unsafe` as a proof obligation. An unsafe block permits specific operation
 
 Use this skill for raw pointers, `NonNull`, unsafe functions and traits, unions, `MaybeUninit`, `ManuallyDrop`, layout, pinning, allocators, manual `Send` or `Sync`, C ABI bindings, callbacks, handles, and ownership transfer.
 
-Route ordinary ownership design to `rust-stable`, concurrent architecture to `rust-concurrency`, binding generation and build scripts to `rust-cargo-build`, and review reporting to `rust-code-review`.
+Route ordinary ownership design to `rust-stable`, concurrent architecture to `rust-concurrency`, UniFFI-generated multi-language bindings to `rust-uniffi-building`, general build scripts to `rust-cargo-build`, and review reporting to `rust-code-review`.
 
 ## Workflow
 

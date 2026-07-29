@@ -1,6 +1,159 @@
+# Unified ignore rules for full-stack skill repositories.
+
+### Rust / Cargo ###
+target/
+**/target/
+Cargo.lock
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### Java / Maven / Gradle ###
+bin/
+codes/
+.gradle
+/build/
+build/
+**/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+!.mvn/wrapper/maven-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
+.flattened-pom.xml
+.fastRequest
+**/dependency-reduced-pom.xml
+pom.xml.versionsBackup
+*.war
+*.ear
+*.tar
+*.tar.gz
+!/libs/*.jar
+
+### Spring Tool Suite ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.settings/
+.springBeans
+.sts4-cache
+rebel.xml
+
+### IntelliJ IDEA ###
+.idea
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Node.js / frontend ###
+node_modules
+node_modules/
+**/node_modules/
+**/dist/
+**/.output/
+**/.vite/
+**/.cache/
+**/.parcel-cache/
+**/*.tsbuildinfo
+**/coverage/
+**/storybook-static/
+**/boba-tea-shop/supervisor-agent/**/static/
+
+### Python ###
+__pycache__/
+*.py[cod]
+*.pyc
+*$py.class
+*.egg-info/
+.venv/
+fix_chinese.py
+
+### Documentation ###
+docs/_build
+
+### Environment and local secrets ###
+.env
+.env.local
+**/.env.local
+**/.env.*.local
+*.json
+!cloud-agents-server/agents/maternal-recovery.json
+assets/personal-asset-index.json
+
+### Logs ###
+logs/
+/logs/
+*.log
+log.*/
+
+### OS files ###
+.DS_Store
+**/.DS_Store
+Thumbs.db
+.metadata
+Servers
+
+### Editor and temporary files ###
+*.swp
+*.swo
+*.cache
+*.diff
+*.patch
+*.tmp
+*.java~
+*.properties~
+*.xml~
+*.gz
+*.http
+
+### Agent and local tooling ###
+.claude
+.claude/
+openspec
+AGENTS.md
+CLAUDE.md
+.agentscope/
+.mimocode/
+.codegraph/
 input/
 trace-report-*.md
-fix_chinese.py
-__pycache__/
-*.pyc
-**/target/
+
+### Local databases ###
+**/*.db
+/agentdb.rvf
+/agentdb.rvf.lock
+/ruvector.db
+
+### Local server data ###
+/server/nacos-server/data
+/server/nacos-server/logs
+upload
+gen_code
+
+### Design and media build artifacts ###
+.video-tmp-*/
+**/.video-tmp-*/
+**/_narration/
+**/_narration_*/
+demos/_frames_*.png
+demos/_verify.js
+demos/_verify.mjs
+_style-research/
+**/design-demos/
+demos/**/*.mp4

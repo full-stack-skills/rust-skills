@@ -6,15 +6,26 @@
 |---|---|---|
 | E0 | file/type/signature inventory | structural disposition only |
 | E1 | Rust check/tests/lints | Rust implementation builds and local tests pass |
-| E2 | Java/Rust golden differential | selected observable contracts match |
-| E3 | real script/example replay | caller-shaped workflows match |
-| E4 | concurrency/model tests | specified interleavings and lifecycle properties hold |
-| E5 | load/soak and profiling | measured performance and stability under stated profile |
-| E6 | fuzz/property/security tests | malformed and broad input classes are exercised |
+| E2 | mirrored/ported Java contract tests | selected source contracts are represented in Rust; no cross-implementation comparison is proven |
+| E3 | Java-produced golden fixtures or live Java/Rust differential execution | selected observable contracts match across pinned implementations |
+| E4 | real script/example replay | caller-shaped workflows match |
+| E5 | concurrency/model/lifecycle tests | specified interleavings, cancellation, and cleanup properties hold |
+| E6 | load/soak, mutation, fuzz/property, and security tests | stated non-functional and broad-input claims are exercised |
 | E7 | real host integration | actual framework/database/network/filesystem boundary works |
 | E8 | gray rollout/rollback drill | operational recovery path is exercised |
 
 Never report a higher level from lower-level evidence.
+
+## Evidence taxonomy
+
+Use these labels precisely:
+
+- **Mirrored test**: a Rust test copies a Java test name, input, or assertion. It is useful contract evidence but is not differential.
+- **Golden differential**: a pinned Java exporter produces fixtures that the Rust implementation consumes and compares.
+- **Live differential**: pinned Java and Rust implementations run the same generated or recorded cases and a comparator evaluates normalized outputs.
+- **Equivalent oracle**: a standards suite, protocol corpus, or mathematically defined property replaces the Java runtime by explicit approval.
+
+Do not call two independently handwritten tests “differential” merely because they describe the same behavior.
 
 ## Differential tests
 
@@ -28,6 +39,8 @@ Pin the Java source SHA and Rust source SHA in the fixture metadata. Prefer a Ja
 - non-deterministic outputs by observable properties rather than exact values.
 
 Do not make the Rust test invoke an unpinned remote Java artifact.
+
+Normalize only documented nondeterminism: timestamps, generated identifiers, map order, locale, paths, and concurrency scheduling. Keep raw outputs as artifacts, record the normalization rules, and fail on unexpected fields rather than deleting them.
 
 ## Real script replay
 
@@ -47,6 +60,10 @@ Define invariants first:
 - graceful shutdown and resource release.
 
 Use deterministic coordination tests, Loom where state primitives warrant it, Tokio paused time for timers, and stress tests for race amplification. Report runtime/thread counts and blocking-pool use.
+
+For application frameworks, build a lifecycle failure matrix covering build, refresh/initialize, start, ready, pause/reload, and close. At each phase inject error, panic, timeout, caller cancellation, and dependency loss where applicable. Assert final state, cleanup order, exactly-once release, preserved primary error, supplemental cleanup error, and orphan task/resource counts.
+
+Test every public error surface separately. `Display`, `Debug`, serialized diagnostics, logs, metrics labels, HTTP/RPC bodies, and `Error::source()` have different audiences. A redacted report does not prove a redacted `Display`; preserve programmatic causality without exposing secrets on public surfaces.
 
 ## Load and stability
 
@@ -80,6 +97,8 @@ Exercise a real supported host:
 
 Record what remains simulated.
 
+When one semantic contract has several framework adapters, place reusable assertions in a shared conformance testkit and execute them against every adapter. Keep native framework tests for routing, extractors, middleware/service boundaries, body streaming, and shutdown behavior that the shared contract cannot observe.
+
 ## Gray rollout and rollback
 
 Define traffic selection, compatibility window, state/schema/wire backward compatibility, metrics and alerts, abort thresholds, and recovery objective. Run:
@@ -103,3 +122,5 @@ Include:
 - failed/flaky/skipped tests;
 - unverified external dependencies;
 - next evidence required for completion.
+
+Use `rust-java-migration-testing` to disposition every source test, add Rust-specific test obligations, design risk-driven value-add tests, and report mutation/coverage results without promoting heuristics to proof.

@@ -41,9 +41,12 @@ For **standard-library API selection** (which collection, which smart pointer, w
 | Cargo.toml dependencies, features, profiles, publishing | `rust-cargo-build` |
 | Dependency governance, supply chain, cargo-deny | `rust-dependencies` |
 | Semver, breaking-change classification, publish workflow | `rust-semver` |
+| Java Maven/Gradle project migration and component replacement | `rust-java-migration` |
+| Java-to-Rust source-test parity, Rust obligations, and migration test audit | `rust-java-migration-testing` |
 | Threads, locks, atomics, channels, Tokio | `rust-concurrency` |
 | Unit tests, integration tests, doctests, coverage | `rust-testing` |
 | Raw pointers, memory layout, FFI, Miri | `rust-unsafe-ffi` |
+| UniFFI-generated Kotlin, Swift, Python, Ruby, or WASM bindings | `rust-uniffi-building` |
 | macro_rules, derive, procedural macros | `rust-macros` |
 | Command contracts, standard streams, exit codes, CLI | `rust-cli` |
 | Server-side HTTP APIs, handlers, middleware | `rust-web` |

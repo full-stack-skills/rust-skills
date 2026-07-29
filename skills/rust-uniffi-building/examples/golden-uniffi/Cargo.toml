@@ -1,0 +1,17 @@
+[package]
+name = "rust-uniffi-golden"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[dependencies]
+uniffi = { version = "=0.32.0", features = ["cli"] }
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi_bindgen.rs"

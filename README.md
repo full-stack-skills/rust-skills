@@ -16,11 +16,11 @@ English | [简体中文](./README.zh-CN.md)
 
 `rust-skills` is a Rust knowledge and engineering package for AI coding agents, not a Rust crate. Its `SKILL.md` files provide trigger metadata, task routing, workflows, validation gates, offline references, and compilable examples.
 
-The package contains 27 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
+The package contains 29 skills. The `rust-stable` entry skill is currently grounded in **Rust 1.97.1**, while requiring agents to inspect the project's actual toolchain and MSRV before using version-sensitive APIs.
 
 ## Install
 
-List the 27 available skills without installing them:
+List the 29 available skills without installing them:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --list
@@ -32,7 +32,7 @@ Choose skills and target agents interactively for the current project:
 npx skills add full-stack-skills/rust-skills
 ```
 
-Install all 27 skills for all detected agents without prompts:
+Install all 29 skills for all detected agents without prompts:
 
 ```bash
 npx skills add full-stack-skills/rust-skills --all
@@ -58,7 +58,7 @@ flowchart TB
     L["std & examples<br/>rust-stdlib / rust-by-example"]
     A["api design<br/>rust-api-design — Rust API Guidelines spine"]
     P["project engineering<br/>rust-workspace / module-layout / cargo-build /<br/>dependencies / semver / documentation / rust-java-migration"]
-    D["specialized domains<br/>concurrency / unsafe-ffi / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
+    D["specialized domains<br/>concurrency / unsafe-ffi / uniffi-building / macros / lombok-macros<br/>cli / web / http-client / database / web-security / embedded"]
     O["operational evidence<br/>testing / performance / observability"]
     Q["quality gates<br/>code-review / style-clippy"]
 
@@ -86,12 +86,14 @@ flowchart TB
 | Engineering | `rust-dependencies` | Version requirement syntax, supply-chain governance (cargo-deny, cargo-audit), private registries, vendoring |
 | Engineering | `rust-semver` | Breaking-change classification, `cargo-semver-checks`, workspace publishing, yank/advisory workflows |
 | Engineering | `rust-documentation` | Rustdoc API contracts, doctests, API Guidelines Documentation chapter, mdBook guides and release gates |
-| Engineering | `rust-java-migration` | Evidence-driven Java module to Rust crate migration: four per-module documents, object/method/parameter parity, semantic mapping, differential verification, host integration, and rollback |
+| Engineering | `rust-java-migration` | Evidence-driven Java module to Rust crate migration: four per-module documents, object/method/parameter parity, contract-led component replacement, host integration, and rollback |
+| Engineering | `rust-java-migration-testing` | Three-ledger Java-to-Rust testing SOP: source-test disposition, mandatory Rust obligations, risk-driven value-add tests, honest differential evidence, and comparable coverage |
 | Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
 | Domain | `rust-performance` | Measurement plans, Criterion benchmarks, CPU/latency/memory profiling and regression proof |
 | Domain | `rust-observability` | Structured tracing, metrics, OpenTelemetry context and runtime diagnostics |
 | Domain | `rust-unsafe-ffi` | Unsafe, raw pointers, layout, FFI and Miri |
+| Domain | `rust-uniffi-building` | UniFFI interface modeling, scaffolding, binding generation, Kotlin/Swift/Python/Ruby/WASM integration, packaging, and cross-language tests |
 | Domain | `rust-macros` | Declarative and procedural macros |
 | Domain | `rust-lombok-macros` | Controlled `lombok-macros` accessors, constructors and debug formatting |
 | Domain | `rust-cli` | End-to-end CLI contracts, standard streams, exit codes and process tests |
@@ -128,6 +130,29 @@ python3 scripts/validate_skills.py --check-examples
 ```
 
 Validation covers manifest/directory parity, frontmatter, the 500-line limit, relative Markdown links, code fences, Codex UI metadata, and compilable golden examples.
+
+## v3.9 Java-to-Rust Migration Testing and Component Catalog
+
+- Renames the migration test skill to `rust-java-migration-testing` and makes its trigger reflect source-test alignment, Rust-specific obligations, and valuable coverage growth.
+- Adds a three-ledger SOP (`SOURCE_PARITY`, `RUST_OBLIGATION`, `VALUE_ADD`), a Java/Rust test inventory script, a migration-test ledger template, and a manual test-value rubric.
+- Extracts positive shared-conformance and exact-assertion patterns plus ignored-result, parse-only, generic-error, unobserved-cache, and coverage-burst counterexamples from the Vernal Framework port.
+- Converts collected Rust component notes into a provenance-aware candidate catalog. Candidate discovery, manifest declaration, contract evidence, real-host verification, and production readiness remain separate states.
+- Adds an executable crates.io discovery and evaluation SOP for unmapped Java dependencies: capability/protocol query families, hard gates, separate contract-fitness and ecosystem-health evidence, contextual usage/activity interpretation, resolved-graph review, and risk-focused candidate spikes.
+- Upgrades all four migration templates with separate Java/Rust baselines, last-audited dates, evidence anchors, cross-document consistency checks, component research status, and the three test ledgers.
+
+## v3.8 Java-to-Rust Decision and Verification SOP
+
+- Extends `rust-java-migration` with contract-led component selection, hard filters, high-risk POCs, explicit adoption states, shared adapter conformance, and rollback/exit decisions.
+- Adds the migration verification foundation, separating mirrored Java contracts from golden/live differential evidence and real-host/non-functional acceptance.
+- Upgrades all four migration document templates with component ownership, evidence levels, lifecycle/cancellation/error-surface matrices, and honest completion accounting.
+- Adds a heuristic test-review script that never auto-deletes tests, a mutation-test wrapper, and a dependency-free golden example for redacted public errors with preserved source chains.
+
+## v3.7 UniFFI Multi-Language Bindings
+
+- Adds `rust-uniffi-building` for exposing Rust libraries to Kotlin/Android, Swift/Apple platforms, Python, Ruby, and experimental WASM through Mozilla UniFFI.
+- Covers procedural-macro versus UDL selection, records/enums/errors/objects/traits/callbacks/custom types, scaffolding, `uniffi.toml`, library-mode generation, async cancellation, host integration, packaging, and upgrades.
+- Maps all 68 pages in the official UniFFI guide into progressively loaded references rather than copying the full guide into `SKILL.md`.
+- Ships a version-locked UniFFI 0.32.0 golden library and local bindgen CLI; validation compiles the Rust API and generates real Python bindings from the built dynamic library.
 
 ## v3.6 Java-to-Rust Migration
 
@@ -206,6 +231,7 @@ Validation covers manifest/directory parity, frontmatter, the 500-line limit, re
 - [RustSec Advisory Database](https://rustsec.org/)
 - [Rust Edition Guide](https://doc.rust-lang.org/edition-guide/)
 - [Rustonomicon](https://doc.rust-lang.org/nomicon/)
+- [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/latest/) and [mozilla/uniffi-rs](https://github.com/mozilla/uniffi-rs)
 - [lombok-macros on crates.io](https://crates.io/crates/lombok-macros) and [versioned docs.rs API](https://docs.rs/lombok-macros/2.0.32/lombok_macros/)
 - [Rustdoc](https://doc.rust-lang.org/rustdoc/), [mdBook](https://rust-lang.github.io/mdBook/), [Tokio](https://tokio.rs/), and [Rayon](https://docs.rs/rayon/)
 - [reqwest](https://docs.rs/reqwest/), [Tower](https://docs.rs/tower/), [tracing](https://docs.rs/tracing/), and [OpenTelemetry Rust](https://opentelemetry.io/docs/languages/rust/)

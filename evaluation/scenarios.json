@@ -486,6 +486,60 @@
       "prompt": "Use CodeGraph to plan an incomplete Java Maven module migration to Rust. Preserve one Java object per Rust file, produce the four module documents, map overloads and annotations, and define differential, concurrency, load, fuzz, host-integration, and rollback acceptance without counting placeholders as complete.",
       "expected_skills": ["rust-java-migration"],
       "assertions": ["pins_java_and_rust_baselines", "creates_four_per_module_documents", "inventories_objects_methods_overloads_and_parameters", "separates_structural_implementation_behavior_and_production_evidence", "isolates_and_excludes_approved_placeholders", "uses_codegraph_for_call_chain_parity", "defines_differential_replay_concurrency_load_fuzz_host_and_rollback_gates"]
+    },
+    {
+      "id": "rust-java-component-replacement-decision",
+      "prompt": "We are migrating a Spring application framework to Rust. Decide whether IoC, AOP, cache, web integration, and annotation processing should use existing crates, wrappers, traits plus adapters, or Rust-native redesigns. Do not select Axum merely because the source uses Spring Boot, and define evidence required before calling a dependency verified.",
+      "expected_skills": ["rust-java-migration", "rust-crate-discovery"],
+      "assertions": ["extracts_semantic_contract_per_responsibility", "separates_core_traits_adapters_and_macros", "searches_multiple_capability_protocol_constraint_queries", "compares_same_responsibility_downloads_reverse_dependencies_activity_and_ownership", "separates_ecosystem_health_from_migration_contract_fitness", "applies_license_msrv_target_async_security_and_maintenance_filters", "does_not_auto_select_highest_score", "distinguishes_dependency_declared_spike_contract_host_and_production_states", "requires_high_risk_poc_and_shared_adapter_conformance", "records_rejected_alternatives_exit_strategy_and_rollback"]
+    },
+    {
+      "id": "rust-java-unknown-crate-replacement",
+      "prompt": "A Java module uses an obscure cancellable scheduling library and our component mapping has no Rust equivalent. Search crates.io, shortlist alternatives, evaluate usage and activity without treating popularity as proof, and define the evidence needed before adoption.",
+      "expected_skills": ["rust-java-migration", "rust-crate-discovery", "rust-dependencies"],
+      "assertions": ["decomposes_scheduler_into_contract_responsibilities", "runs_multiple_english_crates_io_queries", "includes_std_wrapper_trait_adapter_and_host_shapes", "records_observation_date_and_canonical_sources", "applies_hard_gates_before_scoring", "uses_project_specific_fitness_and_health_scorecard", "interprets_downloads_reverse_dependencies_release_activity_and_bus_factor_contextually", "checks_resolved_features_native_dependencies_license_and_rustsec", "spikes_cancellation_shutdown_and_cleanup", "records_unknowns_rejections_and_exit_strategy"]
+    },
+    {
+      "id": "rust-java-mirrored-tests-not-differential",
+      "prompt": "Our Rust port has 98% line coverage and 200 tests copied from Spring test names, so the docs call them differential tests. Audit the evidence, check production stubs and lifecycle failures, and design the next verification gates for ten web adapters.",
+      "expected_skills": ["rust-java-migration-testing", "rust-java-migration"],
+      "assertions": ["dispositions_each_java_test_and_parameter_case", "labels_copied_tests_as_mirrored_not_differential", "adds_rust_ownership_async_error_and_adapter_obligations", "requires_pinned_java_golden_or_live_oracle", "scans_production_stubs_without_equating_green_tests_to_completion", "builds_lifecycle_cancellation_cleanup_failure_matrix", "tests_display_debug_serialized_log_and_source_surfaces_separately", "uses_shared_adapter_conformance_testkit", "reports_comparable_coverage_mutation_host_and_production_evidence_separately"]
+    },
+    {
+      "id": "rust-general-unit-test-near-miss",
+      "prompt": "Write ordinary unit and integration tests for a new Rust-only math crate. There is no Java or source-language implementation to compare.",
+      "expected_skills": ["rust-testing"],
+      "assertions": ["does_not_route_to_java_migration_verification", "uses_rust_unit_and_integration_test_structure", "runs_cargo_test"]
+    },
+    {
+      "id": "uniffi-kotlin-swift-library",
+      "prompt": "Expose this Rust core library to an Android Kotlin app and an iOS Swift app with UniFFI. Choose proc macros or UDL, generate and package the bindings, and prove async cancellation, errors, object lifetimes, and clean consumer installation.",
+      "expected_skills": ["rust-uniffi-building", "rust-testing"],
+      "assertions": ["pins_uniffi_and_host_tool_versions", "chooses_one_interface_strategy", "models_errors_objects_async_and_lifetimes", "generates_from_shipping_libraries", "tests_real_kotlin_and_swift_consumers", "verifies_packaging_architectures_loading_and_cleanup"]
+    },
+    {
+      "id": "uniffi-implicit-rust-swift-android",
+      "prompt": "把这套业务逻辑只用 Rust 实现一次，同时提供给 Swift iOS 应用和 Kotlin Android 应用调用，不想手写两套桥接代码。",
+      "expected_skills": ["rust-uniffi-building"],
+      "assertions": ["recognizes_cross_platform_shared_rust_intent_without_uniffi_keyword", "evaluates_uniffi_target_support", "defines_swift_and_kotlin_binding_contracts", "does_not_stop_at_rust_compilation"]
+    },
+    {
+      "id": "uniffi-implicit-browser-mobile-core",
+      "prompt": "We need one reusable Rust core shared by our desktop browser, Android Kotlin client, and Swift iOS client. Design the language bridges and validation plan.",
+      "expected_skills": ["rust-uniffi-building"],
+      "assertions": ["recognizes_shared_rust_core_and_multi_language_bridge_intent", "checks_javascript_or_browser_backend_support", "separates_binding_generation_from_platform_shipping", "requires_real_consumer_tests"]
+    },
+    {
+      "id": "uniffi-mixed-mode-diagnostics",
+      "prompt": "Our UniFFI crate mixes UDL and #[uniffi::export], generated Python misses methods, and release Swift has duplicate symbols. Diagnose it without hand-editing generated sources.",
+      "expected_skills": ["rust-uniffi-building"],
+      "assertions": ["checks_crate_namespace_alignment", "keeps_udl_valid_alone", "prevents_duplicate_scaffolding", "checks_cfg_features_metadata_and_exact_library", "regenerates_clean_bindings", "tests_release_host_artifacts"]
+    },
+    {
+      "id": "uniffi-near-miss-manual-c-abi",
+      "prompt": "Write a hand-maintained extern C API that returns an allocated buffer to C++ and document allocator ownership and unwind behavior.",
+      "expected_skills": ["rust-unsafe-ffi"],
+      "assertions": ["does_not_route_to_uniffi_without_adoption", "documents_layout_allocator_and_unwinding", "uses_safe_wrapper_and_real_c_integration_test"]
     }
   ]
 }

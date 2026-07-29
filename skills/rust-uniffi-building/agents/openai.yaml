@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust UniFFI Building"
+  short_description: "Build and verify Rust bindings with UniFFI"
+  default_prompt: "Use $rust-uniffi-building to design, generate, and test bindings for this Rust library."

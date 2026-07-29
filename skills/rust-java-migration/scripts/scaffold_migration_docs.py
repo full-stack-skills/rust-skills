@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -26,10 +27,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--java-root", required=True, type=Path, help="Java module path.")
     parser.add_argument("--rust-root", required=True, type=Path, help="Rust crate/module path.")
     parser.add_argument("--output-dir", required=True, type=Path, help="Documentation directory.")
+    parser.add_argument("--java-baseline", help="Pinned Java commit, tag, or artifact version.")
+    parser.add_argument("--rust-baseline", help="Pinned Rust commit.")
     parser.add_argument(
         "--baseline",
-        required=True,
-        help="Pinned baseline, for example 'java=<sha>; rust=<sha>'.",
+        help="Legacy form: 'java=<sha>; rust=<sha>'. Prefer separate baseline options.",
     )
     parser.add_argument(
         "--date",
@@ -43,6 +45,26 @@ def parse_args() -> argparse.Namespace:
         help="Validate inputs and print destinations without writing.",
     )
     return parser.parse_args()
+
+
+def baselines(args: argparse.Namespace) -> tuple[str, str]:
+    """Resolve explicit baselines, retaining the legacy combined argument."""
+    if args.java_baseline or args.rust_baseline:
+        if not args.java_baseline or not args.rust_baseline:
+            raise ValueError("--java-baseline and --rust-baseline must be supplied together")
+        if args.baseline:
+            raise ValueError("use separate baseline options or --baseline, not both")
+        return args.java_baseline, args.rust_baseline
+    if not args.baseline:
+        raise ValueError("supply --java-baseline and --rust-baseline")
+    match = re.fullmatch(
+        r"\s*java\s*=\s*([^;]+?)\s*;\s*rust\s*=\s*(.+?)\s*",
+        args.baseline,
+        re.IGNORECASE,
+    )
+    if match is None:
+        raise ValueError("--baseline must use 'java=<sha>; rust=<sha>'")
+    return match.group(1), match.group(2)
 
 
 def validate_directory(path: Path, label: str) -> Path:
@@ -69,8 +91,9 @@ def render(template: str, values: dict[str, str]) -> str:
 def main() -> int:
     args = parse_args()
     try:
-        java_root = validate_directory(args.java_root, "Java root")
-        rust_root = validate_directory(args.rust_root, "Rust root")
+        validate_directory(args.java_root, "Java root")
+        validate_directory(args.rust_root, "Rust root")
+        java_baseline, rust_baseline = baselines(args)
         template_dir = Path(__file__).resolve().parent.parent / "assets" / "templates"
         if not template_dir.is_dir():
             raise ValueError(f"template directory is missing: {template_dir}")
@@ -82,8 +105,11 @@ def main() -> int:
             # documents instead of leaking machine-specific absolute paths.
             "JAVA_ROOT": args.java_root.as_posix(),
             "RUST_ROOT": args.rust_root.as_posix(),
-            "BASELINE": args.baseline,
+            "JAVA_BASELINE": java_baseline,
+            "RUST_BASELINE": rust_baseline,
             "GENERATED_DATE": args.date,
+            "AUDITED_DATE": args.date,
+            "DOCUMENT_STATUS": "DRAFT",
         }
 
         planned: list[dict[str, str]] = []

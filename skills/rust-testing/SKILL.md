@@ -38,6 +38,10 @@ description: Design, implement, and validate Rust tests, including unit, integra
 
 ---
 
+## Routing Boundary
+
+Use `rust-java-migration-testing` when tests must disposition a source Java suite, distinguish mirrored tests from golden/live differential evidence, add target-specific ownership/async/error/component obligations, audit coverage-chasing tests, or verify migration lifecycle/adapter/host acceptance. Keep this skill focused on general Rust test mechanics and Rust-native test architecture.
+
 ## Unit Tests
 
 ```rust
