@@ -22,6 +22,16 @@ SKIP_PARTS = {
 }
 WILDCARD_IMPORT = re.compile(r"^\s*(?:pub\s+)?use\s+[^;]*::\*\s*;", re.MULTILINE)
 STUB_MACRO = re.compile(r"\b(todo|unimplemented)!\s*\(")
+STUB_PANIC = re.compile(
+    r"\bpanic!\s*\(\s*\"[^\"]*(?:not implemented|todo|placeholder)[^\"]*\"",
+    re.IGNORECASE,
+)
+EMPTY_FUNCTION = re.compile(
+    r"\bfn\s+[A-Za-z_][A-Za-z0-9_]*\s*(?:<[^{};]*>)?\s*"
+    r"\([^{};]*\)\s*(?:->\s*[^{};]+)?\{\s*\}",
+    re.MULTILINE,
+)
+SNAKE_CASE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 TYPE_DEFINITION = re.compile(
     r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:unsafe\s+)?"
     r"(?:struct|enum|trait|union)\s+([A-Za-z_][A-Za-z0-9_]*)",
@@ -30,6 +40,11 @@ TYPE_DEFINITION = re.compile(
 PUBLIC_ITEM = re.compile(
     r"^\s*pub(?:\([^)]*\))?\s+(?:async\s+)?"
     r"(?:unsafe\s+)?(?:fn|struct|enum|trait|union)\s+([A-Za-z_][A-Za-z0-9_]*)",
+    re.MULTILINE,
+)
+PUBLIC_TYPE_DEFINITION = re.compile(
+    r"^\s*pub(?:\([^)]*\))?\s+(?:unsafe\s+)?"
+    r"(?:struct|enum|trait|union)\s+([A-Za-z_][A-Za-z0-9_]*)",
     re.MULTILINE,
 )
 CHINESE = re.compile(r"[\u3400-\u9fff]")
@@ -51,11 +66,26 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--rust-root", required=True, type=Path, help="Rust project root.")
     parser.add_argument(
+        "--java-package-root",
+        type=Path,
+        help="Java module package root used to calculate deterministic expected paths.",
+    )
+    parser.add_argument(
+        "--retain-segments",
+        type=int,
+        default=2,
+        choices=(1, 2),
+        help="Trailing Java package segments retained under Rust src (default: 2).",
+    )
+    parser.add_argument(
         "--allow-stubs-in",
         action="append",
         default=[],
         metavar="RELATIVE_PATH",
-        help="Approved blocked subtree; stub findings remain visible but allowed.",
+        help=(
+            "Acknowledge a blocked planning subtree. Stub findings remain migration "
+            "blockers and never count as completion."
+        ),
     )
     parser.add_argument(
         "--require-source-comments",
@@ -98,9 +128,48 @@ def rust_files(root: Path) -> list[Path]:
     return sorted(files)
 
 
-def preceding_comment(text: str, offset: int, lines: int = 10) -> str:
-    prefix = text[:offset].splitlines()
-    return "\n".join(prefix[-lines:])
+def java_object_files(root: Path) -> list[Path]:
+    """Return source object files; package metadata is not an object."""
+    files: list[Path] = []
+    for path in root.rglob("*.java"):
+        relative = path.relative_to(root)
+        if any(part in SKIP_PARTS or part in {"build", "out"} for part in relative.parts):
+            continue
+        if path.name in {"package-info.java", "module-info.java"}:
+            continue
+        files.append(path)
+    return sorted(files)
+
+
+def camel_to_snake(name: str) -> str:
+    """Convert Java object names, including acronym boundaries, to snake_case."""
+    step_one = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", step_one).replace("-", "_").lower()
+
+
+def expected_rust_path(
+    java_package_root: Path,
+    java_file: Path,
+    rust_root: Path,
+    retain_segments: int,
+) -> Path:
+    """Calculate the one-object Rust path from trailing Java package segments."""
+    package_parts = java_file.parent.relative_to(java_package_root).parts
+    retained = package_parts[-retain_segments:]
+    source_prefix: tuple[str, ...] = () if rust_root.name == "src" else ("src",)
+    return Path(*source_prefix, *retained, f"{camel_to_snake(java_file.stem)}.rs")
+
+
+def preceding_comment(text: str, offset: int) -> str:
+    """Return the complete contiguous Rust doc/attribute block before an item."""
+    collected: list[str] = []
+    for line in reversed(text[:offset].splitlines()):
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("///", "//!", "#[")):
+            collected.append(line)
+            continue
+        break
+    return "\n".join(reversed(collected))
 
 
 def audit_file(
@@ -115,6 +184,31 @@ def audit_file(
     text = path.read_text(encoding="utf-8")
     production_text = text.split("#[cfg(test)]", 1)[0]
     allowed_stub = is_allowed(relative, allowed_roots)
+
+    source_relative = relative
+    if "src" in relative.parts:
+        source_relative = Path(*relative.parts[relative.parts.index("src") + 1 :])
+    for segment in source_relative.parts[:-1]:
+        if not SNAKE_CASE.fullmatch(segment):
+            findings.append(
+                Finding(
+                    "error",
+                    "non_snake_case_directory",
+                    relative_text,
+                    1,
+                    f"production Rust directory is not snake_case: {segment}",
+                )
+            )
+    if path.stem not in {"lib", "mod"} and not SNAKE_CASE.fullmatch(path.stem):
+        findings.append(
+            Finding(
+                "error",
+                "non_snake_case_file",
+                relative_text,
+                1,
+                f"production Rust file is not snake_case: {path.name}",
+            )
+        )
 
     for match in WILDCARD_IMPORT.finditer(production_text):
         findings.append(
@@ -139,6 +233,22 @@ def audit_file(
             )
         )
 
+    for pattern, message in (
+        (STUB_PANIC, "placeholder panic is incomplete migration behavior"),
+        (EMPTY_FUNCTION, "empty function body requires source-backed no-op evidence"),
+    ):
+        for match in pattern.finditer(production_text):
+            findings.append(
+                Finding(
+                    "warning" if allowed_stub else "error",
+                    "stub_logic",
+                    relative_text,
+                    line_number(text, match.start()),
+                    message,
+                    allowed=allowed_stub,
+                )
+            )
+
     if path.name in {"lib.rs", "mod.rs", "compat.rs"}:
         for match in TYPE_DEFINITION.finditer(production_text):
             severity = "warning" if path.name == "compat.rs" else "error"
@@ -153,6 +263,27 @@ def audit_file(
                 )
             )
 
+    public_types = [match.group(1) for match in PUBLIC_TYPE_DEFINITION.finditer(production_text)]
+    primary_types = [
+        name
+        for name in public_types
+        if not (
+            name.endswith("Builder")
+            and name.removesuffix("Builder") in public_types
+        )
+    ]
+    if path.name not in {"lib.rs", "mod.rs", "compat.rs"} and len(primary_types) > 1:
+        findings.append(
+            Finding(
+                "error",
+                "multiple_public_objects",
+                relative_text,
+                1,
+                "one Rust file exposes multiple primary migrated objects: "
+                + ", ".join(primary_types),
+            )
+        )
+
     if require_source_comments:
         for match in PUBLIC_ITEM.finditer(production_text):
             context = preceding_comment(text, match.start())
@@ -163,8 +294,8 @@ def audit_file(
                         "missing_java_source_comment",
                         relative_text,
                         line_number(text, match.start()),
-                        f"public item {match.group(1)} lacks a nearby Chinese "
-                        "'对应 Java' source comment",
+                        f"public item {match.group(1)} lacks an immediately preceding "
+                        "Chinese '对应 Java' source doc block",
                     )
                 )
 
@@ -177,6 +308,16 @@ def main() -> int:
     if not root.is_dir():
         print(f"error: Rust root is not a directory: {root}", file=sys.stderr)
         return 2
+
+    java_package_root: Path | None = None
+    if args.java_package_root is not None:
+        java_package_root = args.java_package_root.expanduser().resolve()
+        if not java_package_root.is_dir():
+            print(
+                f"error: Java package root is not a directory: {java_package_root}",
+                file=sys.stderr,
+            )
+            return 2
 
     allowed_roots = tuple(Path(value) for value in args.allow_stubs_in)
     for allowed in allowed_roots:
@@ -205,16 +346,73 @@ def main() -> int:
                 )
             )
 
+    java_files: list[Path] = []
+    if java_package_root is not None:
+        java_files = java_object_files(java_package_root)
+        rust_paths = {path.relative_to(root) for path in files}
+        rust_paths_by_name: dict[str, list[Path]] = {}
+        for relative in rust_paths:
+            rust_paths_by_name.setdefault(relative.name, []).append(relative)
+        for java_file in java_files:
+            expected = expected_rust_path(
+                java_package_root,
+                java_file,
+                root,
+                args.retain_segments,
+            )
+            if expected in rust_paths:
+                continue
+            current_paths = rust_paths_by_name.get(expected.name, [])
+            java_relative = java_file.relative_to(java_package_root).as_posix()
+            if current_paths:
+                findings.append(
+                    Finding(
+                        "error",
+                        "misplaced_object_file",
+                        java_relative,
+                        1,
+                        f"expected {expected.as_posix()}, found same-name file at "
+                        + ", ".join(path.as_posix() for path in sorted(current_paths)),
+                    )
+                )
+            else:
+                findings.append(
+                    Finding(
+                        "error",
+                        "missing_object_file",
+                        java_relative,
+                        1,
+                        f"expected Rust object file {expected.as_posix()}",
+                    )
+                )
+
     errors = [item for item in findings if item.severity == "error" and not item.allowed]
     warnings = [
         item for item in findings if item.severity == "warning" and not item.allowed
     ]
+    strict_blocker_rules = {
+        "stub_macro",
+        "stub_logic",
+        "missing_object_file",
+        "misplaced_object_file",
+        "multiple_public_objects",
+        "type_in_facade_file",
+        "wildcard_import",
+        "non_snake_case_directory",
+        "non_snake_case_file",
+    }
+    strict_blockers = [item for item in findings if item.rule in strict_blocker_rules]
     summary = {
         "root": str(root),
         "files_scanned": len(files),
+        "java_package_root": str(java_package_root) if java_package_root else None,
+        "java_objects_scanned": len(java_files),
+        "retain_segments": args.retain_segments,
         "errors": len(errors),
         "warnings": len(warnings),
         "allowed_findings": sum(item.allowed for item in findings),
+        "strict_migration_blockers": len(strict_blockers),
+        "migration_completion_blocked": bool(strict_blockers),
         "semantic_parity_proven": False,
     }
     if not args.summary_only:
@@ -225,14 +423,17 @@ def main() -> int:
     else:
         print(
             f"scanned={len(files)} errors={len(errors)} warnings={len(warnings)} "
-            f"allowed={summary['allowed_findings']} semantic_parity_proven=false"
+            f"acknowledged={summary['allowed_findings']} "
+            f"strict_blockers={len(strict_blockers)} "
+            f"migration_completion_blocked={str(bool(strict_blockers)).lower()} "
+            "semantic_parity_proven=false"
         )
         if not args.summary_only:
             for item in findings:
                 marker = "allowed" if item.allowed else item.severity
                 print(f"{marker}: {item.path}:{item.line}: {item.rule}: {item.message}")
 
-    if errors or (args.fail_on_warning and warnings):
+    if errors or strict_blockers or (args.fail_on_warning and warnings):
         return 1
     return 0
 

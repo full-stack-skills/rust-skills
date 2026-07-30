@@ -63,6 +63,24 @@ REVIEW_NAME_PATTERNS = (
     (re.compile(r"^(?:clone|debug|display|default|type_exists|feature_compiles)(?:_|$)", re.I),
      "trait/type/compile smoke-test name"),
 )
+HISTORY_APPENDIX_START = "<!-- historical-design-appendix-start -->"
+OBJECT_STATES = (
+    "MISSING",
+    "MISPLACED",
+    "STUB",
+    "PARTIAL",
+    "UNVERIFIED",
+    "IMPLEMENTED",
+    "DEPENDENCY_REUSED",
+    "PLATFORM_NA",
+    "RUST_EXTENSION",
+)
+INCOMPLETE_STATES = OBJECT_STATES[:5]
+OBJECT_STATE = re.compile(r"\b(" + "|".join(OBJECT_STATES) + r")\b")
+OBJECT_SECTION = re.compile(
+    r"^##\s+.*(?:对象映射|对象级对照|对象台账).*$", re.MULTILINE
+)
+NEXT_H2 = re.compile(r"^##\s+", re.MULTILINE)
 
 
 @dataclass
@@ -77,6 +95,22 @@ class TestItem:
     @property
     def location(self) -> str:
         return f"{self.file}:{self.line}"
+
+
+@dataclass
+class ObjectLedgerSummary:
+    path: str
+    current_fact_only: bool
+    rows_scanned: int
+    state_counts: dict[str, int]
+
+    @property
+    def incomplete_count(self) -> int:
+        return sum(self.state_counts.get(state, 0) for state in INCOMPLETE_STATES)
+
+    @property
+    def migration_completion_blocked(self) -> bool:
+        return self.incomplete_count > 0
 
 
 def source_files(root: Path, suffix: str) -> Iterable[Path]:
@@ -234,7 +268,50 @@ def extract_rust_tests(rust_root: Path) -> list[TestItem]:
     return tests
 
 
-def markdown(java_root: Path, rust_root: Path, java: list[TestItem], rust: list[TestItem]) -> str:
+def parse_object_ledger(path: Path) -> ObjectLedgerSummary:
+    """Read current object facts while deliberately ignoring historical status claims."""
+    text = path.read_text(encoding="utf-8")
+    current = text.split(HISTORY_APPENDIX_START, 1)[0]
+    section_match = OBJECT_SECTION.search(current)
+    if section_match is not None:
+        section_start = section_match.end()
+        next_heading = NEXT_H2.search(current, section_start)
+        current = current[section_start:next_heading.start() if next_heading else None]
+    else:
+        # Avoid counting the status-definition legend as real object rows.
+        current = re.sub(
+            r"^##\s+.*状态图例.*?(?=^##\s+|\Z)",
+            "",
+            current,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+
+    counts = {state: 0 for state in OBJECT_STATES}
+    rows_scanned = 0
+    for line in current.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or re.fullmatch(r"[|:\-\s]+", stripped):
+            continue
+        match = OBJECT_STATE.search(stripped)
+        if match is None:
+            continue
+        counts[match.group(1)] += 1
+        rows_scanned += 1
+    return ObjectLedgerSummary(
+        path=str(path),
+        current_fact_only=True,
+        rows_scanned=rows_scanned,
+        state_counts=counts,
+    )
+
+
+def markdown(
+    java_root: Path,
+    rust_root: Path,
+    java: list[TestItem],
+    rust: list[TestItem],
+    ledger: ObjectLedgerSummary | None,
+) -> str:
     rust_review = [item for item in rust if item.signals]
     parameterized = [item for item in java if item.signals]
     lines = [
@@ -246,15 +323,29 @@ def markdown(java_root: Path, rust_root: Path, java: list[TestItem], rust: list[
         f"- Rust test functions found: **{len(rust)}**",
         f"- Java parameterized/dynamic rows needing case expansion: **{len(parameterized)}**",
         f"- Rust manual-review candidates: **{len(rust_review)}**",
+    ]
+    if ledger is not None:
+        lines.extend(
+            [
+                f"- Object ledger: `{ledger.path}`",
+                f"- Current object rows scanned: **{ledger.rows_scanned}**",
+                f"- Strict incomplete rows: **{ledger.incomplete_count}**",
+                f"- Migration completion blocked: **{str(ledger.migration_completion_blocked).lower()}**",
+            ]
+        )
+    lines.extend(
+        [
         "",
         "> Counts and signals are static heuristics. Do not infer name-based parity,",
         "> semantic equivalence, coverage quality, or deletion decisions from this report.",
+        "> Green tests never override MISSING, MISPLACED, STUB, PARTIAL, or UNVERIFIED object rows.",
         "",
         "## Java source-test inventory",
         "",
         "| Location | Annotation | Test | Ledger action |",
         "|---|---|---|---|",
-    ]
+        ]
+    )
     for item in java:
         action = "; ".join(item.signals) if item.signals else "map inputs, assertions, effects, and cleanup"
         lines.append(f"| `{item.location}` | `{item.kind}` | `{item.name}` | {action} |")
@@ -289,10 +380,39 @@ def markdown(java_root: Path, rust_root: Path, java: list[TestItem], rust: list[
             "",
         ]
     )
+    if ledger is not None:
+        lines.extend(
+            [
+                "## Object-ledger completion firewall",
+                "",
+                "| State | Current rows | Completion effect |",
+                "|---|---:|---|",
+            ]
+        )
+        for state in OBJECT_STATES:
+            effect = "blocks completion" if state in INCOMPLETE_STATES else "handled/outside denominator"
+            lines.append(f"| `{state}` | {ledger.state_counts[state]} | {effect} |")
+        lines.extend(
+            [
+                "",
+                (
+                    "**Conclusion: migration incomplete regardless of test results.**"
+                    if ledger.migration_completion_blocked
+                    else "**No strict object blocker was detected in the supplied current ledger region.**"
+                ),
+                "",
+            ]
+        )
     return "\n".join(lines)
 
 
-def json_report(java_root: Path, rust_root: Path, java: list[TestItem], rust: list[TestItem]) -> str:
+def json_report(
+    java_root: Path,
+    rust_root: Path,
+    java: list[TestItem],
+    rust: list[TestItem],
+    ledger: ObjectLedgerSummary | None,
+) -> str:
     payload = {
         "java_root": str(java_root),
         "rust_root": str(rust_root),
@@ -304,6 +424,15 @@ def json_report(java_root: Path, rust_root: Path, java: list[TestItem], rust: li
         },
         "java_tests": [asdict(item) for item in java],
         "rust_tests": [asdict(item) for item in rust],
+        "object_ledger": (
+            {
+                **asdict(ledger),
+                "incomplete_count": ledger.incomplete_count,
+                "migration_completion_blocked": ledger.migration_completion_blocked,
+            }
+            if ledger is not None
+            else None
+        ),
         "limitations": [
             "static inventory only",
             "does not map tests by name",
@@ -322,6 +451,16 @@ def main() -> None:
     parser.add_argument("--rust-root", type=Path, required=True, help="Rust crate/workspace root")
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     parser.add_argument("--output", type=Path, help="Optional output path")
+    parser.add_argument(
+        "--object-ledger",
+        type=Path,
+        help="Current authoritative 对象级对照表; historical appendix is ignored.",
+    )
+    parser.add_argument(
+        "--fail-on-incomplete",
+        action="store_true",
+        help="Exit non-zero when the current object ledger contains strict incomplete rows.",
+    )
     args = parser.parse_args()
 
     for label, root in (("java", args.java_root), ("rust", args.rust_root)):
@@ -330,10 +469,15 @@ def main() -> None:
 
     java_tests = extract_java_tests(args.java_root)
     rust_tests = extract_rust_tests(args.rust_root)
+    ledger: ObjectLedgerSummary | None = None
+    if args.object_ledger is not None:
+        if not args.object_ledger.is_file():
+            raise SystemExit(f"object ledger is not a file: {args.object_ledger}")
+        ledger = parse_object_ledger(args.object_ledger)
     report = (
-        json_report(args.java_root, args.rust_root, java_tests, rust_tests)
+        json_report(args.java_root, args.rust_root, java_tests, rust_tests, ledger)
         if args.format == "json"
-        else markdown(args.java_root, args.rust_root, java_tests, rust_tests)
+        else markdown(args.java_root, args.rust_root, java_tests, rust_tests, ledger)
     )
 
     if args.output:
@@ -342,6 +486,8 @@ def main() -> None:
         print(f"wrote {args.output}")
     else:
         print(report)
+    if args.fail_on_incomplete and ledger is not None and ledger.migration_completion_blocked:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

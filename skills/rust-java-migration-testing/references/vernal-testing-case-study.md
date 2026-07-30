@@ -90,7 +90,12 @@ The Vernal expression migration documents use status summaries and count-oriente
 
 Reusable rule:
 
-- every `BEHAVIOR_VERIFIED` row needs a source trace, exact test/oracle, command, artifact, and audited Rust SHA;
+- every `IMPLEMENTED` row needs a source trace, exact test/oracle, command,
+  artifact, and audited Rust SHA;
+- green tests never override `MISSING`, `MISPLACED`, `STUB`, `PARTIAL`, or
+  `UNVERIFIED` in the current object ledger;
+- `DEPENDENCY_REUSED` tests must invoke the exact pinned upstream symbol
+  through the local adapter, not merely test a similar local capability;
 - file presence, object count, parser acceptance, and “at least one test” are separate structural signals;
 - the four migration documents must be audited together so a later count table cannot silently contradict a technical-requirements document.
 

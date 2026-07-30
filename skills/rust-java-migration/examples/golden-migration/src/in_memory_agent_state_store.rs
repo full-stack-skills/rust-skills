@@ -1,5 +1,3 @@
-//! 对应 Java：`com.example.state.InMemoryAgentStateStore`。
-
 use std::collections::HashMap;
 use std::sync::RwLock;
 
@@ -7,8 +5,9 @@ use crate::{AgentState, AgentStateStore, StateError};
 
 /// 基于内存的线程安全状态存储。
 ///
-/// 对应 Java：`com.example.state.InMemoryAgentStateStore`。使用
-/// `RwLock<HashMap<...>>` 保留 Java 复合“加载或创建”的原子语义。
+/// 使用 `RwLock<HashMap<...>>` 保证复合“加载或创建”操作的原子性。
+///
+/// 对应 Java：`com.example.state.InMemoryAgentStateStore`。
 #[derive(Debug, Default)]
 pub struct InMemoryAgentStateStore {
     states: RwLock<HashMap<String, AgentState>>,
@@ -30,7 +29,7 @@ impl AgentStateStore for InMemoryAgentStateStore {
             return Err(StateError::EmptySlotKey);
         }
 
-        // 在同一写锁临界区完成查询和插入，保留 Java 原子复合操作语义。
+        // 在同一写锁临界区完成查询和插入，保证复合操作的原子性。
         let mut states = self.states.write().map_err(|_| StateError::LockPoisoned)?;
         let state = states
             .entry(slot_key.to_owned())

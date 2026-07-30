@@ -1,5 +1,3 @@
-//! 对应 Java：`com.example.state.StateException`。
-
 use std::error::Error;
 use std::fmt;
 
@@ -8,7 +6,7 @@ use std::fmt;
 /// 对应 Java：`com.example.state.StateException`。
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum StateError {
-    /// Java 参数 `slotKey` 为空。
+    /// 状态槽位标识为空。
     EmptySlotKey,
     /// 并发锁发生中毒，存储状态不再可信。
     LockPoisoned,

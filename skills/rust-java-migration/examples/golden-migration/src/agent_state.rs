@@ -1,8 +1,8 @@
-//! 对应 Java：`com.example.state.AgentState`。
-
 /// 智能体状态值对象。
 ///
-/// 保留 Java `AgentState` 的槽位标识和版本语义。
+/// 维护槽位标识和版本语义。
+///
+/// 对应 Java：`com.example.state.AgentState`。
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AgentState {
     slot_key: String,
@@ -13,6 +13,9 @@ impl AgentState {
     /// 创建一个初始版本为零的状态。
     ///
     /// 对应 Java：`AgentState(String slotKey)`。
+    ///
+    /// # 参数
+    /// - `slot_key`：状态槽位标识，不能为空。
     #[must_use]
     pub fn new(slot_key: impl Into<String>) -> Self {
         Self {

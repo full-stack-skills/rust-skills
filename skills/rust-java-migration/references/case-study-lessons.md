@@ -31,7 +31,8 @@ When a target module depends on unfinished document-format projects, retaining o
 
 - explicit user approval;
 - isolated module or disabled/non-default feature;
-- `SKELETON` or `PLANNED_BLOCKED` state;
+- factual `MISSING` or `STUB` state, with the external blocker recorded as
+  roadmap metadata rather than a completion-like state;
 - exclusion from implemented and behavior-verified coverage;
 - named upstream dependency and exit test;
 - no claim that facade users can rely on the capability.
@@ -64,3 +65,26 @@ The Vernal migration documents demonstrate four distinct questions:
 4. Name consistency: what is missing, extra, merged, renamed, partial, or unverified?
 
 Their strongest use is cross-checking one another. A roadmap can claim an independent-file rule while an object table records merged types; a name audit can expose that conflict. The templates in this skill require status denominators and method/parameter tables so documentation cannot hide such drift.
+
+The later Vernal correction exposed four additional failure modes:
+
+- a large Rust crate had many same-named objects flattened into its root even
+  though Spring packages defined meaningful boundaries; file counts and green
+  tests hid `MISPLACED` objects;
+- an AOP dependency supplied reusable Aspect capabilities, but that did not
+  erase Spring's Advice, Interceptor, Advisor, auto-proxy bridge, and support
+  object structure;
+- “ecosystem has a similar feature” was mistakenly treated as completion
+  without an exact crate version/commit, source symbol, local adapter, and
+  integration test;
+- a newly generated short object table and an older detailed table were kept
+  as competing authorities, allowing whichever status was more convenient to
+  win.
+
+The corrected rule is deterministic: strip the organization/module package
+root, retain the final two package segments (or the one/zero that exist), and
+map the Java object name to a `snake_case` file. Current source/worktree facts
+come first. Useful historical design material is merged after
+`<!-- historical-design-appendix-start -->`; historical counts and statuses
+never override the current section, and a duplicate “历史详细版” is removed
+after its useful content is merged.

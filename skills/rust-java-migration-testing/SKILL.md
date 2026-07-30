@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration-testing
-description: Design, implement, audit, and report valuable tests for Java-to-Rust migrations. Use when porting JUnit tests to Rust, checking whether every Java test has a Rust disposition, deciding which Rust-specific tests are mandatory, increasing target coverage beyond the source without coverage gaming, or building differential, golden, property, fuzz, mutation, concurrency, cancellation, lifecycle, adapter-conformance, real-dependency, host, load, security, and rollback evidence. Detects parse-only, ignored-result, generic-error, duplicate-coverage, and stub-validating tests without automatically deleting them.
+description: Design, implement, audit, and report valuable tests for Java-to-Rust migrations without promoting green tests into false completion claims. Use when porting JUnit tests to Rust, checking every Java test disposition, validating an object migration ledger, proving exact dependency reuse, deciding Rust-specific obligations, comparing coverage without gaming, or building differential, golden, property, fuzz, mutation, concurrency, cancellation, lifecycle, adapter-conformance, real-dependency, host, load, security, and rollback evidence. Keeps MISSING, MISPLACED, STUB, PARTIAL, and UNVERIFIED objects incomplete even when Cargo tests pass.
 ---
 
 # Java-to-Rust Migration Testing
@@ -37,6 +37,8 @@ Resolve or mark unknown:
 - Java test runner and Rust test runner, including parameterized and dynamic test behavior;
 - source coverage scope/tool/report and comparable Rust coverage scope/tool/report;
 - available oracle: source only, executable Java tests, golden exporter, packaged artifact, live service, or standards suite;
+- the current authoritative object ledger generated from the same Java/Rust
+  baselines; ignore historical-design appendices when reading current states;
 - required hosts, real dependencies, concurrency/load model, security boundary, and rollback mechanism;
 - deterministic normalization rules for time, identifiers, paths, map order, locale, float precision, and scheduling.
 
@@ -59,11 +61,23 @@ Use these labels without promotion:
 
 A copied test name, green Rust suite, or 100% line report does not prove `V3_GOLDEN_DIFF`.
 
+Evidence levels never replace object states. A green `V1_RUST_LOCAL` suite does
+not turn `MISSING`, `MISPLACED`, `STUB`, `PARTIAL`, or `UNVERIFIED` into
+`IMPLEMENTED`. `DEPENDENCY_REUSED` additionally requires an exact pinned
+upstream symbol and local integration test; `PLATFORM_NA` requires platform
+evidence rather than a passing test that skips the behavior.
+
 ## SOP
 
 ### 1. Freeze the verification baseline
 
 Record exact SHAs, commands, tools, profiles, features, targets, test counts, ignored/flaky tests, coverage exclusions, and existing evidence artifacts. Record Java and Rust coverage separately before comparing them.
+
+Read the current fact region of the authoritative object table before designing
+tests. Stop at `historical-design-appendix-start`; old appendix statuses are
+context only. Record counts for all strict object states. If any incomplete
+state remains, the acceptance report must say “module migration incomplete”
+regardless of test results.
 
 Use CodeGraph when indexed to trace each source test through its production entry, collaborators, side effects, and Rust counterpart. Text similarity is insufficient for overloaded methods, registries, interceptors, dynamic dispatch, cleanup, and async paths.
 
@@ -90,10 +104,14 @@ Resolve `SKILL_DIR` to this skill directory and run from the migration repositor
 ```bash
 python3 "$SKILL_DIR/scripts/audit_migration_tests.py" \
   --java-root ../java-project/source-module \
-  --rust-root crates/source_module
+  --rust-root crates/source_module \
+  --object-ledger docs/source-module/对象级对照表.md \
+  --fail-on-incomplete
 ```
 
-The report inventories tests and flags weak signals. It cannot infer semantic mappings or authorize deletion.
+The report inventories tests, flags weak signals, and refuses a completion gate
+while the current ledger contains strict incomplete rows. It cannot infer
+semantic mappings or authorize deletion.
 
 ### 3. Implement the `SOURCE_PARITY` ledger
 
@@ -106,6 +124,11 @@ For every source row:
 5. Record the Rust test, evidence level, command, and divergence.
 
 Missing or blocked source tests remain visible. Source tests are a compatibility floor, not the complete Rust plan.
+
+Do not use one test per object as a substitute for one real file per source
+object. A test that reaches a re-export, compatibility facade, or merged type
+does not cure `MISPLACED`/`MISSING`. Tests validate semantics only after the
+layout and object boundary are factually present.
 
 ### 4. Implement the `RUST_OBLIGATION` ledger
 
@@ -127,6 +150,12 @@ Add applicable tests created by the target design:
 | Framework adapters | one shared contract suite plus adapter-native routing/body/service behavior |
 
 These tests need not exist in Java because they protect the Rust implementation's correctness.
+
+For a `DEPENDENCY_REUSED` row, execute the local adapter against the exact
+declared upstream symbol/version or commit. The dependency's own unit tests,
+documentation examples, or a similar capability name are not local integration
+evidence. Assert the source contract's ordering, errors, lifecycle, cancellation,
+and metadata that cross the adapter.
 
 ### 5. Implement the `VALUE_ADD` ledger
 
@@ -249,6 +278,10 @@ Report separately:
 - line/branch/region coverage with comparable scope;
 - mutation, property, fuzz, concurrency, load, security, host, and rollback evidence;
 - failures, flaky/ignored tests, stubs, exclusions, missing targets, and external boundaries.
+- current object-state counts and the explicit list of all
+  `MISSING`/`MISPLACED`/`STUB`/`PARTIAL`/`UNVERIFIED` blockers;
+- compiler and Clippy warnings, ignored/doctests, feature/target gaps, and tests
+  that were not executed;
 
 ## Red lines
 
@@ -262,6 +295,12 @@ Report separately:
 - Do not replace real dependency/host tests with mocks when the contract crosses that boundary.
 - Do not use fixed sleeps as the only async coordination mechanism.
 - Do not count production stubs as implemented because their tests compile.
+- Do not mark a module complete from Cargo/JUnit test totals, coverage, or a
+  green CI job while the authoritative object ledger has any incomplete state.
+- Do not read completion states from a historical appendix or stale duplicate
+  migration document.
+- Do not call dependency reuse verified from upstream tests or semantic
+  similarity; require the exact dependency symbol and a local integration test.
 
 ## On-demand resources
 
@@ -277,8 +316,12 @@ Report separately:
 ## Completion criteria
 
 - Every in-scope Java test/case has an approved disposition and source trace.
+- The authoritative current object ledger was checked, its baselines match the
+  test run, and no incomplete object state was hidden by the test summary.
 - Every high-risk contract has an oracle, evidence label, and result.
 - Applicable Rust ownership, async, error, serialization, feature, adapter, and unsafe obligations are tested.
 - Added tests name a distinct risk or plausible defect.
 - Coverage scopes are comparable and any numeric gate is reported as a signal, not parity proof.
 - Stubs, warnings, flaky/skipped tests, missing platforms, real-host gaps, and unverified boundaries remain visible.
+- A module completion claim is emitted only when its object ledger, source-test
+  ledger, Rust obligations, and required host/non-functional gates all permit it.

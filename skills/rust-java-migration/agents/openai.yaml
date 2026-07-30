@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration"
-  short_description: "Migrate complete Java modules to Rust in one batch"
-  default_prompt: "Use $rust-java-migration to freeze a complete Java module inventory, implement the full Rust semantic batch, then run one consolidated parity audit and unified final verification."
+  short_description: "Audit source-authoritative Java-to-Rust migration parity"
+  default_prompt: "Use $rust-java-migration to map every Java object to its deterministic last-two-package Rust path and one real object file, maintain one detailed canonical four-document set, and keep MISSING, MISPLACED, STUB, PARTIAL, or UNVERIFIED work incomplete. Accept dependency reuse or platform exclusion only with exact evidence; never infer completion from counts, compilation, green tests, similar ecosystem features, or historical documents."

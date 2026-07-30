@@ -2,6 +2,12 @@
 
 Use this rubric after source-test inventory and before deleting, merging, or adding tests. It is a decision aid, not an automated score gate.
 
+This rubric evaluates test quality only. It never promotes object status and
+never overrides `MISSING`, `MISPLACED`, `STUB`, `PARTIAL`, or `UNVERIFIED` in
+the current authoritative object ledger. A perfect test score against a facade
+or substitute is irrelevant if the source object's expected file or semantics
+are absent.
+
 ## Required metadata
 
 Every retained or proposed test should answer:

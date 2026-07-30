@@ -2,6 +2,18 @@
 
 Use these templates to turn a Java-to-Rust compatibility claim into reproducible evidence.
 
+## 0. Object-state precondition
+
+Read the authoritative `对象级对照表.md` before test inventory. Only read its
+current-fact region before `<!-- historical-design-appendix-start -->`; the
+appendix can explain decisions but cannot supply current completion states.
+
+If the current region contains `MISSING`, `MISPLACED`, `STUB`, `PARTIAL`, or
+`UNVERIFIED`, record the exact counts and conclude that migration completion is
+blocked regardless of passing tests. Test evidence can strengthen an
+`IMPLEMENTED` or `DEPENDENCY_REUSED` row; it cannot create a missing file,
+move a misplaced object, or fill absent behavior.
+
 ## 1. Three-ledger record
 
 Create the source inventory before the generic contract matrix:
@@ -219,12 +231,17 @@ Parallelize independent crates, platforms, and external-service jobs, but isolat
 | Host integration | | | V5 | |
 | Non-functional | | | V6 | |
 | Rollback | | | V7 | |
+| Strict object blockers | | | authoritative current object ledger | |
 
 - Exact commands:
-- Failed/flaky/skipped:
-- Stubs/placeholders:
+- Failed/flaky/ignored/skipped/not-run:
 - Warnings/lints:
+- MISSING/MISPLACED/STUB/PARTIAL/UNVERIFIED:
+- Exact DEPENDENCY_REUSED symbol/version/adapter/integration evidence:
 - Simulated dependencies:
 - Unsupported targets:
 - Next promotion gate:
 ```
+
+The final sentence must say `migration incomplete` when the strict blocker
+count is non-zero. Do not phrase green executed tests as overall completion.

@@ -82,7 +82,12 @@ For each public operation maintain one row:
 | Java signature | Rust API | Input mapping | Output/error mapping | Side effects | Call-path evidence | Tests | Status |
 |---|---|---|---|---|---|---|---|
 
-Status must be one of the states defined by the skill. Do not infer `BEHAVIOR_VERIFIED` from source similarity.
+Status must be one of the strict states defined by the skill. Do not infer
+`IMPLEMENTED` from source similarity, a same-named file, a re-export, green
+tests, or a dependency with adjacent behavior. CodeGraph call paths supply
+semantic evidence only after the deterministic expected path has been checked:
+strip the configured Java package root and retain the final two package
+segments.
 
 ## Post-implementation query rules
 

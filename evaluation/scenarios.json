@@ -488,6 +488,12 @@
       "assertions": ["pins_java_and_rust_baselines", "creates_four_per_module_documents", "freezes_complete_module_inventory_before_implementation", "inventories_objects_methods_overloads_and_parameters", "implements_all_non_exempt_objects_in_one_semantic_batch", "does_not_compare_or_test_object_by_object", "runs_one_consolidated_post_implementation_parity_audit", "runs_unified_final_build_differential_replay_concurrency_load_fuzz_host_and_rollback_gates", "separates_structural_implementation_behavior_and_production_evidence", "isolates_and_excludes_approved_placeholders"]
     },
     {
+      "id": "rust-java-comment-parity",
+      "prompt": "Migrate a documented Java service to Rust. Preserve every class, constructor, method, generic/value parameter, return, exception, since/deprecated/see, thread-safety, and meaningful inline comment as traceable Chinese Rust documentation. Show how JavaDoc tags map when names, errors, overloads, or parameters are reshaped.",
+      "expected_skills": ["rust-java-migration"],
+      "assertions": ["inventories_all_source_documentation_before_implementation", "maps_object_and_method_javadoc_to_rust_doc_comments", "keeps_optional_java_source_anchors_only_on_types_and_methods", "writes_rust_native_generic_value_parameter_return_and_error_docs", "keeps_java_parameter_name_and_exception_mapping_only_in_migration_documents", "maps_since_deprecated_and_see_to_rust_native_docs", "preserves_inline_contract_comments_without_migration_labels", "handles_overload_and_options_struct_comment_mapping", "audits_comment_parity_after_batch_freeze"]
+    },
+    {
       "id": "rust-java-component-replacement-decision",
       "prompt": "We are migrating a Spring application framework to Rust. Decide whether IoC, AOP, cache, web integration, and annotation processing should use existing crates, wrappers, traits plus adapters, or Rust-native redesigns. Do not select Axum merely because the source uses Spring Boot, and define evidence required before calling a dependency verified.",
       "expected_skills": ["rust-java-migration", "rust-crate-discovery"],

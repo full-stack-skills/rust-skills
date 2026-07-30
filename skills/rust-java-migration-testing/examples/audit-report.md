@@ -90,7 +90,10 @@ Review:
 
 ## Stub and warning gate
 
-The source scan found one production `unimplemented!()` in a default feature path. That object remains `SKELETON` even though all current tests pass. The test command also emitted warnings, so the Clippy `-D warnings` gate remains open.
+The source scan found one production `unimplemented!()` in a default feature
+path. That object remains `STUB` even though all current tests pass, so the
+module is not migration-complete. The test command also emitted warnings, so
+the Clippy `-D warnings` gate remains open.
 
 ## Acceptance summary
 

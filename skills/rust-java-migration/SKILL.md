@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, concurrency, or runtime-behavior level; selecting Rust replacements for Java frameworks and components; searching crates.io and evaluating unfamiliar alternatives; producing per-module migration roadmaps and parity tables; or continuing an incomplete port without deleting existing work. Enforces a complete upfront inventory, one continuous module-level semantic implementation batch, one consolidated post-implementation parity audit, and final unified build, differential, replay, concurrency, load, fuzz, host-integration, and rollback verification. Forbids inefficient object-by-object migrate-compare-test loops.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, dependency-reuse, concurrency, or runtime-behavior level; preserving Java semantics in Chinese Rust documentation; selecting exact Rust dependency replacements; producing one detailed four-document set per source module; or continuing an incomplete port without deleting existing work. Enforces source-authoritative object boundaries, deterministic last-two-package path mapping, one Java object per real Rust file, strict non-completion states, evidence-backed dependency reuse/platform exclusions, merged historical appendices, a frozen full inventory, consolidated audit, and unified verification. Forbids completion claims from file counts, compilation, green Rust tests, similar ecosystem features, or historical documentation.
 ---
 
 # Java to Rust Migration
@@ -29,12 +29,16 @@ Do not modify migration code when the user requested only an audit, plan, or doc
 Resolve or explicitly mark unknown:
 
 - Java repository path, baseline commit/tag, build tool, JDK, and module scope.
+- Exact Java module package root used for path mapping; do not pass only a
+  repository or `src/main/java` root and then guess which package segments to strip.
 - Rust repository path, baseline commit, toolchain/MSRV, workspace, and target platforms.
 - Compatibility goal: source-shape parity, public API parity, behavior parity, or production replacement.
 - Dependency policy: license, MSRV, supported targets, unsafe policy, advisory policy, maintenance horizon, and acceptable transitive cost.
 - Component-candidate sources and their observation date; distinguish team policy, researched candidates, declared dependencies, and verified adoption.
 - Explicit exceptions, blocked external projects, unsupported JVM-only features, and completion deadline.
 - Required host applications, real scripts, test data, concurrency model, load profile, and rollback mechanism.
+- Existing migration documents and their authority; identify the single current
+  four-document set before creating or merging historical material.
 
 Never silently infer that the newest branch, a generated manifest, or an API registration list is the behavioral baseline.
 
@@ -81,8 +85,13 @@ Create separate machine-readable or tabular inventories for:
 - Java Maven/Gradle modules and Rust crates.
 - Java packages and Rust module directories.
 - Classes, interfaces, enums, records, annotations, exceptions, and relevant inner types.
+- For every object, the deterministic expected Rust path after removing the
+  organization/module package root and retaining the final two remaining package
+  segments (or one/zero when fewer remain).
 - Public/protected constructors and methods, including every overload.
 - Parameter names, order, generic bounds, nullability, defaults, varargs, checked exceptions, and return contracts.
+- Existing object, constructor, method, generic/value parameter, return,
+  exception, metadata-tag, and semantic inline comments, with source anchors.
 - Examples, tests, fixtures, scripts, configuration, resources, service descriptors, and docs.
 - Call paths and externally observable side effects.
 
@@ -102,10 +111,18 @@ Run the static Rust layout audit as an early signal:
 
 ```bash
 python3 "$SKILL_DIR/scripts/audit_migration_layout.py" \
-  --rust-root .
+  --java-package-root ../java-project/source-module/src/main/java/org/example/module \
+  --rust-root . \
+  --retain-segments 2 \
+  --require-source-comments \
+  --fail-on-warning
 ```
 
-The script detects structural red flags; it does not prove Java/Rust semantic parity.
+The script calculates expected paths and distinguishes missing from misplaced
+objects. It also detects non-snake-case paths, multi-object files, facade
+definitions, wildcard imports, stub macros/panics, empty function bodies, and
+missing Chinese source comments. Any strict blocker keeps migration completion
+blocked; a clean scan still does not prove Java/Rust semantic parity.
 
 ### 3. Create four documents for every source module
 
@@ -115,10 +132,12 @@ When documentation writes are authorized, generate a documentation directory for
 python3 "$SKILL_DIR/scripts/scaffold_migration_docs.py" \
   --module source-module \
   --java-root ../java-project/source-module \
+  --java-package-root ../java-project/source-module/src/main/java/org/example/module \
   --rust-root crates/source_module \
   --output-dir docs/source-module \
   --java-baseline <sha-or-tag> \
-  --rust-baseline <sha>
+  --rust-baseline <sha> \
+  --retain-segments 2
 ```
 
 The command creates:
@@ -128,12 +147,24 @@ The command creates:
 3. `语义迁移对照表.md` — every behavior family and its Rust-native implementation.
 4. `对象名称一致性检查.md` — counts, missing/extra/merged objects, names, methods, parameters, and logic gaps.
 
-Populate every placeholder from source evidence. Keep documents synchronized with code in the same change. Templates:
+Populate every placeholder from source evidence. A generated template is
+`DRAFT`, not evidence and never completion. Keep documents synchronized with
+code in the same change. Templates:
 
 - [Migration roadmap](assets/templates/迁移路线图.md)
 - [Object mapping](assets/templates/对象级对照表.md)
 - [Semantic mapping](assets/templates/语义迁移对照表.md)
 - [Name consistency audit](assets/templates/对象名称一致性检查.md)
+
+Every one of the four documents must be independently detailed and must contain
+the module's current migration contract: source/Rust SHAs, exact object
+denominator, target root, `retain_segments = 2`, status snapshot, strict
+completion rules, and that document's responsibility. Reject a title-only,
+count-only, or placeholder-only document. As an anti-summary floor, require at
+least three substantive level-2 sections plus an evidence table or task matrix;
+use a repository-configured size floor (45 nonblank lines by default) while
+allowing a proportionally smaller generated object table for a genuinely tiny
+module.
 
 Every document must show separate Java and Rust baselines, its last-audited date,
 and a document status. Every migrated/verified row needs an evidence anchor:
@@ -144,32 +175,64 @@ Rust SHA and update statuses in one consolidated pass. A later count table must
 not silently contradict a technical-requirements document or an earlier semantic
 gap.
 
+Keep exactly one current four-document set at the module root. Do not leave
+`*-历史详细版.md` or a second `history/**/<current-name>.md` beside it. Merge
+useful old package grouping, design context, and decision history into a clearly
+delimited “历史设计附录” in the corresponding current document. The generated
+current-fact region must remain first and regeneration must preserve the
+appendix. Old counts, paths, statuses, tests, and completion marks never override
+current facts.
+
+Treat scaffold `--force` as destructive and use it only for a disposable,
+untouched `DRAFT`; never use it to merge or refresh a populated current
+document. Merge historical details into the current document in place and
+preserve both its generated fact region and existing appendix.
+
 ### 4. Classify every object honestly
 
-Use these states consistently:
+Use these object states consistently. Keep verification levels (`V0`–`V7`)
+separate; do not invent a friendlier state or translate a test result directly
+into an object state.
 
 | State | Meaning |
 |---|---|
-| `NOT_STARTED` | No Rust counterpart exists |
-| `SKELETON` | Shape exists but behavior is absent or deliberately blocked |
-| `IMPLEMENTED_UNVERIFIED` | Real logic exists but behavioral parity is not proven |
-| `BEHAVIOR_VERIFIED` | Live/golden differential evidence passes, or an approved equivalent contract oracle proves the behavior |
-| `JAVA_ONLY_EXEMPT` | JVM-specific behavior has an approved Rust replacement or exclusion |
-| `PLANNED_BLOCKED` | Explicit external dependency blocks implementation |
+| `MISSING` | Expected Rust object file does not exist |
+| `MISPLACED` | Same-name file/type exists but not at the deterministic expected path |
+| `STUB` | Shape or placeholder exists but real behavior is absent |
+| `PARTIAL` | Real behavior exists but methods, callbacks, errors, ordering, lifecycle, or integration semantics are incomplete |
+| `UNVERIFIED` | File/logic exists but source comments, object boundary, or semantic test evidence is insufficient |
+| `IMPLEMENTED` | Expected path, one-object boundary, real complete logic, Chinese source semantics, and current semantic tests all exist |
+| `DEPENDENCY_REUSED` | A pinned dependency provides the exact capability; crate/version or commit, upstream symbol, adapter, and local integration test are recorded |
+| `PLATFORM_NA` | The capability is genuinely JVM/bytecode/class-loader/platform-only and explicit evidence records why no Rust object applies |
 | `RUST_EXTENSION` | Intentional Rust-only capability, excluded from Java parity numerator |
 
-`SKELETON` and `PLANNED_BLOCKED` count as incomplete. API registration, compilation, file presence, or an empty method never upgrades them.
+Only `IMPLEMENTED`, `DEPENDENCY_REUSED`, and `PLATFORM_NA` count as handled
+source objects. `MISSING`, `MISPLACED`, `STUB`, `PARTIAL`, and `UNVERIFIED` are
+incomplete. `RUST_EXTENSION` never enters the Java denominator.
 
-Allow a planned placeholder only when the user explicitly approves it. Isolate it by module/feature, name the dependency and owner, record exit criteria, keep it out of default facades, and exclude it from implemented/verified coverage.
+Allow a planned placeholder only when the user explicitly approves it. Record
+the blocker in the roadmap, but keep each affected object in its factual
+`MISSING` or `STUB` state. A blocker is metadata, not a completion-like object
+state.
 
-For a blocked module, record the module-level exception as `PLANNED_BLOCKED`. Individual signature-only object rows inside it may be `SKELETON`; both states remain outside implementation and behavior numerators.
+Never upgrade from `MISSING` merely because an object name appears in a manifest,
+facade, `lib.rs`, `mod.rs`, re-export, generated registry, or compatibility
+module. Never upgrade from `UNVERIFIED` merely because `cargo test` is green.
 
 ### 5. Decide component replacements from contracts
 
 Do not map framework names directly. For every external Java component or framework subsystem:
 
+The Java source module remains authoritative for object names, package
+structure, and public contracts. A Rust dependency is only an implementation
+reuse boundary. Do not restructure the migration around the dependency's file
+tree and do not copy dependency-owned implementations into local files merely
+to improve parity counts. For AOP-like work, for example, Spring defines the
+Advice/Interceptor/Advisor object inventory while an aspect crate may satisfy
+specific runtime symbols through `DEPENDENCY_REUSED`.
+
 1. Extract the behavior contract: API shape, wire/storage format, ordering, failure taxonomy, lifecycle, transactions, concurrency, cancellation, backpressure, security, observability, and deployment assumptions.
-2. Choose a replacement shape: standard library, direct crate, wrapped crate, trait plus adapters, explicit registry/SPI, compile-time macro/code generation, application-host responsibility, or approved non-migration.
+2. Choose a replacement shape: standard library, direct crate, wrapped crate, trait plus adapters, explicit registry/SPI, compile-time macro/code generation, application-host responsibility, or proven `PLATFORM_NA`.
 3. Check the common mapping table and candidate catalog as discovery starting points, never as automatic approval.
 4. When no verified mapping fits, generate several English capability/protocol/constraint queries, search crates.io and companion primary sources, and shortlist five to ten candidates across std, direct crate, wrapper, trait/adapters, code generation, host responsibility, and exclusion shapes.
 5. Route crates.io metadata collection and ecosystem-health comparison to `rust-crate-discovery` when available. Apply migration-specific contract and compatibility gates here; its numeric health score does not select the replacement.
@@ -177,7 +240,10 @@ Do not map framework names directly. For every external Java component or framew
 7. Compare viable candidates using semantic fit, maintenance, adoption, docs/tests, project compatibility, security/supply chain, maturity, cost, and exit strategy. Interpret downloads, reverse dependencies, stars, release recency, and commits as contextual signals, not proof.
 8. Spike the highest-risk semantic path for the top candidates before committing the architecture.
 9. Record search queries and date, ownership, version/features, per-dimension evidence/confidence, rejected alternatives, escape hatch, and rollback plan.
-10. Promote the decision only through explicit evidence states; a manifest entry or highest score is not semantic verification.
+10. Promote an object to `DEPENDENCY_REUSED` only when the exact upstream symbol,
+    pinned dependency evidence, adapter boundary, and local integration test are
+    all recorded. “The ecosystem has it” or “semantically similar” remains
+    `UNVERIFIED`.
 
 For multiple target frameworks, define a framework-neutral contract and thin adapters, then run one shared conformance suite against every adapter. Keep runtime traits/types separate from thin procedural macros and generated code.
 
@@ -195,8 +261,12 @@ execute the entire frozen batch without object-level acceptance pauses:
    exactly one primary `.rs` file per Java object and real logic in the
    corresponding object or explicit collaborator files.
 3. Copy and translate JavaDoc semantics into Chinese Rust doc comments across
-   the batch. Preserve parameter, default, nullability, error, side-effect,
-   ordering, lifecycle, and concurrency intent.
+   the batch. Migrate every existing object comment, constructor/method comment,
+   generic and value `@param`, `@return`, `@throws`, `@since`, `@deprecated`,
+   relevant `@see`, and semantic inline comment without omission. Preserve the
+   parameter-specific contracts. Keep Java-to-Rust name, signature, and exception
+   mappings in the four migration documents; keep generated Rust documentation
+   Rust-native.
 4. Implement all mapped overload variants, examples, fixtures, source-test
    counterparts, Rust-specific obligations, and risk-driven tests as batch
    artifacts, but do not execute validation yet.
@@ -211,12 +281,20 @@ differential comparison, per-object CodeGraph re-queries, or per-object
 completion reviews. Do not report an object as accepted merely because its file
 was edited. Recovery commits are allowed, but they are not verification gates.
 
+Read [Comment migration contract and example](references/comment-migration.md)
+before migrating documentation. Treat missing source comments as migration gaps,
+not optional cleanup.
+
 ### 7. Preserve naming and overload intent
 
 - Use `snake_case` for Rust directories, files, methods, and parameters.
 - Use `PascalCase` for Rust types.
 - Map `loadOrCreateAgentState(slotKey)` to `load_or_create_agent_state(slot_key)`.
-- Preserve the last meaningful Java package level as the Rust subdirectory.
+- Remove the organization and declared source-module package root, then retain
+  exactly the final two remaining package segments. Retain one when only one
+  remains and place root-package objects at the crate root. Example:
+  `factory/xml/support/Foo.java` → `xml/support/foo.rs`;
+  `propertyeditors/PatternEditor.java` → `propertyeditors/pattern_editor.rs`.
 - Keep `lib.rs` and `mod.rs` as declarations and re-exports only.
 - Keep one Java class/interface/enum/record per Rust file; an inner builder tightly owned by the primary type may remain with it.
 - Record every intentional rename in both object and name-consistency documents.
@@ -283,8 +361,9 @@ declared batch:
 
 1. Run one consolidated CodeGraph/static parity audit over all objects, files,
    exact signatures, parameters, overloads, call paths, dynamic boundaries,
-   examples, tests, docs, and placeholders. Reconcile all four documents in one
-   pass.
+   examples, tests, docs, and placeholders. Compare the complete Java comment
+   inventory with Rust object, method, parameter, return, error, metadata, and
+   inline comments. Reconcile all four documents in one pass.
 2. Run Rust formatting, check, unit, doc, integration, Clippy, feature, target,
    and platform gates as one unified engineering suite.
 3. Run every ported/mirrored Java contract test, clearly labeled as
@@ -333,10 +412,20 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - Do not silently merge several Java objects into one Rust file.
 - Do not replace overloaded behavior with one lossy convenience function.
 - Do not call a declared dependency, successful compile, or isolated POC a verified component replacement.
+- Do not use a replacement dependency's package/file layout as the target object
+  inventory; source Java objects and the deterministic path rule remain authoritative.
+- Do not mark a semantically similar dependency as `DEPENDENCY_REUSED` without
+  pinned crate/commit, exact source symbol, adapter evidence, and local integration tests.
+- Do not use `PLATFORM_NA` for work that is merely difficult or missing; require
+  JVM/bytecode/class-loader/platform-specific evidence.
 - Do not promote a component copied from a research list or local convention document to “selected” without current hard-filter and contract evidence.
 - Do not call a Rust test copied from a Java test a differential test unless both implementations or Java-produced golden artifacts participate.
 - Do not mark a row behavior-verified from file counts, parser acceptance, generic `is_ok()`/`is_err()`, or “at least one test per object”.
 - Do not let the four migration documents carry different baselines or contradictory completion states.
+- Do not keep a current document and a `-历史详细版`/nested duplicate. Merge
+  useful history into the current document after the generated fact region.
+- Do not replace or delete the generated current-fact region while merging old
+  documentation, and do not let regeneration discard the merged appendix.
 - Do not claim real testing when only mocks, compilation, or static inspection ran.
 - Do not edit reference source repositories while extracting patterns.
 - Do not alternate migration, comparison, and testing for each object, file, or
@@ -345,13 +434,29 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
   finish the frozen batch before consolidated audit and unified verification.
 - Do not convert recovery commits or local edit milestones into completion
   checkpoints.
+- Do not omit an existing Java object, constructor, method, parameter, return,
+  exception, lifecycle, thread-safety, deprecation, or semantic inline comment.
+- Do not replace specific source documentation with generic prose such as
+  “processes the request” or claim comment parity from `cargo doc` alone.
+- Do not write `对应 Java` in parameter, return, error-variant, field, or inline
+  comments. Limit optional source anchors to the migrated Rust type and
+  constructor/method documentation; keep detailed correspondence in the four
+  migration documents.
 
 ## Completion Criteria
 
-- Four current documents exist for every in-scope source module, share pinned baselines, and record their last audit against the current Rust SHA.
+- Four detailed current documents exist for every in-scope source module, share
+  pinned baselines and one module-specific migration contract, and record their
+  last audit against the current Rust SHA; no parallel historical copy exists.
+- Every object has a deterministic expected path using the final-two-segments
+  algorithm, and `MISPLACED` objects remain incomplete until physically aligned.
 - Every Java object, method, overload, and parameter has a disposition.
-- Every exception and Rust extension is categorized and excluded from misleading denominators.
+- Every dependency reuse, platform exclusion, blocker, exception, and Rust
+  extension has precise evidence and is excluded from misleading denominators.
 - Production Rust files satisfy layout, documentation, import, and no-stub rules.
+- Every source-documented Java object, constructor, method, generic/value
+  parameter, return, exception, metadata tag, and semantic inline comment has a
+  traceable Rust documentation counterpart.
 - The complete declared batch was implemented before any acceptance gate ran.
 - One consolidated post-implementation parity audit covers the full frozen
   denominator; no object-by-object verification loop was used.

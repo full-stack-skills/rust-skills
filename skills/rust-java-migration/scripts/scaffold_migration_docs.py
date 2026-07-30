@@ -17,6 +17,7 @@ TEMPLATE_NAMES = (
     "语义迁移对照表.md",
     "对象名称一致性检查.md",
 )
+HISTORY_APPENDIX_START = "<!-- historical-design-appendix-start -->"
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,6 +26,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--module", required=True, help="Source module name.")
     parser.add_argument("--java-root", required=True, type=Path, help="Java module path.")
+    parser.add_argument(
+        "--java-package-root",
+        required=True,
+        type=Path,
+        help="Directory that represents the Java module's root package.",
+    )
     parser.add_argument("--rust-root", required=True, type=Path, help="Rust crate/module path.")
     parser.add_argument("--output-dir", required=True, type=Path, help="Documentation directory.")
     parser.add_argument("--java-baseline", help="Pinned Java commit, tag, or artifact version.")
@@ -38,7 +45,21 @@ def parse_args() -> argparse.Namespace:
         default=dt.date.today().isoformat(),
         help="Document date in YYYY-MM-DD form (default: today).",
     )
-    parser.add_argument("--force", action="store_true", help="Overwrite existing documents.")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Overwrite an untouched disposable DRAFT only; never use this to merge "
+            "or refresh populated current facts."
+        ),
+    )
+    parser.add_argument(
+        "--retain-segments",
+        type=int,
+        default=2,
+        choices=(1, 2),
+        help="Number of trailing Java package segments to retain (default: 2).",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -88,11 +109,30 @@ def render(template: str, values: dict[str, str]) -> str:
     return rendered
 
 
+def preserve_historical_appendix(rendered: str, existing: str) -> str:
+    """Keep a merged historical appendix when an explicit regeneration occurs."""
+    if HISTORY_APPENDIX_START not in existing:
+        return rendered
+    existing_appendix = existing.split(HISTORY_APPENDIX_START, 1)[1]
+    current = rendered.split(HISTORY_APPENDIX_START, 1)[0].rstrip()
+    return (
+        current
+        + "\n\n"
+        + HISTORY_APPENDIX_START
+        + existing_appendix
+    )
+
+
 def main() -> int:
     args = parse_args()
     try:
-        validate_directory(args.java_root, "Java root")
+        java_root = validate_directory(args.java_root, "Java root")
+        java_package_root = validate_directory(args.java_package_root, "Java package root")
         validate_directory(args.rust_root, "Rust root")
+        if java_package_root != java_root and java_root not in java_package_root.parents:
+            raise ValueError(
+                f"Java package root must be inside Java root: {java_package_root}"
+            )
         java_baseline, rust_baseline = baselines(args)
         template_dir = Path(__file__).resolve().parent.parent / "assets" / "templates"
         if not template_dir.is_dir():
@@ -104,7 +144,9 @@ def main() -> int:
             # Preserve the caller's repository-relative spelling in generated
             # documents instead of leaking machine-specific absolute paths.
             "JAVA_ROOT": args.java_root.as_posix(),
+            "JAVA_PACKAGE_ROOT": args.java_package_root.as_posix(),
             "RUST_ROOT": args.rust_root.as_posix(),
+            "RETAIN_SEGMENTS": str(args.retain_segments),
             "JAVA_BASELINE": java_baseline,
             "RUST_BASELINE": rust_baseline,
             "GENERATED_DATE": args.date,
@@ -124,6 +166,16 @@ def main() -> int:
                     f"refusing to overwrite {destination}; pass --force explicitly"
                 )
             content = render(template_path.read_text(encoding="utf-8"), values)
+            if destination.exists() and args.force:
+                existing = destination.read_text(encoding="utf-8")
+                if "文档状态：`DRAFT`" not in existing:
+                    raise ValueError(
+                        f"refusing to overwrite populated/current document: {destination}"
+                    )
+                content = preserve_historical_appendix(
+                    content,
+                    existing,
+                )
             rendered_documents.append((destination, content))
             planned.append({"template": str(template_path), "output": str(destination)})
 

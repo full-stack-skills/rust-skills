@@ -5,8 +5,16 @@
 - Map each Java class, interface, enum, or record to one primary Rust file.
 - Convert the object name to `snake_case.rs`; keep the Rust type in `PascalCase`.
 - Keep a tightly coupled Java inner builder with its primary type only when it is not an independently referenced object.
-- Map the final meaningful Java package level to the same Rust directory name.
-- Use deeper Rust directories only when they preserve an existing Java domain boundary.
+- Declare the Java module package root explicitly, remove it together with the
+  organization path, and retain exactly the final two remaining package
+  segments. Retain one segment when only one remains; use the crate root when
+  none remains.
+- Examples:
+  `factory/config/BeanDefinition.java` → `factory/config/bean_definition.rs`;
+  `factory/xml/support/Foo.java` → `xml/support/foo.rs`;
+  `propertyeditors/PatternEditor.java` → `propertyeditors/pattern_editor.rs`.
+- Do not flatten objects into the crate root and do not preserve arbitrary
+  deeper paths. A same-name file at another path is `MISPLACED`, not complete.
 - Keep `lib.rs` and `mod.rs` limited to module declarations, visibility, documentation, and re-exports.
 - Keep runtime compatibility facades thin. Put real object behavior in the corresponding object files.
 
@@ -24,30 +32,62 @@
 
 ## Documentation contract
 
-Every migrated type must include Chinese Rust doc comments:
+Every existing Java object, constructor, method, generic/value parameter,
+return, exception, metadata tag, and semantic inline comment must have a
+traceable Chinese Rust counterpart. Read
+[Comment migration contract and example](comment-migration.md) for the complete
+mapping and audit procedure.
+
+Every migrated type and method must include Chinese Rust doc comments:
 
 ```rust
-//! 对应 Java：com.example.state.AgentStateStore
-//! 来源文件：module/src/main/java/com/example/state/AgentStateStore.java
-
 /// 智能体状态存储契约。
 ///
-/// 保留 Java 对象的加载、创建与并发可见性语义。
+/// 保证状态加载、创建与并发可见性。
+///
+/// 对应 Java：`com.example.state.AgentStateStore`。
+/// 来源文件：`module/src/main/java/com/example/state/AgentStateStore.java`。
 pub trait AgentStateStore {
     /// 加载或创建指定槽位的状态。
     ///
     /// 对应 Java：`AgentStateStore#loadOrCreateAgentState(String)`。
     ///
     /// # 参数
-    /// - `slot_key`：Java 参数 `slotKey`。
+    /// - `slot_key`：状态槽位标识，不能为空。
     ///
     /// # 错误
-    /// 持久化或反序列化失败时返回错误。
+    /// - `StateError::EmptySlotKey`：`slot_key` 为空。
+    /// - `StateError::Storage`：持久化或反序列化失败。
     fn load_or_create_agent_state(&self, slot_key: &str) -> Result<AgentState, StateError>;
 }
 ```
 
-Translate semantic points from JavaDoc, including null handling, ordering, thread safety, defaults, exceptions, side effects, and version notes. Do not copy license-incompatible prose verbatim beyond what the project license permits.
+Translate semantic points from JavaDoc, including null handling, ordering,
+thread safety, defaults, exceptions, side effects, and version notes. Preserve
+every `@param` as a mapped `# 参数` or `# 类型参数` entry, plus `@return` as
+`# 返回值` and `@throws` as `# 错误`. Use only Rust names and real Rust error
+conditions in these sections. Keep old names and exception mappings in the four
+migration documents. Do not copy license-incompatible prose verbatim beyond
+what the project license permits.
+
+## Four-document governance
+
+Each source module owns one current `迁移路线图.md`, `对象级对照表.md`,
+`语义迁移对照表.md`, and `对象名称一致性检查.md`. Each file must include a
+module-specific current contract with pinned SHAs, object denominator,
+`retain_segments = 2`, strict state snapshot, and its own responsibility.
+Scaffolded TODOs or a short count summary are not a finished document.
+
+Keep generated current facts first. Merge valuable old grouping and decisions
+into a delimited “历史设计附录” in the corresponding current file. Remove the
+parallel `*-历史详细版.md` or nested duplicate after a lossless merge. Old
+counts, paths, states, tests, and completion claims are never current evidence.
+Regeneration must preserve the appendix.
+
+Apply an anti-summary gate: at least three substantive level-2 sections and an
+evidence table/task matrix, plus a repository-configured nonblank-line floor
+(45 by default). A generated object ledger may be shorter only when the actual
+object denominator is genuinely tiny and every row is still present.
 
 ## Overloads
 
@@ -68,7 +108,7 @@ An exception record must contain:
 | Field | Required value |
 |---|---|
 | Scope | exact module/object/method |
-| State | `JAVA_ONLY_EXEMPT` or `PLANNED_BLOCKED` |
+| Object state | factual `MISSING`, `STUB`, `PARTIAL`, `UNVERIFIED`, or proven `PLATFORM_NA` |
 | Reason | technical incompatibility or named dependency |
 | User approval | date/issue/decision reference |
 | Runtime exposure | disabled, isolated feature, or non-default facade |
@@ -76,7 +116,10 @@ An exception record must contain:
 | Exit criteria | concrete dependency/version/test required |
 | Owner | responsible project/team |
 
-For an approved placeholder module, label the module exception `PLANNED_BLOCKED`. Preserve the object/signature plan and label each signature-only object row `SKELETON` (or `PLANNED_BLOCKED` when that object has its own external blocker). Neither state enters implementation or behavior numerators. Never describe the module as implemented.
+For an approved placeholder module, record the blocker as roadmap metadata.
+Preserve the object/signature plan and keep each row in its factual `MISSING`
+or `STUB` state. Neither enters handled, implementation, or behavior
+numerators. Never describe the module as implemented.
 
 ## Existing implementation preservation
 
@@ -101,6 +144,15 @@ Before editing an existing Rust port:
 - methods that ignore parameters with `let _ = ...`;
 - returns of constant/default values where Java computes results;
 - tests that assert only construction or registration;
-- Rust-only facades counted as migrated Java objects.
+- Rust-only facades counted as migrated Java objects;
+- a passing module test suite used to hide `MISSING`, `MISPLACED`, `STUB`,
+  `PARTIAL`, or `UNVERIFIED` object rows;
+- a dependency declared as replacement without a pinned exact symbol, adapter,
+  and local integration test;
+- JVM/platform exclusion asserted without JVM/bytecode/class-loader evidence;
+- duplicate current and “历史详细版” documents carrying conflicting facts;
+- source-documented objects, methods, parameters, returns, exceptions, or
+  semantic inline comments omitted from Rust;
+- generic filler comments that do not preserve the Java contract.
 
 Treat the static audit script as a detector, then confirm every finding from source and tests.

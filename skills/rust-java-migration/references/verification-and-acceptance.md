@@ -14,6 +14,13 @@ the implementation batch, and rerun the affected gate plus any downstream gate
 whose evidence was invalidated. Do not turn failure repair into an
 object-by-object migrate-compare-test loop.
 
+Before running the evidence ladder, read the current-fact region of the
+authoritative object ledger (everything before
+`<!-- historical-design-appendix-start -->`). If any row is `MISSING`,
+`MISPLACED`, `STUB`, `PARTIAL`, or `UNVERIFIED`, the module remains incomplete.
+Evidence levels describe how strongly a handled object was verified; they do
+not replace object states or repair structural gaps.
+
 ## Evidence levels
 
 | Level | Evidence | What it proves |
@@ -29,6 +36,17 @@ object-by-object migrate-compare-test loop.
 | E8 | gray rollout/rollback drill | operational recovery path is exercised |
 
 Never report a higher level from lower-level evidence.
+
+Passing `cargo test`, high coverage, a clean differential subset, or a real
+host smoke test cannot promote a module while the object ledger contains a
+strict incomplete state. Likewise, a same-named file, facade, re-export, or
+dependency with similar behavior is not E0 structural completion.
+
+For `DEPENDENCY_REUSED`, acceptance must execute the exact declared upstream
+crate symbol through the local adapter/call point using the pinned
+version/commit. For `PLATFORM_NA`, acceptance checks the recorded JVM,
+bytecode, class-loader, or comparable platform-only evidence rather than a
+generic statement that Rust works differently.
 
 ## Evidence taxonomy
 
@@ -130,13 +148,17 @@ Include:
 
 - both SHAs and toolchains;
 - module-by-module state counts;
+- strict counts for `MISSING`, `MISPLACED`, `STUB`, `PARTIAL`, and `UNVERIFIED`;
 - structural, implementation, behavioral, test, integration, and production percentages with denominators;
 - exact commands and outcomes;
-- approved exemptions and blocked placeholders;
-- failed/flaky/skipped tests;
+- exact dependency-reuse and platform-not-applicable evidence;
+- failed/flaky/ignored/skipped/not-run tests plus warnings and lint findings;
 - unverified external dependencies;
 - next evidence required for completion.
 - confirmation that implementation preceded acceptance and that the parity
   audit and verification used the complete frozen denominator.
+
+The final conclusion must say **migration incomplete** whenever any strict
+incomplete state remains, even if every executed test passes.
 
 Use `rust-java-migration-testing` to disposition every source test, add Rust-specific test obligations, design risk-driven value-add tests, and report mutation/coverage results without promoting heuristics to proof.
