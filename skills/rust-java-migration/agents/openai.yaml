@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration"
   short_description: "Audit source-authoritative Java-to-Rust migration parity"
-  default_prompt: "Use $rust-java-migration to map every Java object to its deterministic last-two-package Rust path and one real object file, maintain one detailed canonical four-document set, and keep MISSING, MISPLACED, STUB, PARTIAL, or UNVERIFIED work incomplete. Accept dependency reuse or platform exclusion only with exact evidence; never infer completion from counts, compilation, green tests, similar ecosystem features, or historical documents."
+  default_prompt: "Use $rust-java-migration to build an idiomatic Rust API, record JavaBean or script compatibility as ADAPTED through explicit registries, preserve full source semantics, and verify the complete migration batch without treating adaptation as completion."

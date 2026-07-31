@@ -494,6 +494,12 @@
       "assertions": ["inventories_all_source_documentation_before_implementation", "maps_object_and_method_javadoc_to_rust_doc_comments", "keeps_optional_java_source_anchors_only_on_types_and_methods", "writes_rust_native_generic_value_parameter_return_and_error_docs", "keeps_java_parameter_name_and_exception_mapping_only_in_migration_documents", "maps_since_deprecated_and_see_to_rust_native_docs", "preserves_inline_contract_comments_without_migration_labels", "handles_overload_and_options_struct_comment_mapping", "audits_comment_parity_after_batch_freeze"]
     },
     {
+      "id": "rust-java-java-bean-property-adaptation",
+      "prompt": "Migrate QLExpress Java getName()/setName() behavior to Rust without generating get_name(). Rust callers should use name()/set_name(), while scripts must still support user.name and user.name = \"Tom\" through NativeRegistry or the member resolver. Preserve getter/setter validation, side effects, errors, visibility, boolean isXxx precedence, and aliases.",
+      "expected_skills": ["rust-java-migration"],
+      "assertions": ["uses_idiomatic_rust_getter_setter_mut_into_builder_and_boolean_names", "does_not_mechanically_generate_get_prefix", "separates_rust_api_from_script_property_compatibility", "registers_property_read_and_write_in_native_registry_or_member_resolver", "preserves_java_property_resolution_precedence_validation_side_effects_errors_and_visibility", "records_adapted_as_mapping_form_not_completion_state", "tests_rust_api_and_script_access_paths"]
+    },
+    {
       "id": "rust-java-component-replacement-decision",
       "prompt": "We are migrating a Spring application framework to Rust. Decide whether IoC, AOP, cache, web integration, and annotation processing should use existing crates, wrappers, traits plus adapters, or Rust-native redesigns. Do not select Axum merely because the source uses Spring Boot, and define evidence required before calling a dependency verified.",
       "expected_skills": ["rust-java-migration", "rust-crate-discovery"],

@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, dependency-reuse, concurrency, or runtime-behavior level; preserving Java semantics in Chinese Rust documentation; selecting exact Rust dependency replacements; producing one detailed four-document set per source module; or continuing an incomplete port without deleting existing work. Enforces source-authoritative object boundaries, deterministic last-two-package path mapping, one Java object per real Rust file, strict non-completion states, evidence-backed dependency reuse/platform exclusions, merged historical appendices, a frozen full inventory, consolidated audit, and unified verification. Forbids completion claims from file counts, compilation, green Rust tests, similar ecosystem features, or historical documentation.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, dependency-reuse, JavaBean getter/setter or script-property compatibility, concurrency, or runtime-behavior level; preserving Java semantics in Chinese Rust documentation; selecting exact Rust dependency replacements; producing one detailed four-document set per source module; or continuing an incomplete port without deleting existing work. Enforces source-authoritative object boundaries, idiomatic Rust APIs with explicit ADAPTED compatibility layers, one Java object per real Rust file, strict non-completion states, evidence-backed dependency reuse/platform exclusions, a frozen full inventory, consolidated audit, and unified verification.
 ---
 
 # Java to Rust Migration
@@ -301,6 +301,27 @@ not optional cleanup.
 
 Rust has no method overloading. Keep one canonical snake_case name only when the signatures have one semantic operation. Give additional variants stable semantic suffixes such as `_with_charset`, `_into`, or `_from_reader`; record the exact Java signature mapped to each Rust function. Never collapse overloads that differ in defaults, validation, side effects, or error behavior.
 
+Apply the local `rust-api-design` conventions to every migrated public Rust
+surface. Do not mechanically translate JavaBean accessors: prefer `name()` over
+`get_name()` (except genuine lookup operations), `set_name(value)` for controlled
+mutation, `name_mut()` only when it cannot bypass invariants,
+`into_name()`/`into_inner()` for ownership transfer, semantic boolean predicates,
+and chainable builders. Use `as_`/`to_`/`into_`, `From`/`TryFrom`/`AsRef` and
+`IntoIterator` by their Rust meanings; do not use `Deref` to emulate Java
+inheritance. Expose fields directly only when invariants and API evolution permit
+it. Preserve validation, visibility, side effects, exceptions, synchronization,
+and lazy-computation behavior.
+
+When a script, expression engine, serializer, reflection facade, or other
+compatibility surface exposes Java property semantics, keep the Rust API
+idiomatic and implement the old field/getter/setter behavior in an explicit
+registry or member resolver. Record this relationship as mapping form
+`ADAPTED`; this is orthogonal to completion status and still requires
+`IMPLEMENTED`, `UNVERIFIED`, or another factual state.
+
+Read [Rust API and JavaBean property adaptation](references/rust-api-adaptation.md)
+before migrating getters, setters, builders, or script-visible properties.
+
 ### 8. Translate mechanisms, not frameworks literally
 
 Use this table as a common starting point, then verify the exact contract and
@@ -411,6 +432,11 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - Do not use wildcard imports in production migration code.
 - Do not silently merge several Java objects into one Rust file.
 - Do not replace overloaded behavior with one lossy convenience function.
+- Do not create `get_*` methods solely to mirror JavaBean spelling when an
+  idiomatic Rust method plus an explicit compatibility adapter preserves the
+  contract.
+- Do not treat an idiomatic Rust getter/setter as sufficient when scripts or
+  dynamic member access still require Java field/getter/setter resolution.
 - Do not call a declared dependency, successful compile, or isolated POC a verified component replacement.
 - Do not use a replacement dependency's package/file layout as the target object
   inventory; source Java objects and the deterministic path rule remain authoritative.
