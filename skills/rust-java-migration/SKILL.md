@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, dependency-reuse, JavaBean getter/setter or script-property compatibility, concurrency, or runtime-behavior level; preserving Java semantics in Chinese Rust documentation; selecting exact Rust dependency replacements; producing one detailed four-document set per source module; or continuing an incomplete port without deleting existing work. Enforces source-authoritative object boundaries, idiomatic Rust APIs with explicit ADAPTED compatibility layers, one Java object per real Rust file, strict non-completion states, evidence-backed dependency reuse/platform exclusions, a frozen full inventory, consolidated audit, and unified verification.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces, and repair migrated workspaces that no longer compile or that carry dependency/version drift, broken crate-root re-exports, duplicate cross-crate types, or warning floods. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, dependency-reuse, JavaBean getter/setter or script-property compatibility, concurrency, or runtime-behavior level; preserving Java semantics in Chinese Rust documentation; selecting exact Rust dependency replacements; producing one detailed four-document set per source module; or continuing an incomplete port without deleting existing work. Enforces source-authoritative object boundaries, idiomatic Rust APIs with explicit ADAPTED compatibility layers, one Java object per real Rust file, strict non-completion states, evidence-backed dependency reuse/platform exclusions, a frozen full inventory, consolidated audit, and unified verification.
 ---
 
 # Java to Rust Migration
@@ -63,6 +63,8 @@ completion loops are not.
 ### 1. Freeze baselines and inspect repository state
 
 Record both repository SHAs, dirty worktrees, Java/Rust toolchains, module manifests, enabled features, and generated-code boundaries. Preserve existing Rust work and unrelated changes.
+
+Verify the Rust toolchain satisfies the workspace MSRV: an older default rustc fails with `rustc X is not supported by the following packages` — run gates via `rustup run <ver> cargo ...`, never silently lower `rust-version`.
 
 If a repository contains `.codegraph/`, use CodeGraph before text search or file-by-file reading:
 
@@ -408,7 +410,7 @@ When a gate fails, group failures by shared subsystem or root cause, repair the
 batch, and rerun the affected consolidated gate plus downstream invalidated
 gates. Never fall back to migrate-compare-test one object at a time.
 
-Read [Verification and acceptance](references/verification-and-acceptance.md) for evidence design and use `rust-java-migration-testing` for the three-ledger testing SOP.
+Read [Verification and acceptance](references/verification-and-acceptance.md) for evidence design and use `rust-java-migration-testing` for the three-ledger testing SOP. Before repairing a non-compiling or warning-heavy workspace, read [Compile drift and migration cleanup](references/compile-drift-and-cleanup.md): dependency/version drift, MSRV, crate-root re-export chain breaks, duplicate cross-crate types, Java-mirror naming/scaffolding norms, and the zero-warning check workflow (default + `--all-features`, `--keep-going` layered errors, per-crate attribution, tests after cleanup).
 
 ### 11. Report completion without inflating coverage
 
@@ -468,6 +470,10 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
   comments. Limit optional source anchors to the migrated Rust type and
   constructor/method documentation; keep detailed correspondence in the four
   migration documents.
+- Do not rename Java-mirror SCREAMING_SNAKE enum variants or delete Java-mirror scaffolding types to silence `non_camel_case_types`/`dead_code`; use `#[allow(...)]` + comment and keep the Java inventory intact.
+- Do not declare a workspace clean from the default-features gate alone; `--all-features` must also reach zero warnings, and do not silently lower `rust-version` to match an old local rustc — run the pinned toolchain via `rustup run <ver> cargo ...`.
+- Do not edit a path dependency while cleaning a dependent crate; attribute each warning to its owning crate's `-->` path first.
+- Do not fix "all errors" from one `--keep-going` output; errors surface in layers — fix the first layer, re-run, iterate.
 
 ## Completion Criteria
 

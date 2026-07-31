@@ -184,6 +184,9 @@ Strong tests observe exact public behavior:
 Weak patterns requiring review:
 
 - `let _ = result`, unused parsed AST, or a test that accepts success and failure;
+  note that during cleanup, converting a genuinely dropped `Result` to
+  `let _ = expr;` preserves semantics and is not itself weak evidence — it only
+  becomes weak when `let _ =` is the sole observation of the behavior under test;
 - parse-only checks named as semantic/evaluation tests;
 - only `is_ok()` or `is_err()` when value/error category matters;
 - a cache test that observes only final values;
@@ -259,6 +262,16 @@ cargo test --doc --workspace
 
 Then run targeted compile-fail, platform/MSRV, differential, real-dependency, real-host, model/Loom, Miri/sanitizer, mutation, property/fuzz, load/soak, security, and rollback gates. Record exact command, environment, result, and artifact.
 
+Run every gate at the workspace MSRV: a default rustc older than the workspace
+`rust-version` fails with `rustc X is not supported by the following packages`
+rather than testing your code — use `rustup run <ver> cargo ...` and never
+silently lower the manifest. Use `--keep-going` so one failing crate does not
+hide the remaining errors (errors surface in layers; fix the first layer and
+re-run). Require **both** default and `--all-features` check runs to reach zero
+warnings: feature-gated crates and code paths only compile under
+`--all-features`, and a check gate with warnings must be reported as a gap, not
+a pass.
+
 Use the project-specific coverage command. For mutation candidates:
 
 ```bash
@@ -301,6 +314,9 @@ Report separately:
   migration document.
 - Do not call dependency reuse verified from upstream tests or semantic
   similarity; require the exact dependency symbol and a local integration test.
+- Do not report the check gate as passed while `cargo check` (default or
+  `--all-features`) still emits warnings, or when the run used an unsupported
+  toolchain instead of the workspace MSRV.
 
 ## On-demand resources
 
