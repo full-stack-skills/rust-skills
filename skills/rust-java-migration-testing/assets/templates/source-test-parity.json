@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "java_baseline": "<java-sha-or-tag>",
+  "rust_baseline": "<rust-sha>",
+  "acceptance_module": {
+    "package": "<project>-test",
+    "manifest": "<project>-test/Cargo.toml",
+    "publish": false,
+    "components": [
+      "<project>",
+      "<project>-binding"
+    ],
+    "command": "cargo test -p <project>-test --all-features",
+    "status": "PASS",
+    "failed": 0,
+    "skipped": 0,
+    "not_run": 0,
+    "artifact": "verification/runs/whole-project.json"
+  },
+  "source_tests": [
+    {
+      "source": "src/test/java/org/example/ExampleTest.java#example_case",
+      "case_id": "default",
+      "targets": [
+        "<project>-test/tests/example_test.rs#example_case"
+      ],
+      "disposition": "MIRRORED",
+      "contract_preserved": true,
+      "inputs_preserved": true,
+      "assertions_preserved": true,
+      "fixture_state_preserved": true,
+      "cleanup_preserved": true,
+      "case_expansion_complete": true,
+      "result_parity": "MATCH",
+      "evidence": "verification/differential/example-case.json"
+    }
+  ],
+  "assets": [
+    {
+      "source": "src/test/resources/example.json",
+      "target": "<project>-test/tests/fixtures/source/example.json",
+      "mode": "COPY_EXACT",
+      "sha256": "<sha256>"
+    }
+  ],
+  "runs": {
+    "java": {
+      "command": "<exact-java-test-command>",
+      "status": "PASS",
+      "failed": 0,
+      "skipped": 0,
+      "not_run": 0,
+      "artifact": "verification/runs/java.json"
+    },
+    "rust": {
+      "command": "<exact-rust-test-command>",
+      "status": "PASS",
+      "failed": 0,
+      "skipped": 0,
+      "not_run": 0,
+      "artifact": "verification/runs/rust.json"
+    },
+    "differential": {
+      "command": "<exact-differential-command>",
+      "status": "PASS",
+      "matched": 1,
+      "mismatched": 0,
+      "harness_failures": 0,
+      "not_run": 0,
+      "artifact": "verification/runs/differential.json"
+    }
+  }
+}

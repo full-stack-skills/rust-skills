@@ -2,6 +2,11 @@
 
 Classify tests by the behavior they protect, not by file location or coverage effect. A test may belong to more than one category; record its primary risk.
 
+Location still defines ownership: production and binding crates keep focused
+local tests, while a non-published `<project>-test` workspace package owns the
+complete source suite, cross-component workflows, and aggregate differential
+gate for a repository/product-level migration claim.
+
 ## 1. Parity tests
 
 Protect a source-side observable contract and cite the Java source, test, or documentation.
@@ -26,6 +31,11 @@ Use parity tests for:
 - exception category and partial side effects.
 
 A Rust test copied from a Java test is `V2_MIRRORED`. It becomes differential only when pinned Java output participates.
+
+The final parity gate includes every source test and concrete case. Preserve
+source tests even when a target-language reviewer considers them redundant;
+Rust-specific cleanup may reorganize them only with a lossless case/assertion
+mapping and per-case differential `MATCH`.
 
 ## 2. Boundary tests
 

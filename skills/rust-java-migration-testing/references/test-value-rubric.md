@@ -8,6 +8,12 @@ the current authoritative object ledger. A perfect test score against a facade
 or substitute is irrelevant if the source object's expected file or semantics
 are absent.
 
+Do not use this rubric to remove or weaken a `SOURCE_PARITY` case. Every source
+test remains in the 100% compatibility floor even when it is redundant or low
+value by target-language standards. `REMOVE_PROPOSED` applies only to
+Rust-authored duplicate/value-add tests after confirming no source mapping is
+lost.
+
 ## Required metadata
 
 Every retained or proposed test should answer:

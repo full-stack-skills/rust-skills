@@ -1,17 +1,28 @@
 ---
 name: rust-java-migration-testing
-description: Design, implement, audit, and report valuable tests for Java-to-Rust migrations without promoting green tests into false completion claims. Use when porting JUnit tests to Rust, checking every Java test disposition, validating an object migration ledger, proving exact dependency reuse, deciding Rust-specific obligations, comparing coverage without gaming, or building differential, golden, property, fuzz, mutation, concurrency, cancellation, lifecycle, adapter-conformance, real-dependency, host, load, security, and rollback evidence. Keeps MISSING, MISPLACED, STUB, PARTIAL, and UNVERIFIED objects incomplete even when Cargo tests pass.
+description: Design, implement, audit, and report lossless Java-to-Rust migration tests without promoting green tests into false completion claims. Use when porting 100% of JUnit tests and concrete parameterized/dynamic cases to Rust, copying and SHA-256-verifying every source fixture/resource/script/data file, requiring complete Java/Rust per-case golden or live differential MATCH results, validating object and source-test ledgers, adding Rust-specific obligations, comparing coverage without gaming, or building property, fuzz, mutation, concurrency, lifecycle, adapter, host, load, security, and rollback evidence. Keeps every object, source-test, asset, harness, mismatch, or not-run gap incomplete even when Cargo tests pass.
 ---
 
 # Java-to-Rust Migration Testing
 
-Prove observable compatibility and Rust safety properties, not test volume. Build three explicit test ledgers in this order:
+Prove observable compatibility and Rust safety properties, not test volume. Treat
+the complete source test suite as a non-negotiable compatibility floor: migrate
+100% of its test cases without weakening inputs or assertions, copy every test
+fixture/data/script byte-for-byte into the target repository, and make both
+implementations produce the same per-case observable result. Build three explicit
+test ledgers in this order:
 
-1. `SOURCE_PARITY` — disposition every in-scope source test.
+1. `SOURCE_PARITY` — map every source test/case and every source test asset; no
+   missing, blocked, or not-applicable row permits a completion claim.
 2. `RUST_OBLIGATION` — test risks introduced by the Rust implementation and replacement components.
 3. `VALUE_ADD` — add tests justified by uncovered behavior, plausible defects, incidents, mutation survivors, or hostile inputs.
 
-Coverage should rise because meaningful contracts are exercised. A percentage is not the design input and 100% is not migration proof.
+`SOURCE_PARITY` has two mandatory sections: `TEST_CASE` and `TEST_ASSET`.
+`TEST_CASE` preserves the source inputs, assertions, exception/error category,
+ordering, state, side effects, and cleanup. `TEST_ASSET` preserves the source
+relative path, target path, and SHA-256 of every copied fixture, script, corpus,
+golden file, and data file. Coverage should rise because meaningful contracts are
+exercised. A percentage is not the design input and 100% is not migration proof.
 
 ## Scope and routing
 
@@ -33,7 +44,10 @@ An audit-only request does not authorize deleting or rewriting tests. Preserve e
 Resolve or mark unknown:
 
 - pinned Java and Rust SHAs, dirty state, toolchains, profiles, features, targets, and generated-code boundaries;
-- in-scope modules, public contracts, test roots, fixtures, examples, scripts, and test-support code;
+- the complete source test roots and runner configuration, including fixtures,
+  examples, scripts, test resources, parameter sources, dynamic factories, and
+  test-support code; the source repository defines the denominator and exclusions
+  cannot be introduced merely to make parity reach 100%;
 - Java test runner and Rust test runner, including parameterized and dynamic test behavior;
 - source coverage scope/tool/report and comparable Rust coverage scope/tool/report;
 - available oracle: source only, executable Java tests, golden exporter, packaged artifact, live service, or standards suite;
@@ -53,8 +67,8 @@ Use these labels without promotion:
 | `V0_STATIC` | source/test inventory, call trace, no-stub scan | structural disposition only |
 | `V1_RUST_LOCAL` | Rust unit/integration/doc/compile tests | Rust-local behavior passes |
 | `V2_MIRRORED` | Rust test preserves a named Java test's inputs and assertions | source test represented; not differential |
-| `V3_GOLDEN_DIFF` | pinned Java-generated fixtures compared by Rust | selected outputs match |
-| `V4_LIVE_DIFF` | pinned Java and Rust execute identical cases | selected live behavior matches |
+| `V3_GOLDEN_DIFF` | pinned Java-generated fixtures compared by Rust | recorded outputs match; completion requires the full source denominator |
+| `V4_LIVE_DIFF` | pinned Java and Rust execute identical cases | recorded live behavior matches; completion requires every source case |
 | `V5_HOST` | real framework/process/database/network/filesystem | named integration boundary works |
 | `V6_NONFUNCTIONAL` | model, mutation, property, fuzz, load, soak, security | named non-functional claim holds |
 | `V7_ROLLBACK` | gray rollout and rollback rehearsal | stated recovery path works |
@@ -83,7 +97,12 @@ Use CodeGraph when indexed to trace each source test through its production entr
 
 ### 2. Inventory source and target tests
 
-Create one row per Java test method and per parameterized/dynamic case when cases have distinct contracts. Include disabled tests and fixtures that encode behavior.
+Create one row per Java test method and one row per concrete parameterized,
+repeated, template, or dynamic case. Include disabled tests; a disabled source
+test remains a required migrated test and its disabled reason is preserved
+separately. Create one `TEST_ASSET` row per file in every source test resource,
+fixture, script, corpus, and data root. Copy source assets without editing them;
+place target-generated or normalized derivatives beside the immutable copy.
 
 Use dispositions:
 
@@ -93,11 +112,16 @@ Use dispositions:
 | `ADAPTED` | same observable contract using a Rust-native fixture/oracle |
 | `SPLIT` | one Java test becomes several focused Rust tests |
 | `MERGED_APPROVED` | several Java tests share one parameterized Rust test without losing cases/assertions |
-| `NOT_APPLICABLE` | approved JVM-only behavior with impact and replacement recorded |
-| `BLOCKED` | named dependency or oracle prevents the test |
-| `MISSING` | no Rust disposition; migration gap |
+| `NOT_APPLICABLE` | JVM-only claim recorded for analysis; blocks 100% lossless source-test completion |
+| `BLOCKED` | named dependency or oracle prevents the test; blocks completion |
+| `MISSING` | no Rust implementation; blocks completion |
 
-Do not map by test name alone. Preserve inputs, assertions, exception/error category, ordering, side effects, fixture state, and cleanup.
+`MIRRORED`, `ADAPTED`, `SPLIT`, and `MERGED_APPROVED` are complete only when
+every source case remains identifiable, all preservation flags are true, every
+target test exists, and golden/live comparison records `MATCH`. `ADAPTED` permits
+Rust-native harness mechanics, not a weaker contract. `SPLIT` and
+`MERGED_APPROVED` may reorganize tests but may not remove a case or assertion.
+Do not map by test name alone.
 
 Resolve `SKILL_DIR` to this skill directory and run from the migration repository:
 
@@ -106,12 +130,17 @@ python3 "$SKILL_DIR/scripts/audit_migration_tests.py" \
   --java-root ../java-project/source-module \
   --rust-root crates/source_module \
   --object-ledger docs/source-module/对象级对照表.md \
+  --parity-manifest docs/source-module/source-test-parity.json \
+  --java-test-assets-root src/test/resources \
   --fail-on-incomplete
 ```
 
-The report inventories tests, flags weak signals, and refuses a completion gate
-while the current ledger contains strict incomplete rows. It cannot infer
-semantic mappings or authorize deletion.
+The report inventories tests, flags weak signals, verifies every source-test
+manifest row, checks target test files, hashes exact asset copies, and refuses a
+completion gate for any object, test, asset, run, or differential gap. Additional
+non-standard asset roots must be passed with repeated
+`--java-test-assets-root`. The script validates recorded preservation evidence;
+it cannot infer semantic mappings or authorize deletion.
 
 ### 3. Implement the `SOURCE_PARITY` ledger
 
@@ -120,10 +149,43 @@ For every source row:
 1. Trace the protected Java contract and production call path.
 2. Port the fixture and assertions, not merely the method name.
 3. Preserve valid, boundary, failure, state-transition, and side-effect cases.
-4. Use the strongest feasible oracle: live diff, golden diff, standards suite, or honestly labeled mirror.
-5. Record the Rust test, evidence level, command, and divergence.
+4. Run the source and target suites from pinned baselines and retain raw per-case
+   results. A mirror without Java output is useful during implementation but does
+   not satisfy the final source-parity gate.
+5. Compare each source case through a pinned golden or live differential oracle;
+   require `MATCH`, zero harness failures, and zero not-run cases.
+6. Record the Rust test, preservation flags, evidence, commands, artifacts, and
+   any divergence.
 
-Missing or blocked source tests remain visible. Source tests are a compatibility floor, not the complete Rust plan.
+Missing, blocked, or not-applicable source tests remain visible and block a
+migration-complete conclusion. Source tests are a compatibility floor, not the
+complete Rust plan.
+
+#### Whole-project migration test module
+
+For every repository/product-level migration completion claim, create one
+non-published workspace package as the whole-project acceptance authority. It
+is especially important for multiple crates, bindings/adapters, or a source
+system/templatesuite. Name it
+`<project>-test` by default; keep the directory and Cargo package name identical,
+set `publish = false`, and run it explicitly in CI. Local tests inside production
+crates prove their own parser/type/API/binding behavior; they do not replace the
+whole-project module's source-suite replay, cross-crate workflows, real copied
+assets, golden/live differential comparison, or aggregate result artifact.
+
+For FreeMarker use this boundary:
+
+```text
+freemarker/          # Rust engine local unit/integration tests
+freemarker-pyo3/     # Python binding local/packaging tests
+freemarker-test/     # complete Java templatesuite + cross-component acceptance
+```
+
+The `freemarker-test` package must be a workspace member, depend on public
+surfaces under test, and remain outside crates.io publication. Its complete gate
+is every source case `MATCH`, with no threshold pass count, skipped capability,
+or ignored case. Read [Migration verification SOP](references/migration-verification-sop.md)
+for naming, ownership, layout, and CI rules.
 
 Do not use one test per object as a substitute for one real file per source
 object. A test that reaches a re-export, compatibility facade, or merged type
@@ -206,6 +268,12 @@ Use a versioned case format such as JSON Lines:
 
 Retain Java and Rust raw outputs separately. Pin exporter and implementation SHAs, seeds, environment, and normalizer version. Compare success values, error categories, side effects, order, and wire bytes as applicable. Do not normalize unexpected fields away.
 
+Differential comparison is a full source-suite gate, not a representative
+sample. The final manifest must record one `MATCH` per concrete source case and
+suite-level Java, Rust, and differential runs with `PASS`, zero mismatches, zero
+harness failures, and zero not-run cases. A temporary subset may guide
+development but must be labeled partial and cannot satisfy completion.
+
 ### 8. Reuse conformance suites for adapters
 
 Put shared assertions and failure fixtures in a testkit. Each adapter must provide real native observations. Run the same identity, scope, lifecycle, error, cancellation, streaming, and cleanup contracts for every implementation, then add adapter-native tests.
@@ -224,11 +292,13 @@ Coverage comparison is valid only when scopes are documented and reasonably comp
 
 Acceptance order:
 
-1. every source test has an approved disposition;
-2. every high-risk source contract has adequate evidence;
-3. every applicable Rust obligation is tested;
-4. meaningful mutants and uncovered branches are reviewed;
-5. comparable Rust coverage exceeds the Java baseline if the project requires it.
+1. every source test and concrete case has a lossless target implementation;
+2. every source test asset has a byte-identical target copy verified by SHA-256;
+3. both complete suites pass and every source case has differential `MATCH`;
+4. every high-risk source contract has adequate evidence;
+5. every applicable Rust obligation is tested;
+6. meaningful mutants and uncovered branches are reviewed;
+7. comparable Rust coverage exceeds the Java baseline if the project requires it.
 
 Do not weaken assertions, duplicate tests, exclude difficult files, or add trivial getters to reach a number. A user-mandated 100% gate may be enforced, but report what it proves and what it does not.
 
@@ -284,7 +354,7 @@ Interpret survivors individually; do not impose one universal mutation score.
 
 Report separately:
 
-- source-test disposition coverage;
+- source-test lossless implementation and per-case differential coverage;
 - source behavior evidence by `V0`–`V4`;
 - Rust-obligation completion;
 - value-add tests and defect/risk rationale;
@@ -300,6 +370,15 @@ Report separately:
 
 - Do not call mirrored tests differential.
 - Do not replace source-test disposition with raw test-count parity.
+- Do not exclude, disable, weaken, merge away, or mark a source test not
+  applicable to manufacture 100% parity.
+- Do not rewrite copied source fixtures or data in place; retain a byte-identical
+  copy and generate target-specific derivatives separately.
+- Do not accept two independently green suites as result parity; require
+  per-case Java/Rust golden or live comparison.
+- Do not substitute local tests in production or binding crates for the
+  non-published `<project>-test` whole-project acceptance package, and do not
+  use pass thresholds, skips, or ignored cases as its completion gate.
 - Do not write tests solely to increase coverage or file count.
 - Do not call parse success semantic equivalence.
 - Do not accept generic `is_err()` when the error contract is observable.
@@ -310,6 +389,10 @@ Report separately:
 - Do not count production stubs as implemented because their tests compile.
 - Do not mark a module complete from Cargo/JUnit test totals, coverage, or a
   green CI job while the authoritative object ledger has any incomplete state.
+- Do not run a completion gate without a source-test parity manifest. Missing
+  test mappings, incomplete parameter expansion, false preservation flags,
+  missing target files, asset hash differences, non-`MATCH` results, harness
+  failures, or not-run cases all block completion.
 - Do not read completion states from a historical appendix or stale duplicate
   migration document.
 - Do not call dependency reuse verified from upstream tests or semantic
@@ -325,13 +408,26 @@ Report separately:
 - [Test-value rubric](references/test-value-rubric.md)
 - [Vernal positive and negative examples](references/vernal-testing-case-study.md)
 - [Migration test ledger template](assets/templates/迁移测试对照表.md)
+- [Machine-readable source-test parity manifest](assets/templates/source-test-parity.json)
 - [Worked audit report](examples/audit-report.md)
 - `scripts/audit_migration_tests.py` — Java/Rust test inventory and weak-signal audit
 - `scripts/run_mutation_test.sh` — mutation-test wrapper
 
 ## Completion criteria
 
-- Every in-scope Java test/case has an approved disposition and source trace.
+- Every Java test and every concrete parameterized/dynamic/repeated case in the
+  frozen source test roots has a target-language implementation and source trace;
+  the source denominator is 100% accounted for without completion exclusions.
+- Every source fixture, resource, script, corpus, golden file, and test data file
+  has a byte-identical copy in the target repository with matching SHA-256.
+- Every mapped case attests preservation of contract, inputs, assertions,
+  fixture state, and cleanup; split/merged/adapted forms lose nothing.
+- The complete pinned Java and Rust suites pass, and the complete golden/live
+  differential report contains only `MATCH` with zero harness failures and zero
+  not-run cases.
+- The `<project>-test` package is a workspace member with `publish = false`,
+  exercises public component surfaces, and owns the complete suite/differential
+  command plus aggregate artifact; local crate tests remain subsystem evidence.
 - The authoritative current object ledger was checked, its baselines match the
   test run, and no incomplete object state was hidden by the test summary.
 - Every high-risk contract has an oracle, evidence label, and result.
@@ -340,4 +436,5 @@ Report separately:
 - Coverage scopes are comparable and any numeric gate is reported as a signal, not parity proof.
 - Stubs, warnings, flaky/skipped tests, missing platforms, real-host gaps, and unverified boundaries remain visible.
 - A module completion claim is emitted only when its object ledger, source-test
-  ledger, Rust obligations, and required host/non-functional gates all permit it.
+  case ledger, source-asset ledger, complete differential result, Rust
+  obligations, and required host/non-functional gates all permit it.

@@ -20,13 +20,115 @@ Create the source inventory before the generic contract matrix:
 
 | Ledger | Required row |
 |---|---|
-| `SOURCE_PARITY` | one per Java test and distinct parameterized/dynamic case, with source production trace and disposition |
+| `SOURCE_PARITY/TEST_CASE` | one per Java test and every concrete parameterized/dynamic/repeated case, with source production trace, preservation flags, target test, and golden/live result |
+| `SOURCE_PARITY/TEST_ASSET` | one per source fixture/resource/script/corpus/golden/data file, with source/target path, copy mode, and SHA-256 |
 | `RUST_OBLIGATION` | one per applicable ownership, async, error, serialization, feature, macro, adapter, unsafe, or replacement-component risk |
 | `VALUE_ADD` | one per uncovered branch, meaningful mutant, property, fuzz finding, incident, load, security, or rollback risk |
 
 Do not substitute Rust test counts for source-test disposition.
 
-## 2. Slice verification record
+The completion denominator is the complete frozen source test tree, not an
+agent-selected “in-scope” subset. `MISSING`, `BLOCKED`, and `NOT_APPLICABLE`
+remain useful diagnostic states but all block 100% lossless completion. An
+`ADAPTED`, `SPLIT`, or `MERGED_APPROVED` row passes only when it preserves every
+source case and assertion and has differential `MATCH`.
+
+All `evidence` and run `artifact` paths in the JSON manifest are relative to the
+manifest file and must exist when the completion audit runs. Keep the manifest,
+raw Java output, raw Rust output, normalized output, and comparison report tied
+to the pinned baselines in versioned files or immutable CI artifacts.
+
+Use the JSON manifest template bundled with the skill. Keep copied assets
+immutable. Verify the manifest with:
+
+```bash
+python3 "$SKILL_DIR/scripts/audit_migration_tests.py" \
+  --java-root <java-module> \
+  --rust-root <rust-crate-or-workspace> \
+  --object-ledger <对象级对照表.md> \
+  --parity-manifest <source-test-parity.json> \
+  --fail-on-incomplete
+```
+
+## 2. Whole-project migration acceptance module
+
+Create one dedicated target-workspace package for every repository/product-level
+migration completion claim. It is especially necessary when any of these hold:
+
+- the migrated product spans multiple production crates;
+- language bindings, framework adapters, or host packages must work together;
+- the source has a system/templatesuite or reusable test-support module;
+- the compatibility claim is about public end-to-end workflows rather than one
+  crate's internal behavior.
+
+Use `<project>-test` as the default directory and Cargo package name. Keep it
+singular and consistent with the project family; do not alternate between
+`-test`, `-tests`, and `-testing`. Set `publish = false`, add it to workspace
+`members`, and run it explicitly in CI even when it is excluded from
+`default-members` for fast local development. It is test infrastructure, not a
+published production crate and not a source-object parity row.
+
+Cargo converts hyphens to underscores only in Rust paths: the directory and
+package remain `freemarker-test`, while Rust code imports an optional harness
+library as `freemarker_test`.
+
+| Product/package family | Directory | Cargo package | Rust crate identifier |
+|---|---|---|---|
+| FreeMarker | `freemarker-test/` | `freemarker-test` | `freemarker_test` |
+| QlExpress Rust (`qlexpress`) | `qlexpress-test/` | `qlexpress-test` | `qlexpress_test` |
+
+Keep responsibilities separate:
+
+| Location | Owns | Does not prove |
+|---|---|---|
+| production crate local tests | algorithms, parser/AST nodes, internal errors, focused public APIs | complete migrated product parity |
+| binding/adapter local tests | conversion, ABI/FFI, packaging, native host surface | engine plus every host workflow |
+| `<project>-test` | complete source suite/assets, public cross-crate workflows, golden/live diff, aggregate artifacts | production implementation code |
+
+Use public production APIs from the test package. Do not move missing product
+logic into the test harness. Keep reusable runners in `src/lib.rs` or a testkit
+module, integration entry points under `tests/`, immutable source assets under a
+clearly named suite directory, and raw/normalized/diff artifacts under the
+verification location recorded by the parity manifest.
+
+FreeMarker naming and boundary example:
+
+```text
+freemarker-rust/
+├── Cargo.toml                # members include all three packages
+├── freemarker/               # engine; focused local tests
+├── freemarker-pyo3/          # Python binding; focused binding/package tests
+└── freemarker-test/          # whole-project migration acceptance
+    ├── Cargo.toml            # name = "freemarker-test"; publish = false
+    ├── src/lib.rs            # shared templatesuite/differential harness only
+    └── tests/
+        ├── source_parity.rs
+        ├── cross_component.rs
+        └── suite/source/     # byte-identical Java templates/data/expected files
+```
+
+The Java oracle may combine `freemarker-test-utils` with the Java templatesuite;
+the Rust `freemarker-test` package owns replay of those assets against the public
+`freemarker` API and any required `freemarker-pyo3` end-to-end workflow. Require
+all cases to pass and compare. Gates such as `PASS >= 20`, “representative cases
+passed”, or `SKIPPED` with a reason are progress reports, not migration
+completion.
+
+Minimum Cargo shape:
+
+```toml
+[package]
+name = "freemarker-test"
+publish = false
+
+[dependencies]
+freemarker = { path = "../freemarker" }
+```
+
+Record the module package, manifest path, tested components, command, artifact,
+and zero failed/skipped/not-run counts in `source-test-parity.json`.
+
+## 3. Slice verification record
 
 ```markdown
 # Verification: <module / vertical slice>
@@ -44,7 +146,7 @@ Do not substitute Rust test counts for source-test disposition.
 - Unverified boundaries:
 ```
 
-## 3. Contract-to-evidence matrix
+## 4. Contract-to-evidence matrix
 
 Create one row per observable contract:
 
@@ -55,7 +157,7 @@ Create one row per observable contract:
 
 If a row has only a mirrored test, keep the planned differential level open.
 
-## 4. Differential case format
+## 5. Differential case format
 
 Prefer an append-only JSONL corpus:
 
@@ -79,7 +181,11 @@ Store metadata beside it:
 
 Keep raw Java output, raw Rust output, normalized output, and comparison report as separate artifacts.
 
-## 5. Normalizer checklist
+Run the format over every concrete source case. A sampled corpus is development
+evidence only. The final manifest records `result_parity: MATCH` for every row
+and suite runs with zero mismatches, harness failures, and not-run cases.
+
+## 6. Normalizer checklist
 
 Normalize only documented nondeterminism:
 
@@ -102,7 +208,7 @@ Do not normalize:
 
 Version and test the normalizer. A normalizer change requires reviewing prior fixtures.
 
-## 6. Harness outcome taxonomy
+## 7. Harness outcome taxonomy
 
 Report one of:
 
@@ -117,7 +223,7 @@ Report one of:
 
 Never turn harness failures into product mismatches or silently skip them.
 
-## 7. Lifecycle failure matrix
+## 8. Lifecycle failure matrix
 
 Adapt this table to the framework:
 
@@ -140,7 +246,7 @@ For each applicable cell assert:
 - primary error remains primary;
 - public error/log/report surfaces follow redaction policy.
 
-## 8. Public error-surface matrix
+## 9. Public error-surface matrix
 
 | Surface | Audience | Typical policy | Test |
 |---|---|---|---|
@@ -153,7 +259,7 @@ For each applicable cell assert:
 
 Testing one row does not prove the others.
 
-## 9. Shared adapter conformance template
+## 10. Shared adapter conformance template
 
 Define one testkit interface:
 
@@ -181,7 +287,7 @@ Run common assertions for:
 
 Keep framework-specific tests for native extractors, middleware/service composition, routing templates, body frames/trailers, local non-`Send` futures, and packaging.
 
-## 10. Test-value review record
+## 11. Test-value review record
 
 For every test proposed for deletion or rewrite:
 
@@ -197,7 +303,7 @@ For every test proposed for deletion or rewrite:
 
 Never delete solely because a heuristic labels the test low value.
 
-## 11. Gate sequence
+## 12. Gate sequence
 
 Prefer fast feedback first:
 
@@ -214,7 +320,7 @@ Prefer fast feedback first:
 
 Parallelize independent crates, platforms, and external-service jobs, but isolate ports, temp directories, databases, and process state.
 
-## 12. Acceptance summary
+## 13. Acceptance summary
 
 ```markdown
 ## Acceptance summary
@@ -223,6 +329,7 @@ Parallelize independent crates, platforms, and external-service jobs, but isolat
 |---|---:|---:|---|---|
 | Structural disposition | | | V0 | |
 | Source-test disposition | | | V0–V4 | |
+| Source-test assets | | | SHA-256 exact copy | |
 | Rust obligations | | | V1–V6 | |
 | Value-add risks | | | V1–V7 | |
 | Real implementation | | | V1+ | |

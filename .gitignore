@@ -94,6 +94,7 @@ docs/_build
 **/.env.*.local
 *.json
 !cloud-agents-server/agents/maternal-recovery.json
+!skills/rust-java-migration-testing/assets/templates/source-test-parity.json
 assets/personal-asset-index.json
 
 ### Logs ###

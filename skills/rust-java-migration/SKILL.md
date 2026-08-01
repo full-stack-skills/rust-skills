@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces, and repair migrated workspaces that no longer compile or that carry dependency/version drift, broken crate-root re-exports, duplicate cross-crate types, or warning floods. Use when comparing Java and Rust repositories at module, package, object, file, method, parameter, documentation, example, test, dependency-reuse, JavaBean getter/setter or script-property compatibility, concurrency, or runtime-behavior level; preserving Java semantics in Chinese Rust documentation; selecting exact Rust dependency replacements; producing one detailed four-document set per source module; or continuing an incomplete port without deleting existing work. Enforces source-authoritative object boundaries, idiomatic Rust APIs with explicit ADAPTED compatibility layers, one Java object per real Rust file, strict non-completion states, evidence-backed dependency reuse/platform exclusions, a frozen full inventory, consolidated audit, and unified verification.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces, including 100% lossless source-test/case migration, byte-identical copied test assets, and complete Java/Rust per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, or runtime-behavior level; selecting exact Rust dependency replacements; producing the required migration documents; continuing an incomplete port; or repairing dependency/version drift, re-export breaks, duplicate types, and warning floods. Enforces source-authoritative inventories, idiomatic Rust APIs with explicit compatibility adapters, strict non-completion states, evidence-backed exclusions, frozen baselines, consolidated audit, and unified verification.
 ---
 
 # Java to Rust Migration
@@ -11,16 +11,7 @@ Migrate contracts and observable behavior, not Java syntax. Preserve the Java pr
 
 Use this skill for full-project migrations, one Maven/Gradle module, parity audits, migration planning, or continuation of an existing Rust port.
 
-Route detailed Rust choices to:
-
-- `rust-workspace` and `rust-module-layout` for crate and module boundaries.
-- `rust-api-design` for public Rust API quality.
-- `rust-crate-discovery` for crates.io search and pre-adoption ecosystem-health evidence; migration contract fitness remains owned here.
-- `rust-dependencies` for resolved graph, feature, license, advisory, update, and post-adoption governance.
-- `rust-macros` for annotation-to-procedural-macro work.
-- `rust-concurrency`, `rust-database`, `rust-http-client`, or `rust-web` for domain implementation.
-- `rust-java-migration-testing` for source-test disposition, Rust-specific test obligations, differential evidence, and test-value review.
-- `rust-testing`, `rust-performance`, and `rust-web-security` for Rust test mechanics and non-functional verification.
+Route crate/layout/API, dependency, macro, and domain mechanics to the corresponding Rust skills. Route source-test, differential, Rust-obligation, performance, and security evidence to `rust-java-migration-testing` plus the relevant test skill.
 
 Do not modify migration code when the user requested only an audit, plan, or documentation. A plan-only or read-only request does not authorize running a write-producing document scaffolder: return the proposed four-document content in the response, use `--dry-run`, or write only to a user-approved destination. Do not broaden a module migration into a repository rewrite without authorization.
 
@@ -39,23 +30,13 @@ Resolve or explicitly mark unknown:
 - Required host applications, real scripts, test data, concurrency model, load profile, and rollback mechanism.
 - Existing migration documents and their authority; identify the single current
   four-document set before creating or merging historical material.
+- Complete source test roots/runner configuration, including every concrete test case, disabled test, fixture, script, corpus, golden file, resource, and data file. The source repository defines the denominator; do not narrow it to fit Rust.
 
 Never silently infer that the newest branch, a generated manifest, or an API registration list is the behavioral baseline.
 
 ## Workflow
 
-Treat one declared Java source module and its Rust target crate/module as the
-default migration batch. A user-authorized multi-module scope may be one batch,
-but its complete boundary must be frozen before implementation. Follow this
-execution invariant:
-
-```text
-freeze full scope and contracts
-    -> implement the complete batch once
-    -> freeze implementation
-    -> audit the complete batch once
-    -> run unified verification
-```
+Treat one declared Java source module and its Rust target crate/module as the default migration batch. A user-authorized multi-module scope may be one batch, but freeze its boundary before implementation. Apply: freeze scope/contracts → implement the batch → freeze → audit → unified verification.
 
 Dependency-ordered editing inside the implementation batch is allowed. Per-object
 completion loops are not.
@@ -95,6 +76,11 @@ Create separate machine-readable or tabular inventories for:
 - Existing object, constructor, method, generic/value parameter, return,
   exception, metadata-tag, and semantic inline comments, with source anchors.
 - Examples, tests, fixtures, scripts, configuration, resources, service descriptors, and docs.
+- A source-test case manifest and source-test asset manifest. Record every
+  concrete case and every asset path/hash before implementation; test resources
+  must later be copied byte-for-byte into the Rust repository.
+- A non-published `<project>-test` workspace package owning project-level source
+  replay and differential acceptance, including cross-component paths.
 - Call paths and externally observable side effects.
 
 Exclude `package-info`, generated sources, BOMs, aggregators, test support, facades, and Rust-only infrastructure only through explicit categories. Do not hide them by changing the denominator.
@@ -271,7 +257,10 @@ execute the entire frozen batch without object-level acceptance pauses:
    Rust-native.
 4. Implement all mapped overload variants, examples, fixtures, source-test
    counterparts, Rust-specific obligations, and risk-driven tests as batch
-   artifacts, but do not execute validation yet.
+   artifacts, but do not execute validation yet. Preserve 100% of source test
+   inputs, assertions, error expectations, state, side effects, and cleanup.
+   Copy source test files/data/resources without editing them; put any
+   Rust-specific derivatives in separate files.
 5. Maintain one deferred-issues ledger. Continue through local uncertainties;
    pause only for a blocker that changes the frozen public contract,
    architecture, dependency policy, or authorized scope.
@@ -391,8 +380,12 @@ declared batch:
    and platform gates as one unified engineering suite.
 3. Run every ported/mirrored Java contract test, clearly labeled as
    non-differential evidence.
-4. Run the complete Java golden exporter or live Java/Rust differential suite
-   over the same deterministic cases.
+4. Run the complete pinned Java suite and the complete Rust lossless-port suite,
+   then run the complete Java golden exporter or live Java/Rust differential
+   suite over every concrete source case. Require both suites to pass and every
+   case to report `MATCH`; zero mismatches, harness failures, and not-run cases.
+   Execute this from the dedicated `<project>-test` package; local
+   production-crate tests remain subsystem evidence only.
 5. Replay the complete set of real user scripts and examples against both
    implementations.
 6. Run concurrency acceptance for ordering, cancellation, backpressure, races,
@@ -414,14 +407,10 @@ Read [Verification and acceptance](references/verification-and-acceptance.md) fo
 
 ### 11. Report completion without inflating coverage
 
-Report separately:
-
-- Structural coverage: objects/files/method signatures registered.
-- Implementation coverage: non-stub logic present.
-- Behavioral coverage: distinguish mirrored contracts, golden differential, live differential, and approved equivalent oracles.
-- Test coverage: migrated Java tests and Rust-native tests passing.
-- Integration coverage: real hosts/dependencies exercised.
-- Production readiness: load, security, observability, rollout, and rollback verified.
+Report structural, implementation, behavioral, test, integration, and production
+readiness separately. For behavior, distinguish mirrored contracts, golden
+differential, live differential, and approved equivalent oracles; for tests,
+separate losslessly migrated source tests from Rust-native additions.
 
 Include exact commands, SHAs, test counts, failures, exceptions, and unverified boundaries. Never call a migration complete because code compiles or a parity manifest reaches 100%.
 
@@ -448,6 +437,16 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
   JVM/bytecode/class-loader/platform-specific evidence.
 - Do not promote a component copied from a research list or local convention document to “selected” without current hard-filter and contract evidence.
 - Do not call a Rust test copied from a Java test a differential test unless both implementations or Java-produced golden artifacts participate.
+- Do not declare source-test parity from approved dispositions alone. Every
+  source case must have a lossless target implementation and a golden/live
+  `MATCH`; `MISSING`, `BLOCKED`, and `NOT_APPLICABLE` block a 100% migration claim.
+- Do not modify copied source fixtures, scripts, corpora, golden files, or test
+  data in place. Verify every source/target asset pair by SHA-256 and keep
+  target-specific generated data separate.
+- Do not treat two independently green suites or equal test totals as behavioral
+  parity; compare per-case outputs, errors, state, side effects, and cleanup.
+- Do not substitute production-crate or binding-crate local tests for the
+  required non-published `<project>-test` whole-project acceptance package.
 - Do not mark a row behavior-verified from file counts, parser acceptance, generic `is_ok()`/`is_err()`, or “at least one test per object”.
 - Do not let the four migration documents carry different baselines or contradictory completion states.
 - Do not keep a current document and a `-历史详细版`/nested duplicate. Merge
@@ -477,18 +476,22 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 
 ## Completion Criteria
 
-- Four detailed current documents exist for every in-scope source module, share
-  pinned baselines and one module-specific migration contract, and record their
-  last audit against the current Rust SHA; no parallel historical copy exists.
-- Every object has a deterministic expected path using the final-two-segments
-  algorithm, and `MISPLACED` objects remain incomplete until physically aligned.
+- Four current documents per source module share baselines, contract, and Rust SHA; no duplicate exists.
+- Every object has a deterministic final-two-segments path; `MISPLACED` remains
+  incomplete until physically aligned.
 - Every Java object, method, overload, and parameter has a disposition.
+- Every source test/case has a lossless Rust implementation, and every source
+  test asset has a byte-identical checked copy in the Rust repository.
+- Required whole-project acceptance package exists as `<project>-test`, is a
+  workspace member with `publish = false`, and is the recorded owner of the full
+  source-suite/differential command and artifact.
+- The complete Java and Rust suites pass and the full per-case differential
+  result is 100% `MATCH`, with no harness failure or not-run case.
 - Every dependency reuse, platform exclusion, blocker, exception, and Rust
   extension has precise evidence and is excluded from misleading denominators.
 - Production Rust files satisfy layout, documentation, import, and no-stub rules.
-- Every source-documented Java object, constructor, method, generic/value
-  parameter, return, exception, metadata tag, and semantic inline comment has a
-  traceable Rust documentation counterpart.
+- Every source-documented object, member, parameter, return, exception, metadata
+  tag, and semantic inline comment has a traceable Rust documentation counterpart.
 - The complete declared batch was implemented before any acceptance gate ran.
 - One consolidated post-implementation parity audit covers the full frozen
   denominator; no object-by-object verification loop was used.

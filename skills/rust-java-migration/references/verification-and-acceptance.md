@@ -48,6 +48,23 @@ version/commit. For `PLATFORM_NA`, acceptance checks the recorded JVM,
 bytecode, class-loader, or comparable platform-only evidence rather than a
 generic statement that Rust works differently.
 
+## Whole-project migration test module
+
+For every repository/product-level migration completion claim, create one
+non-published workspace package named `<project>-test`. This is especially
+important for multiple Rust crates, bindings/adapters, or a source system suite.
+Make it the single owner of complete source-suite replay, immutable copied test
+assets, public cross-component workflows, golden/live differential comparison,
+and aggregate acceptance artifacts. Keep local tests in production crates for
+focused implementation and binding behavior; never use their combined green
+status as a substitute for the overall module.
+
+For FreeMarker use `freemarker-test` alongside `freemarker` and
+`freemarker-pyo3`. Set `publish = false`, include it in workspace `members`, and
+run `cargo test -p freemarker-test` explicitly in CI. Use public APIs and keep
+product logic out of the harness. A partial pass threshold or any skipped source
+capability keeps migration incomplete.
+
 ## Evidence taxonomy
 
 Use these labels precisely:
@@ -71,6 +88,14 @@ Pin the Java source SHA and Rust source SHA in the fixture metadata. Prefer a Ja
 - non-deterministic outputs by observable properties rather than exact values.
 
 Do not make the Rust test invoke an unpinned remote Java artifact.
+
+The final migration gate covers the entire frozen source test denominator, not
+a curated or high-risk subset. Before running it, copy all source fixtures,
+resources, scripts, corpora, golden files, and test data into the target
+repository without modification and record SHA-256 for both paths. Run the
+complete pinned source suite, the complete target-language port, and the
+complete per-case differential comparator. Require both suites to pass and all
+cases to be `MATCH`, with zero mismatches, harness failures, and not-run cases.
 
 Normalize only documented nondeterminism: timestamps, generated identifiers, map order, locale, paths, and concurrency scheduling. Keep raw outputs as artifacts, record the normalization rules, and fail on unexpected fields rather than deleting them.
 
@@ -155,10 +180,14 @@ Include:
 - failed/flaky/ignored/skipped/not-run tests plus warnings and lint findings;
 - unverified external dependencies;
 - next evidence required for completion.
+- source test case mapping count, concrete parameter/dynamic case count, exact
+  copied test-asset count/hash result, and full differential outcome counts;
 - confirmation that implementation preceded acceptance and that the parity
   audit and verification used the complete frozen denominator.
 
 The final conclusion must say **migration incomplete** whenever any strict
-incomplete state remains, even if every executed test passes.
+incomplete object state, source-test gap, asset mismatch, differential mismatch,
+harness failure, or not-run source case remains, even if every executed test
+passes.
 
 Use `rust-java-migration-testing` to disposition every source test, add Rust-specific test obligations, design risk-driven value-add tests, and report mutation/coverage results without promoting heuristics to proof.

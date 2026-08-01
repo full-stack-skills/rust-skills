@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration"
-  short_description: "Audit source-authoritative Java-to-Rust migration parity"
-  default_prompt: "Use $rust-java-migration to build an idiomatic Rust API, record JavaBean or script compatibility as ADAPTED through explicit registries, preserve full source semantics, and verify the complete migration batch without treating adaptation as completion."
+  short_description: "Migrate Java to Rust with lossless parity"
+  default_prompt: "Use $rust-java-migration to preserve the complete Java contract, tests, fixtures, data, and observable behavior in idiomatic Rust, establish a non-published <project>-test whole-project acceptance package, and block completion until full Java/Rust differential parity is proven."

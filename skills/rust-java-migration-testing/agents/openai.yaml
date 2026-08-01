@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration Testing"
-  short_description: "Verify migrations without hiding object-level gaps"
-  default_prompt: "Use $rust-java-migration-testing to read the authoritative current object ledger, block completion for MISSING, MISPLACED, STUB, PARTIAL, or UNVERIFIED rows, disposition every Java test, prove exact dependency reuse through the local adapter, and add Rust-specific and risk-driven evidence. Never turn green tests or coverage into migration completion."
+  short_description: "Prove lossless source-test and result parity"
+  default_prompt: "Use $rust-java-migration-testing to make a non-published <project>-test package own whole-project acceptance, migrate 100% of source tests/assets without loss, verify byte-identical fixtures and complete per-case Java/Rust MATCH results, then add Rust-specific tests."
