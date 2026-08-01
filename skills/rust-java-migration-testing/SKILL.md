@@ -28,6 +28,11 @@ exercised. A percentage is not the design input and 100% is not migration proof.
 
 Use this skill for migration-specific test planning, implementation, audit, and acceptance.
 
+This is the Rust testing adapter of the shared target-language migration
+profile. Keep source-test dispositions, exact-asset rules, full differential
+outcomes, and completion semantics equivalent to `zig-java-migration-testing`
+and future Kotlin/Swift adapters; vary only Rust test/build syntax and Rust risks.
+
 Route:
 
 - module/object/component migration planning to `rust-java-migration`;
@@ -404,6 +409,7 @@ Report separately:
 ## On-demand resources
 
 - [Migration verification SOP](references/migration-verification-sop.md)
+- [Cross-language migration profile](references/cross-language-migration-profile.md)
 - [Test categories](references/test-categories.md)
 - [Test-value rubric](references/test-value-rubric.md)
 - [Vernal positive and negative examples](references/vernal-testing-case-study.md)

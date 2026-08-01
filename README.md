@@ -86,8 +86,8 @@ flowchart TB
 | Engineering | `rust-dependencies` | Version requirement syntax, supply-chain governance (cargo-deny, cargo-audit), private registries, vendoring |
 | Engineering | `rust-semver` | Breaking-change classification, `cargo-semver-checks`, workspace publishing, yank/advisory workflows |
 | Engineering | `rust-documentation` | Rustdoc API contracts, doctests, API Guidelines Documentation chapter, mdBook guides and release gates |
-| Engineering | `rust-java-migration` | Evidence-driven Java-to-Rust migration with full object/contract inventory, a non-published `<project>-test` acceptance package, 100% lossless source tests/assets, complete differential parity, host integration, and rollback |
-| Engineering | `rust-java-migration-testing` | Whole-project hard gate in `<project>-test`: every source case migrated, every asset hash-identical, full Java/Rust differential MATCH, then additive Rust-specific tests |
+| Engineering | `rust-java-migration` | Rust adapter of the shared Java migration profile: full object/contract inventory, `<project>-test`, lossless source tests/assets, complete differential parity, host integration, and rollback |
+| Engineering | `rust-java-migration-testing` | Rust testing adapter: `<project>-test` hard gate, every source case and asset preserved, full Java/Rust differential MATCH, then additive Rust obligations |
 | Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
 | Domain | `rust-performance` | Measurement plans, Criterion benchmarks, CPU/latency/memory profiling and regression proof |

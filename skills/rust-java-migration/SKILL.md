@@ -11,7 +11,7 @@ Migrate contracts and observable behavior, not Java syntax. Preserve the Java pr
 
 Use this skill for full-project migrations, one Maven/Gradle module, parity audits, migration planning, or continuation of an existing Rust port.
 
-Route crate/layout/API, dependency, macro, and domain mechanics to the corresponding Rust skills. Route source-test, differential, Rust-obligation, performance, and security evidence to `rust-java-migration-testing` plus the relevant test skill.
+This is the Rust adapter of the [cross-language migration profile](references/cross-language-migration-profile.md). Route crate/layout/API, dependency, macro, and domain mechanics to the corresponding Rust skills. Route verification to `rust-java-migration-testing` plus relevant test skills.
 
 Do not modify migration code when the user requested only an audit, plan, or documentation. A plan-only or read-only request does not authorize running a write-producing document scaffolder: return the proposed four-document content in the response, use `--dry-run`, or write only to a user-approved destination. Do not broaden a module migration into a repository rewrite without authorization.
 
@@ -497,4 +497,4 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
   denominator; no object-by-object verification loop was used.
 - High-value call chains have source-linked semantic mappings.
 - Applicable differential, replay, concurrency, load, fuzz, host, and rollback gates have evidence or explicit open gaps.
-- The final report separates structural, implementation, behavioral, integration, and production-readiness claims.
+- Final reporting separates structural, implementation, behavioral, integration, and production-readiness claims.
