@@ -21,3 +21,7 @@ SwiftPM/XCTest/Swift Testing/ARC/concurrency mechanics.
 
 Shared rule changes require auditing every target adapter. Target syntax and
 toolchain changes stay within their target package.
+
+The `<project>-test` package name and responsibility are invariant, but its
+parent directory follows the migration roadmap's root-flat, hybrid, or
+contained workspace topology. The Rust adapter must not assume `crates/`.

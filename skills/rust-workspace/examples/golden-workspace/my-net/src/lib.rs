@@ -1,12 +1,8 @@
 //! A mid-level crate that depends on `my-core`.
-//!
-//! Demonstrates the workspace dependency direction:
-//! `my-net` ─► `my-core` (allowed)
-//! `my-core` ─► `my-net` (forbidden — cycle)
 
 pub use my_core::Version;
 
-/// A user-agent header value, parameterized by version.
+/// Builds a user-agent value from a name and version.
 pub fn user_agent(name: &str, version: Version) -> String {
     format!("{name}/{}", version.as_string())
 }

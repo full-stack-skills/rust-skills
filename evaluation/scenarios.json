@@ -15,9 +15,9 @@
     },
     {
       "id": "project-layout",
-      "prompt": "把单 crate Rust 项目重构成 core、api、adapter 三个 workspace members。",
+      "prompt": "把单 crate Rust 项目重构成 core、api、adapter 三个紧密相关的 workspace members。仓库根目录没有其他语言或大量工具文件，请决定成员目录布局。",
       "expected_skills": ["rust-workspace", "rust-cargo-build"],
-      "assertions": ["designs_public_boundaries", "validates_workspace"]
+      "assertions": ["designs_public_boundaries", "chooses_root_flat_for_small_workspace", "does_not_default_to_crates_container", "validates_workspace"]
     },
     {
       "id": "project-visibility",
@@ -53,7 +53,7 @@
       "id": "workspace-virtual-vs-root",
       "prompt": "我的 8 个 crate 的项目到底应该用虚拟 manifest 还是 root package workspace？解释 trade-off 并给出最终建议。",
       "expected_skills": ["rust-workspace"],
-      "assertions": ["explains_root_pollution", "explains_command_ergonomics", "recommends_virtual_manifest_for_large"]
+      "assertions": ["explains_root_pollution", "explains_command_ergonomics", "separates_manifest_flavor_from_member_placement", "recommends_virtual_manifest_for_nontrivial_workspace"]
     },
     {
       "id": "workspace-mixed-root-migration",
@@ -77,7 +77,7 @@
       "id": "workspace-layout-decision",
       "prompt": "我现在有 25 个 crate，包括 10 个 lib、5 个 bin、10 个 plugin，应该用平铺 crates/ 还是分组 crates/<category>/?",
       "expected_skills": ["rust-workspace"],
-      "assertions": ["evaluates_crate_count_threshold", "proposes_grouped_pattern_with_glob", "documents_category_in_readme"]
+      "assertions": ["treats_crate_count_as_review_signal", "evaluates_real_package_families_and_root_noise", "proposes_grouped_pattern_with_scoped_globs", "documents_layout_rationale"]
     },
     {
       "id": "cargo-resolver",
@@ -486,6 +486,12 @@
       "prompt": "Use CodeGraph to migrate an incomplete Java Maven module to Rust efficiently. Freeze the complete module inventory and four documents first, then finish every mapped object's semantic implementation in one continuous dependency-ordered batch. Do not migrate, compare, or test one object at a time. After the whole implementation is frozen, run one consolidated parity audit and then the unified build, differential, replay, concurrency, load, fuzz, host-integration, and rollback verification suite. Preserve one Java object per Rust file and do not count placeholders as complete.",
       "expected_skills": ["rust-java-migration"],
       "assertions": ["pins_java_and_rust_baselines", "creates_four_per_module_documents", "freezes_complete_module_inventory_before_implementation", "inventories_objects_methods_overloads_and_parameters", "implements_all_non_exempt_objects_in_one_semantic_batch", "does_not_compare_or_test_object_by_object", "runs_one_consolidated_post_implementation_parity_audit", "runs_unified_final_build_differential_replay_concurrency_load_fuzz_host_and_rollback_gates", "separates_structural_implementation_behavior_and_production_evidence", "isolates_and_excludes_approved_placeholders"]
+    },
+    {
+      "id": "rust-java-project-driven-workspace-layout",
+      "prompt": "为 Java 到 Rust 迁移设计 workspace。FreeMarker 迁移结果只有核心库、freemarker-pyo3 和 freemarker-test；另一个大型项目有二十多个核心、适配器、示例和测试 crate。不要按 Maven module 一对一复制目录，分别决定合理布局，并说明 <project>-test 放在哪里。",
+      "expected_skills": ["rust-java-migration", "rust-workspace", "rust-java-migration-testing"],
+      "assertions": ["derives_crates_from_rust_boundaries_not_maven_modules", "chooses_root_flat_for_small_freemarker_workspace", "chooses_hybrid_or_contained_layout_for_large_family_workspace", "treats_counts_as_signals_not_hard_rules", "places_project_test_by_recorded_topology", "records_source_module_to_crate_mapping_and_layout_rationale"]
     },
     {
       "id": "rust-java-comment-parity",

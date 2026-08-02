@@ -264,14 +264,14 @@ If you copy `[profile]` into a member's `Cargo.toml`, `cargo` errors. Keep profi
 
 ## A Realistic Workspace Root
 
-Combining all the patterns, here's a typical root `Cargo.toml` for a 5-10 crate workspace:
+Combining the shared-configuration patterns, here is a small root-flat virtual
+workspace. Member placement remains independent of dependency inheritance.
 
 ```toml
 # Cargo.toml — virtual manifest, all shared config here
 [workspace]
 resolver = "3"
-members = ["crates/*"]
-exclude = ["crates/example"]   # examples excluded if you want
+members = ["my-core", "my-net", "my-db"]
 
 [workspace.package]
 version = "0.1.0"
@@ -294,9 +294,9 @@ async-trait = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 # Internal
-my-core = { path = "crates/core", version = "0.1.0" }
-my-net = { path = "crates/net", version = "0.1.0" }
-my-db = { path = "crates/db", version = "0.1.0" }
+my-core = { path = "my-core", version = "0.1.0" }
+my-net = { path = "my-net", version = "0.1.0" }
+my-db = { path = "my-db", version = "0.1.0" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -314,7 +314,7 @@ codegen-units = 1
 A typical member `Cargo.toml` becomes short:
 
 ```toml
-# crates/net/Cargo.toml — minimal, everything inherited
+# my-net/Cargo.toml — minimal, everything inherited
 [package]
 name = "my-net"
 version.workspace = true

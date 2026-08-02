@@ -80,14 +80,14 @@ flowchart TB
 | Core | `rust-by-example` | Concrete code patterns — type conversions, flow control, closures, modules, generics, traits, errors, attributes, unsafe, migrations |
 | Design | `rust-api-design` | Rust API Guidelines (~100 C-* rules): naming, interop traits, type safety, future-proofing |
 | Design | `rust-crate-discovery` | Search crates.io, evaluate across 4 sources (crates.io/docs.rs/GitHub/RustSec), weighted 0-100 score, red-flag detection, comparison |
-| Engineering | `rust-workspace` | Multi-crate workspaces, virtual manifests, crate boundaries, dependency direction DAGs, `[workspace.*]` configuration |
+| Engineering | `rust-workspace` | Project-driven crate boundaries and small root-flat, growing hybrid, or large contained/grouped workspaces, plus dependency DAGs and `[workspace.*]` configuration |
 | Engineering | `rust-module-layout` | In-crate `src/` directory tree, `lib.rs` facade, `mod` declarations, visibility, re-exports — the companion to `rust-workspace` |
 | Engineering | `rust-cargo-build` | Manifests, dependencies, features, resolver, profiles, build scripts, `.cargo/config.toml`, Cargo Home, source replacement |
 | Engineering | `rust-dependencies` | Version requirement syntax, supply-chain governance (cargo-deny, cargo-audit), private registries, vendoring |
 | Engineering | `rust-semver` | Breaking-change classification, `cargo-semver-checks`, workspace publishing, yank/advisory workflows |
 | Engineering | `rust-documentation` | Rustdoc API contracts, doctests, API Guidelines Documentation chapter, mdBook guides and release gates |
-| Engineering | `rust-java-migration` | Rust adapter of the shared Java migration profile: full object/contract inventory, `<project>-test`, lossless source tests/assets, complete differential parity, host integration, and rollback |
-| Engineering | `rust-java-migration-testing` | Rust testing adapter: `<project>-test` hard gate, every source case and asset preserved, full Java/Rust differential MATCH, then additive Rust obligations |
+| Engineering | `rust-java-migration` | Rust adapter of the shared Java migration profile: derive target crate/workspace topology, preserve the full object/contract inventory, `<project>-test`, source tests/assets, differential parity, host integration, and rollback |
+| Engineering | `rust-java-migration-testing` | Rust testing adapter: place `<project>-test` by the recorded topology, preserve every source case and asset, require full Java/Rust differential MATCH, then add Rust obligations |
 | Domain | `rust-concurrency` | Threads, async runtimes, CPU parallelism, synchronization, backpressure, supervision and model testing |
 | Domain | `rust-testing` | Unit, integration and doc tests, benchmarks and coverage |
 | Domain | `rust-performance` | Measurement plans, Criterion benchmarks, CPU/latency/memory profiling and regression proof |

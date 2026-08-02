@@ -30,7 +30,8 @@ parity evidence.
 
 Only these concerns vary by target:
 
-- compiler/runtime, build manifest, module system, and package layout;
+- compiler/runtime, build manifest, module system, crate/package boundaries,
+  and scale-appropriate workspace layout;
 - naming and API idioms;
 - error/null/generic/async/concurrency mapping;
 - ownership, allocation, cleanup, and lifecycle model;
@@ -53,3 +54,7 @@ domain skills. For Zig, the corresponding adapter composes with `zig-0.16`,
 When a shared rule changes, audit all existing target pairs. When a compiler,
 layout, test runner, or language obligation changes, update only that target
 adapter.
+
+For Rust, the target adapter must derive Cargo packages from Rust boundaries
+before selecting root-flat, hybrid/domain-grouped, or contained member paths.
+Java module count is never a sufficient layout rule.

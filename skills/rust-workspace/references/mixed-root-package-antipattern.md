@@ -155,13 +155,21 @@ Every symbol dumps into the crate root. Provenance is lost; IDE completion is no
 
 ### 5. Hard to split later
 
-Once the root package is published with `<root>/src/` at this path, moving it to `crates/my-framework/src/` is a breaking change for any user who depends on the `path` structure (rare, but exists in private monorepos). And `cargo publish` doesn't care about the path — but any tooling that does (custom build scripts, IDE configs) might.
+Once the root package is published with `<root>/src/` at this path, moving it to another member directory is a breaking change for any user who depends on the `path` structure (rare, but exists in private monorepos). Cargo publishing does not care about the repository path, but custom build scripts, IDE configuration, and private path dependencies might.
 
 ---
 
-## Migration — six-step procedure (preserves published crate name)
+## Migration — six-step contained-layout example
 
-The migration is **mechanical and preserves the public API**. Downstream users see zero changes.
+First use `workspace-layouts.md` to select a target topology. A small workspace
+may move the package to `<root>/my-framework/`; a growing workspace may use a
+hybrid family; a large or root-heavy workspace may use
+`<root>/crates/my-framework/`. The example below assumes the last case because
+the diagnosed repository is already large. Adapt every path consistently; do
+not introduce `crates/` merely because this example uses it.
+
+The package-name/API migration is mechanical, but repository path consumers
+must still be checked.
 
 ### Step 1 — Create the target directory
 
@@ -252,7 +260,7 @@ opt-level = 3
 codegen-units = 1
 ```
 
-### Step 5 — Move member crates into `crates/`
+### Step 5 — Move member crates into the selected topology
 
 ```bash
 git mv codegen crates/codegen
@@ -324,7 +332,7 @@ Same as tests. Move if package-specific; keep at root if workspace-wide.
 - [ ] `cargo doc --workspace --no-deps` builds
 - [ ] No `src/` at the workspace root
 - [ ] Root `Cargo.toml` is a pure virtual manifest (no `[package]`, no `[dependencies]`)
-- [ ] All members live under `crates/`
+- [ ] All members follow the recorded root-flat, hybrid, or contained topology
 - [ ] Internal `path` references all use `../<sibling>` form
 - [ ] `[profile]` settings live at root, not in members
 - [ ] Published crate name unchanged

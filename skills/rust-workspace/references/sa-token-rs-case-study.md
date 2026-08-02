@@ -10,7 +10,7 @@ This file walks through the full workspace member-by-member: the root manifest, 
 
 - **Virtual manifest** (no root `[package]`) — clean root, `cargo build` builds all 11 by default
 - **5-layer DAG** — core → leaves → facade → adapters/plugins/DAOs → demos/tests — every arrow points up
-- **Pattern A + B hybrid** — flat `crates/sa-token-*` for the 7 primary crates, `crates/sa-token-plugin/` and `crates/sa-token-demo/` for grouped sub-crates
+- **Contained + domain-grouped hybrid** — primary crates live under `crates/`, while plugin and demo families have their own subdirectories
 - **Full `[workspace.*]` inheritance** — package metadata, dependencies, and lints defined once at root
 - **Edition 2024 + MSRV 1.85** — declared once, inherited everywhere
 - **Feature-gated optional dep** — Redis DAO behind `redis = ["dep:sa-token-dao-redis"]`
@@ -301,7 +301,7 @@ The current `sa-token-rs` uses option 1's pattern but hasn't published yet (stil
 | Layered DAG | 5 layers, every arrow points up |
 | Facade pattern | `sa-token` re-exports core + leaves |
 | Optional plugins | Adapters/plugins depend on facade, not bundled by default |
-| Grouped sub-crates | `sa-token-plugin/`, `sa-token-demo/` use Pattern B |
+| Grouped sub-crates | `sa-token-plugin/` and `sa-token-demo/` are domain families inside the contained layout |
 | Workspace inheritance | `[workspace.package]`, `[workspace.dependencies]`, `[workspace.lints]` |
 | Feature gating | `redis = ["dep:sa-token-dao-redis"]` |
 | Edition + MSRV | `edition = "2024"`, `rust-version = "1.85"` inherited |

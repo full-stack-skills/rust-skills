@@ -49,6 +49,8 @@ An audit-only request does not authorize deleting or rewriting tests. Preserve e
 Resolve or mark unknown:
 
 - pinned Java and Rust SHAs, dirty state, toolchains, profiles, features, targets, and generated-code boundaries;
+- the authoritative workspace-topology decision and actual paths of the target
+  production and `<project>-test` packages; do not assume a `crates/` directory;
 - the complete source test roots and runner configuration, including fixtures,
   examples, scripts, test resources, parameter sources, dynamic factories, and
   test-support code; the source repository defines the denominator and exclusions
@@ -133,7 +135,7 @@ Resolve `SKILL_DIR` to this skill directory and run from the migration repositor
 ```bash
 python3 "$SKILL_DIR/scripts/audit_migration_tests.py" \
   --java-root ../java-project/source-module \
-  --rust-root crates/source_module \
+  --rust-root <selected-target-crate-or-workspace> \
   --object-ledger docs/source-module/对象级对照表.md \
   --parity-manifest docs/source-module/source-test-parity.json \
   --java-test-assets-root src/test/resources \
@@ -172,8 +174,12 @@ For every repository/product-level migration completion claim, create one
 non-published workspace package as the whole-project acceptance authority. It
 is especially important for multiple crates, bindings/adapters, or a source
 system/templatesuite. Name it
-`<project>-test` by default; keep the directory and Cargo package name identical,
-set `publish = false`, and run it explicitly in CI. Local tests inside production
+`<project>-test` by default; keep the final directory name and Cargo package name
+identical, set `publish = false`, and run it explicitly in CI. Its parent path
+follows the recorded workspace topology: a small root-flat workspace uses
+`<project>-test/`; a hybrid may keep it at root or in a real test family; a
+contained workspace may use `crates/<project>-test/` or
+`crates/tests/<project>-test/`. Local tests inside production
 crates prove their own parser/type/API/binding behavior; they do not replace the
 whole-project module's source-suite replay, cross-crate workflows, real copied
 assets, golden/live differential comparison, or aggregate result artifact.
@@ -191,6 +197,10 @@ surfaces under test, and remain outside crates.io publication. Its complete gate
 is every source case `MATCH`, with no threshold pass count, skipped capability,
 or ignored case. Read [Migration verification SOP](references/migration-verification-sop.md)
 for naming, ownership, layout, and CI rules.
+
+The test package's semantic role is mandatory; one physical parent directory
+is not. Never relocate it solely to imitate the Java test-module tree or a
+generic Rust example.
 
 Do not use one test per object as a substitute for one real file per source
 object. A test that reaches a re-export, compatibility facade, or merged type
@@ -350,7 +360,7 @@ a pass.
 Use the project-specific coverage command. For mutation candidates:
 
 ```bash
-"$SKILL_DIR/scripts/run_mutation_test.sh" crates/source_module
+"$SKILL_DIR/scripts/run_mutation_test.sh" <selected-target-crate>
 ```
 
 Interpret survivors individually; do not impose one universal mutation score.
@@ -384,6 +394,8 @@ Report separately:
 - Do not substitute local tests in production or binding crates for the
   non-published `<project>-test` whole-project acceptance package, and do not
   use pass thresholds, skips, or ignored cases as its completion gate.
+- Do not hardcode `<project>-test` under `crates/` or at repository root without
+  checking the migration roadmap's project-driven workspace topology.
 - Do not write tests solely to increase coverage or file count.
 - Do not call parse success semantic equivalence.
 - Do not accept generic `is_err()` when the error contract is observable.
@@ -432,7 +444,8 @@ Report separately:
   differential report contains only `MATCH` with zero harness failures and zero
   not-run cases.
 - The `<project>-test` package is a workspace member with `publish = false`,
-  exercises public component surfaces, and owns the complete suite/differential
+  lives at the path selected by the recorded workspace topology, exercises
+  public component surfaces, and owns the complete suite/differential
   command plus aggregate artifact; local crate tests remain subsystem evidence.
 - The authoritative current object ledger was checked, its baselines match the
   test run, and no incomplete object state was hidden by the test summary.

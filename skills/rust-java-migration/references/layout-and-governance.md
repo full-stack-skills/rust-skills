@@ -1,5 +1,28 @@
 # Layout and Migration Governance
 
+## Workspace topology is a target-product decision
+
+Keep two decisions separate:
+
+1. **Which Cargo packages exist?** Derive them from independent publishing or
+   reuse, dependency/feature/target isolation, proc-macro and FFI constraints,
+   and distinct build/test lifecycles.
+2. **Where do those packages live?** Select root-flat, hybrid/domain-grouped, or
+   contained paths from the resulting package count, stable package families,
+   root-directory noise, repository languages, and compatibility-sensitive
+   established paths.
+
+The Java module inventory is mandatory for traceability, but it is not a Cargo
+member list. Document many-to-one and one-to-many mappings explicitly. For a
+small cohesive result, prefer top-level siblings such as `freemarker/`,
+`freemarker-pyo3/`, and `freemarker-test/`. When adapter/example families grow,
+keep core packages visible and group the family. Use a `crates/` container when
+large scale, root noise, or multi-language ownership makes the extra level pay
+for itself. Treat numerical thresholds as review signals rather than policy.
+
+The deterministic object-file mapping below begins **inside the selected target
+crate's `src/`**. It does not dictate the workspace member directory.
+
 ## Source-to-target layout
 
 - Map each Java class, interface, enum, or record to one primary Rust file.

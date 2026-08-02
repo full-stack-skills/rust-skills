@@ -61,12 +61,25 @@ migration completion claim. It is especially necessary when any of these hold:
 - the compatibility claim is about public end-to-end workflows rather than one
   crate's internal behavior.
 
-Use `<project>-test` as the default directory and Cargo package name. Keep it
+Use `<project>-test` as the final directory and Cargo package name. Keep it
 singular and consistent with the project family; do not alternate between
 `-test`, `-tests`, and `-testing`. Set `publish = false`, add it to workspace
 `members`, and run it explicitly in CI even when it is excluded from
 `default-members` for fast local development. It is test infrastructure, not a
 published production crate and not a source-object parity row.
+
+Place that directory according to the workspace topology already recorded by
+the migration roadmap:
+
+| Workspace topology | Typical package path |
+|---|---|
+| small root-flat | `<project>-test/` |
+| hybrid/domain-grouped | root-flat when product-wide, or `<test-family>/<project>-test/` when a real family exists |
+| contained/grouped | `crates/<project>-test/` or `crates/tests/<project>-test/` |
+| multi-language repository | inside the selected Rust workspace root, then apply one of the rows above |
+
+The role and Cargo package name are mandatory; the parent directory is not.
+Never infer it from Java's test-module path or hardcode `crates/` in automation.
 
 Cargo converts hyphens to underscores only in Rust paths: the directory and
 package remain `freemarker-test`, while Rust code imports an optional harness

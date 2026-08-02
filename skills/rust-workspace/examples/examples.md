@@ -26,5 +26,9 @@ pub fn add_to_waitlist() {}
 ```toml
 # root Cargo.toml
 [workspace]
-members = ["crates/*"]
+members = ["my-core", "my-cli"]
 ```
+
+Small cohesive workspaces default to root-flat members. Use `support/*` or a
+`crates/` container only when project scale, stable families, root noise, or a
+multi-language repository justifies it.

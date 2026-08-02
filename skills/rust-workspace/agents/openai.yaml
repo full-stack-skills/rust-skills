@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Workspace"
-  short_description: "Design multi-crate workspaces, virtual manifests, and crate boundaries"
-  default_prompt: "Use $rust-workspace to design or refactor this Rust workspace, split a project into crates, or diagnose a mixed root-package layout."
+  short_description: "Choose project-sized Rust workspace topology and crate boundaries"
+  default_prompt: "Use $rust-workspace to derive crate boundaries first, then choose a small root-flat, growing hybrid, or large contained/grouped workspace from project evidence, or diagnose a mixed root-package layout."

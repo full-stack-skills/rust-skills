@@ -23,7 +23,7 @@ The decision between a **virtual manifest** and a **root package** is the single
 # Cargo.toml — virtual manifest
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["my-core", "my-cli"]
 
 [workspace.package]
 version = "0.1.0"
@@ -36,11 +36,10 @@ edition = "2024"
 ```text
 my-project/
 ├── Cargo.toml              # virtual — no src/ here
-├── crates/
-│   ├── core/
-│   │   └── src/lib.rs
-│   └── cli/
-│       └── src/main.rs
+├── my-core/
+│   └── src/lib.rs
+└── my-cli/
+    └── src/main.rs
 ```
 
 ### Behavior
@@ -60,7 +59,7 @@ my-project/
 1. **Clean root**: no `src/`, `tests/`, `benches/` cluttering the top level alongside the workspace's organizational files.
 2. **Symmetric commands**: `cargo build` / `test` / `doc` act on all members uniformly. No `--workspace` flag needed.
 3. **Clear separation**: the root is unambiguously "the workspace", and each crate is unambiguously "a crate". New contributors don't get confused about what's what.
-4. **Easier extraction**: moving a crate to its own repository is a clean cut — just `git mv crates/foo ../foo` and update paths.
+4. **Easier extraction**: each member already owns a manifest and public boundary; move its selected member directory and update paths.
 5. **Easier publishing**: each member is published independently with `cargo publish -p <name>`. No special handling for the root.
 
 ### Downsides (minor)
@@ -76,7 +75,7 @@ my-project/
 # Cargo.toml — root package
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["my-cli"]
 
 [package]                   # the root package
 name = "my_main_lib"
@@ -94,9 +93,8 @@ my-project/
 │   └── lib.rs
 ├── tests/                  # root package tests
 ├── benches/                # root package benchmarks
-└── crates/
-    └── cli/
-        └── src/main.rs
+└── my-cli/
+    └── src/main.rs
 ```
 
 ### Behavior
@@ -115,17 +113,19 @@ my-project/
 
 1. **Root pollution**: `src/`, `tests/`, `benches/` sit alongside `crates/` and other workspace organizational files. Confusing for newcomers.
 2. **Asymmetric commands**: `cargo build` builds only the root; you must remember `--workspace` for everything else. This trips up CI configs and new contributors constantly.
-3. **Publishing coupling**: if the root package depends on members via `path = "crates/..."`, you must publish members **first**, then the root. Forgetting the order causes publish failures.
+3. **Publishing coupling**: if the root package depends on path members, you must publish members **first**, then the root. Forgetting the order causes publish failures.
 4. **Two roles for one file**: the root `Cargo.toml` is both the workspace config AND a package config. It grows long and conflates concerns.
-5. **Migration is breaking**: once published, moving the root package into `crates/my-main-lib/` changes the repo structure. Users with `path = ""` references break.
+5. **Migration is breaking**: once published, moving the root package into a member directory changes repository paths. Users with `path = ""` references break.
 
 ### When it's acceptable
 
-- 2-3 crate workspace
-- One crate is unambiguously the primary entry point (e.g., the main library)
-- The root package is small — most logic lives in member crates
+- 2-3 package workspace
+- One package is unambiguously the primary entry point (e.g., the main library)
+- The root package has a focused role; most other concerns live in members
 
-If the root package grows past ~1000 LOC, **migrate to a virtual manifest**. See `mixed-root-package-antipattern.md` for the migration path.
+Substantial root code is a review signal, not a LOC cutoff. Prefer a virtual
+manifest when root ownership, default command scope, publishing order, or path
+compatibility becomes ambiguous. See `mixed-root-package-antipattern.md`.
 
 ---
 
@@ -164,10 +164,14 @@ A root package + members where the root package has substantial code is the wors
 
 | Question | If yes |
 |----------|--------|
-| Is the workspace just 1 crate? | Single-crate, no workspace needed |
-| Does the workspace have 2-3 crates with one clearly primary? | Root package acceptable |
-| Does the workspace have 4+ crates? | **Virtual manifest** (no exceptions) |
-| Is the "primary crate" actually substantial code (> 1000 LOC)? | **Virtual manifest** |
+| Is the product just 1 package? | Single package, no workspace needed |
+| Does the workspace have 2-3 packages with one clearly primary? | Root package acceptable |
+| Does the workspace have 4+ packages or no uniquely primary root package? | Prefer a **virtual manifest**; document any exception |
+| Does root code make ownership, commands, publishing, or paths ambiguous? | Prefer a **virtual manifest** |
 | Are you migrating from a Java/Python project where you put everything at the root? | **Virtual manifest** (you have the mixed anti-pattern) |
 
 When in doubt: virtual manifest.
+
+This decision is independent of member placement. A virtual workspace can be
+root-flat, hybrid/domain-grouped, or contained under `crates/`; select that
+topology separately using `workspace-layouts.md`.

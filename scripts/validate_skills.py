@@ -183,7 +183,15 @@ def check_examples(manifests: list[Path]) -> list[str]:
             environment["CARGO_TARGET_DIR"] = str(temporary_root / "target")
 
             commands = [
-                ["cargo", "fmt", "--manifest-path", str(crate / "Cargo.toml"), "--", "--check"],
+                [
+                    "cargo",
+                    "fmt",
+                    "--all",
+                    "--manifest-path",
+                    str(crate / "Cargo.toml"),
+                    "--",
+                    "--check",
+                ],
                 [
                     "cargo",
                     "check",

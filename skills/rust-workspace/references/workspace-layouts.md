@@ -1,243 +1,239 @@
-# Workspace Layout Patterns — Four Complete Skeletons
+# Workspace Layout Patterns — Project-Driven Skeletons
 
-Copy-paste `Cargo.toml` and directory trees for each of the four workspace patterns referenced in SKILL.md. Authority: [Cargo Book — Workspaces](https://doc.rust-lang.org/cargo/reference/workspaces.html), [matklad — Large Rust Workspaces](https://matklad.github.io/2021/08/22/large-rust-workspaces.html).
+Choose crate boundaries before choosing directories. The source repository's
+Maven/Gradle modules, package count, or directory depth are evidence about the
+domain, not a Cargo layout to copy mechanically. Authority: [Cargo Book —
+Workspaces](https://doc.rust-lang.org/cargo/reference/workspaces.html) and
+[matklad — Large Rust Workspaces](https://matklad.github.io/2021/08/22/large-rust-workspaces.html).
+
+## Decision inputs
+
+Record these before selecting a topology:
+
+1. Resulting Rust packages and which ones are independently published.
+2. Dependency, feature, target, `no_std`, proc-macro, and FFI boundaries.
+3. Stable families such as adapters, plugins, bindings, examples, or tests.
+4. Root-directory noise from documentation, tools, fixtures, or other languages.
+5. Existing public paths, automation, and contributor expectations that a move
+   would break.
+
+Workspace member/package count is only a review trigger: 2-8 cohesive packages normally remain
+root-flat; around 8-20 compare root-flat and hybrid layouts; 20+ commonly needs
+grouping or a `crates/` container. Stronger project evidence overrides the count.
 
 ---
 
-## Pattern A — Flat `crates/` (default)
+## Pattern A — Root-flat virtual workspace (small default)
 
-**When**: up to ~20 crates; default for new workspaces.
-**Used by**: tokio, bevy, rust-analyzer, most modern Rust libraries.
+**When**: a small, cohesive Rust-only workspace whose members are all useful to
+see at a glance. This is the default for a newly derived 2-8 package workspace.
 
 ```text
 my-project/
-├── Cargo.toml                      # virtual manifest
+├── Cargo.toml
 ├── Cargo.lock
-├── README.md
-├── LICENSE
-└── crates/
-    ├── core/
-    │   ├── Cargo.toml
-    │   └── src/
-    │       └── lib.rs
-    ├── net/
-    │   ├── Cargo.toml
-    │   └── src/
-    │       └── lib.rs
-    ├── cli/                        # binary crate
-    │   ├── Cargo.toml
-    │   └── src/
-    │       └── main.rs
-    └── server/                     # binary crate
-        ├── Cargo.toml
-        └── src/
-            └── main.rs
+├── my-core/
+│   ├── Cargo.toml
+│   └── src/lib.rs
+├── my-net/
+│   ├── Cargo.toml
+│   └── src/lib.rs
+└── my-cli/
+    ├── Cargo.toml
+    └── src/main.rs
 ```
 
 ```toml
-# root Cargo.toml — virtual manifest
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["my-core", "my-net", "my-cli"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 license = "Apache-2.0"
-repository = "https://github.com/me/my-project"
 
 [workspace.dependencies]
-# External deps pinned once
 serde = { version = "1", features = ["derive"] }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
-anyhow = "1"
-tracing = "0.1"
-
-# Internal workspace deps
-my-core = { path = "crates/core" }
-my-net = { path = "crates/net" }
-
-[workspace.lints.rust]
-unsafe_code = "forbid"
-missing_docs = "warn"
-
-[workspace.lints.clippy]
-all = "warn"
+my-core = { path = "my-core" }
+my-net = { path = "my-net" }
 ```
 
-```toml
-# crates/net/Cargo.toml
-[package]
-name = "my-net"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
-license.workspace = true
-repository.workspace = true
+**Pros**: `ls` exposes the product's packages immediately; member paths are
+short; adding a small integration-test package is unsurprising.
 
-[dependencies]
-serde.workspace = true
-tokio.workspace = true
-my-core.workspace = true
-
-[lints]
-workspace = true
-```
-
-**Pros**: trivial to add/remove/split crates; `members = ["crates/*"]` auto-discovers; flat namespace is easy to navigate.
-**Cons**: at 50+ crates the flat list becomes hard to scan.
+**Watch**: use explicit member names. `members = ["*"]` also matches unrelated
+top-level directories containing manifests and is too broad.
 
 ---
 
-## Pattern B — Grouped `crates/<category>/`
+## Pattern B — Hybrid or domain-grouped workspace
 
-**When**: 20+ crates with clear categorical buckets.
-**Used by**: large monorepos, plugin architectures.
+**When**: core packages still deserve top-level visibility, while one or more
+real families would otherwise flood the root. Group by domain or lifecycle, not
+by a generic desire for symmetry.
 
 ```text
 my-project/
 ├── Cargo.toml
-└── crates/
-    ├── libs/                       # library crates
-    │   ├── core/
-    │   │   ├── Cargo.toml
-    │   │   └── src/lib.rs
-    │   ├── net/
-    │   │   └── src/lib.rs
-    │   └── crypto/
-    │       └── src/lib.rs
-    ├── bins/                       # binary crates
-    │   ├── cli/
-    │   │   └── src/main.rs
-    │   └── server/
-    │       └── src/main.rs
-    └── plugins/                    # optional extensions
-        ├── jwt/
-        │   └── src/lib.rs
-        └── redis/
-            └── src/lib.rs
+├── my-core/
+├── my-api/
+├── my-test/
+├── support/
+│   ├── my-axum/
+│   └── my-wasm/
+└── examples/
+    ├── hello-world/
+    └── web-demo/
 ```
 
 ```toml
-# root Cargo.toml
 [workspace]
 resolver = "3"
 members = [
-    "crates/libs/*",
-    "crates/bins/*",
-    "crates/plugins/*",
+    "my-core",
+    "my-api",
+    "my-test",
+    "support/*",
+    "examples/*",
 ]
-# Note: Cargo's glob `*` matches one level only.
-# `crates/libs/*` matches `crates/libs/core` but NOT `crates/libs/core/sub`.
-
-[workspace.package]
-# ... same as Pattern A
 ```
 
-**Pros**: scales to 50+ crates with clear categorical buckets; mirrors mental model.
-**Cons**: each category must be listed in `members` explicitly; deeper nesting (e.g., `crates/libs/crypto/*`) requires explicit listing.
+**Pros**: preserves discoverable core crates while containing repetitive
+adapters/examples. It supports gradual growth without a repository-wide move.
 
-**Real-world example** (anonymized): a multi-platform auth library organized as:
+**Watch**: each glob matches one level only. Do not invent `libs/`, `modules/`,
+or `packages/` buckets if the project has no corresponding conceptual family.
+
+---
+
+## Pattern C — Contained or grouped `crates/` workspace
+
+**When**: many Rust packages, a multi-language repository, a crowded root, or a
+clear need to separate Cargo members from documentation, tooling, datasets, and
+other products. `crates/` is a valid Rust convention; it is not the universal
+default and it is not a Java/Maven requirement.
 
 ```text
-sa-token-rs/                       # actual project layout (truncated)
+my-project/
 ├── Cargo.toml
+├── docs/
+├── tooling/
 └── crates/
-    ├── sa-token/                  # main facade
-    ├── sa-token-core/             # core types
-    ├── sa-token-axum/             # framework integration
-    ├── sa-token-derive/           # proc macros
-    ├── sa-token-context-mock/     # context impl
-    ├── sa-token-dao-memory/       # DAO impl
-    ├── sa-token-dao-redis/        # DAO impl
-    ├── sa-token-plugin/           # plugins subdirectory
-    │   ├── sa-token-jwt/
-    │   └── sa-token-sign/
-    └── sa-token-demo/             # demos subdirectory
-        └── sa-token-demo-axum/
+    ├── core/
+    │   ├── Cargo.toml
+    │   └── src/lib.rs
+    ├── adapters/
+    │   ├── axum/
+    │   └── wasm/
+    ├── bindings/
+    │   └── python/
+    └── tests/
+        └── my-project-test/
 ```
 
-This is Pattern A with two nested subdirectories (`sa-token-plugin/`, `sa-token-demo/`) acting as informal category buckets. The `members` list has to enumerate them explicitly.
+```toml
+[workspace]
+resolver = "3"
+members = [
+    "crates/core",
+    "crates/adapters/*",
+    "crates/bindings/*",
+    "crates/tests/*",
+]
+```
+
+**Pros**: keeps a large or multi-language root legible and scales with stable
+families. **Cons**: adds path depth and hides small workspaces behind an
+unnecessary container when adopted too early.
 
 ---
 
-## Pattern C — Nested sub-workspaces (rare)
+## Pattern D — Nested sub-workspaces (rare)
 
-**When**: git submodule isolation; vendored upstream workspaces.
+**When**: a vendored upstream repository or Git submodule must retain its own
+workspace and lockfile.
 
 ```text
 my-project/
-├── Cargo.toml                  # root workspace
-├── crates/
-│   └── core/
+├── Cargo.toml
+├── my-core/
 └── vendor/
-    └── upstream-lib/           # nested workspace (e.g., git submodule)
-        ├── Cargo.toml          # its own [workspace]
+    └── upstream-lib/
+        ├── Cargo.toml
         └── crates/
-            ├── lib-a/
-            └── lib-b/
 ```
 
 ```toml
-# root Cargo.toml
 [workspace]
 resolver = "3"
-members = ["crates/*"]
-exclude = ["vendor/upstream-lib"]  # exclude nested workspace
+members = ["my-core"]
+exclude = ["vendor/upstream-lib"]
 ```
 
-The nested workspace has its own `[workspace]` block and manages its own `Cargo.lock`. The root workspace excludes it to prevent conflicts.
-
-**Pros**: git submodules can add/remove crates internally without updating the root `members` list.
-**Cons**: complex; Cargo has historically had rough edges with nested workspaces. Avoid unless you specifically need submodule isolation. The [`nested_workspace`](https://crates.io/crates/nested_workspace) crate provides extra tooling if you must go this route.
+Avoid this unless independent upstream ownership requires it; Cargo workspace
+nesting adds operational complexity.
 
 ---
 
-## Pattern D — Root package workspace (small only)
+## Pattern E — Root package workspace (small and intentional)
 
-**When**: 2-3 crate workspaces where one crate is unambiguously primary.
+**When**: two or three packages, one package is unequivocally the main
+published library/application, and root-package command asymmetry is useful or
+accepted.
 
 ```text
 my-project/
-├── Cargo.toml                  # [workspace] + [package] together
-├── src/                        # root package source
-│   └── lib.rs
-├── tests/
-└── crates/
-    └── cli/                    # companion binary
-        ├── Cargo.toml
-        └── src/
-            └── main.rs
+├── Cargo.toml              # [workspace] + [package]
+├── src/lib.rs              # primary package
+└── my-cli/
+    ├── Cargo.toml
+    └── src/main.rs
 ```
 
 ```toml
-# root Cargo.toml
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["my-cli"]
 
 [package]
-name = "my_lib"
+name = "my-project"
 version = "0.1.0"
 edition = "2024"
-
-[dependencies]
-# ... root package deps
 ```
 
-**Acceptable for**: a library + its companion CLI (2-3 crates total).
-**Avoid for**: anything larger. The trade-offs (root pollution, asymmetric commands, publishing friction) outweigh the convenience. See `mixed-root-package-antipattern.md` for what happens when Pattern D grows out of control.
+Root package and root-flat member location are independent decisions. A small
+virtual workspace may be root-flat without having a root package. Avoid a root
+package once its dual role makes commands, publishing, or root ownership
+ambiguous; see `mixed-root-package-antipattern.md`.
 
 ---
 
-## How to Choose
+## Migration-project examples
 
-| Situation | Pattern |
-|-----------|---------|
-| Just starting, 1-3 crates | A (flat) |
-| 3-20 crates, all related | A (flat) |
-| 20+ crates, multiple categories | B (grouped) |
-| Integrating a vendored workspace via submodule | C (nested) |
-| Library + companion CLI (2 crates max) | D (root package) |
-| Anything else | A (flat) — you can always graduate to B later |
+| Resulting Rust product | Recommended topology | Reason |
+|------------------------|----------------------|--------|
+| Core library + whole-project tests + one language binding | Root-flat | Few cohesive publish/test units; all are immediately discoverable |
+| Core + tests + several framework adapters | Hybrid | Core stays visible; adapter family is contained |
+| Dozens of format/protocol modules, demos, bindings, and test infrastructure | Hybrid or contained/grouped | Root noise and stable families justify collection |
+| Multi-language monorepo with a Rust product | Rust-specific container, then apply A/B/C inside it | Language ownership is clearer than a repository-wide flat list |
+
+Do not equate a Java module with a Rust package. Merge source modules that have
+no independent Rust boundary, and split a source module when Rust target,
+publishing, proc-macro, FFI, or dependency isolation requires it.
+
+## Decision summary
+
+| Situation | Start with |
+|-----------|------------|
+| One cohesive package | Single package, no workspace |
+| 2-8 cohesive packages | A: root-flat virtual |
+| Growing project with real adapter/example/test families | B: hybrid/domain-grouped |
+| Large, root-heavy, or multi-language repository | C: contained/grouped |
+| Independently owned vendored workspace | D: nested/excluded |
+| 2-3 packages with one intentional root package | E: root package |
+
+Record the selected topology and rejected alternatives in the architecture or
+migration roadmap. Revisit it when the project crosses a boundary, not merely
+when an arbitrary workspace member count changes.

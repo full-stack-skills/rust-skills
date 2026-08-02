@@ -3,14 +3,6 @@
 version = 4
 
 [[package]]
-name = "my-app"
-version = "0.0.0"
-dependencies = [
- "my-core",
- "my-net",
-]
-
-[[package]]
 name = "my-cli"
 version = "0.0.0"
 dependencies = [

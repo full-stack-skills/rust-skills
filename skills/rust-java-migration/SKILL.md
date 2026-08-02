@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to Rust Cargo workspaces, including 100% lossless source-test/case migration, byte-identical copied test assets, and complete Java/Rust per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, or runtime-behavior level; selecting exact Rust dependency replacements; producing the required migration documents; continuing an incomplete port; or repairing dependency/version drift, re-export breaks, duplicate types, and warning floods. Enforces source-authoritative inventories, idiomatic Rust APIs with explicit compatibility adapters, strict non-completion states, evidence-backed exclusions, frozen baselines, consolidated audit, and unified verification.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to project-shaped Rust Cargo workspaces, including derived crate boundaries, scale-appropriate root-flat/hybrid/grouped topology, 100% lossless source-test/case migration, byte-identical copied test assets, and complete Java/Rust per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, or runtime-behavior level; selecting dependencies; producing migration documents; continuing an incomplete port; or repairing workspace drift. Enforces source-authoritative inventories, Rust-native APIs with explicit compatibility adapters, strict non-completion states, frozen baselines, and unified verification.
 ---
 
 # Java to Rust Migration
@@ -20,16 +20,15 @@ Do not modify migration code when the user requested only an audit, plan, or doc
 Resolve or explicitly mark unknown:
 
 - Java repository path, baseline commit/tag, build tool, JDK, and module scope.
-- Exact Java module package root used for path mapping; do not pass only a
-  repository or `src/main/java` root and then guess which package segments to strip.
+- Exact Java module package root used for path mapping; do not pass only a repository or `src/main/java` root and guess which segments to strip.
 - Rust repository path, baseline commit, toolchain/MSRV, workspace, and target platforms.
+- Target-product topology inputs: independently published Rust units, dependency/feature/target/proc-macro/FFI boundaries, expected crate count, package families, root noise, other languages, and established paths.
 - Compatibility goal: source-shape parity, public API parity, behavior parity, or production replacement.
 - Dependency policy: license, MSRV, supported targets, unsafe policy, advisory policy, maintenance horizon, and acceptable transitive cost.
 - Component-candidate sources and their observation date; distinguish team policy, researched candidates, declared dependencies, and verified adoption.
 - Explicit exceptions, blocked external projects, unsupported JVM-only features, and completion deadline.
 - Required host applications, real scripts, test data, concurrency model, load profile, and rollback mechanism.
-- Existing migration documents and their authority; identify the single current
-  four-document set before creating or merging historical material.
+- Existing migration documents and their authority; identify the single current four-document set before merging historical material.
 - Complete source test roots/runner configuration, including every concrete test case, disabled test, fixture, script, corpus, golden file, resource, and data file. The source repository defines the denominator; do not narrow it to fit Rust.
 
 Never silently infer that the newest branch, a generated manifest, or an API registration list is the behavioral baseline.
@@ -38,8 +37,7 @@ Never silently infer that the newest branch, a generated manifest, or an API reg
 
 Treat one declared Java source module and its Rust target crate/module as the default migration batch. A user-authorized multi-module scope may be one batch, but freeze its boundary before implementation. Apply: freeze scope/contracts → implement the batch → freeze → audit → unified verification.
 
-Dependency-ordered editing inside the implementation batch is allowed. Per-object
-completion loops are not.
+Dependency-ordered editing inside the implementation batch is allowed. Per-object completion loops are not.
 
 ### 1. Freeze baselines and inspect repository state
 
@@ -53,47 +51,41 @@ If a repository contains `.codegraph/`, use CodeGraph before text search or file
 2. Query representative public types and overloaded methods.
 3. Trace high-value call chains across factories, registries, interceptors, serializers, persistence, networking, and concurrency.
 4. Query the Rust counterparts and their callers/tests.
-5. Refresh or re-query the module inventory once before implementation if the
-   index reports staleness.
+5. Refresh or re-query the module inventory before implementation if the index reports staleness.
 
 If no index exists, do not initialize one without authorization. Use language-aware tooling or targeted source inspection and disclose the weaker evidence.
 
 Read [CodeGraph parity audit](references/codegraph-parity-audit.md) for query patterns and inventory rules.
 Read [Case-study lessons](references/case-study-lessons.md) when designing a large utility-library migration or an annotation/macro split.
 
+### 1.5. Derive Rust crate boundaries and workspace topology
+
+Do not map Maven/Gradle modules one-to-one to Cargo packages. Derive Rust packages from independent publishing/reuse, dependency/feature/target isolation, proc-macro or FFI constraints, and distinct lifecycles; source modules remain traceability scopes.
+
+Select placement with `rust-workspace`: small cohesive results are normally root-flat; real adapter/binding/example/test families support a hybrid; large, root-heavy, or multi-language repositories may use `crates/`. Counts are review triggers, not laws. Record the source-module-to-crate mapping, chosen topology, rejected alternatives, and compatibility plan in the roadmap. See [Layout and governance](references/layout-and-governance.md).
+
 ### 2. Build inventories before implementation
 
 Create separate machine-readable or tabular inventories for:
 
 - Java Maven/Gradle modules and Rust crates.
+- The source-module-to-crate mapping and why root-flat, hybrid, or contained/grouped paths fit this project.
 - Java packages and Rust module directories.
 - Classes, interfaces, enums, records, annotations, exceptions, and relevant inner types.
-- For every object, the deterministic expected Rust path after removing the
-  organization/module package root and retaining the final two remaining package
-  segments (or one/zero when fewer remain).
+- For every object, the deterministic Rust path after removing the organization/module package root and retaining the final two remaining segments (or one/zero when fewer remain).
 - Public/protected constructors and methods, including every overload.
 - Parameter names, order, generic bounds, nullability, defaults, varargs, checked exceptions, and return contracts.
-- Existing object, constructor, method, generic/value parameter, return,
-  exception, metadata-tag, and semantic inline comments, with source anchors.
+- Existing object, constructor, method, generic/value parameter, return, exception, metadata-tag, and semantic inline comments, with source anchors.
 - Examples, tests, fixtures, scripts, configuration, resources, service descriptors, and docs.
-- A source-test case manifest and source-test asset manifest. Record every
-  concrete case and every asset path/hash before implementation; test resources
-  must later be copied byte-for-byte into the Rust repository.
-- A non-published `<project>-test` workspace package owning project-level source
-  replay and differential acceptance, including cross-component paths.
+- A source-test case manifest and asset manifest; record every concrete case and asset path/hash before copying resources byte-for-byte into Rust.
+- A non-published `<project>-test` package owning project-level source replay, cross-component paths, and differential acceptance.
 - Call paths and externally observable side effects.
 
 Exclude `package-info`, generated sources, BOMs, aggregators, test support, facades, and Rust-only infrastructure only through explicit categories. Do not hide them by changing the denominator.
 
-Freeze the inventory as the batch manifest before editing production code. It
-must cover the complete denominator, dependency order, shared mechanisms,
-component decisions, test disposition, and approved exceptions. Do not start
-with one object and discover the rest while implementing.
+Freeze the inventory as the batch manifest before production edits. Cover the complete denominator, dependency order, shared mechanisms, component decisions, test disposition, and approved exceptions; do not discover scope object-by-object.
 
-Resolve `SKILL_DIR` to the directory containing this `SKILL.md`; never assume a
-fixed installation or mount path. Run the following commands from the Rust
-migration repository root and prefer repository-relative paths for project
-inputs and generated artifacts.
+Resolve `SKILL_DIR` from this `SKILL.md`; never assume a fixed install path. Run commands from the Rust migration root and prefer repository-relative inputs/artifacts.
 
 Run the static Rust layout audit as an early signal:
 
@@ -121,7 +113,7 @@ python3 "$SKILL_DIR/scripts/scaffold_migration_docs.py" \
   --module source-module \
   --java-root ../java-project/source-module \
   --java-package-root ../java-project/source-module/src/main/java/org/example/module \
-  --rust-root crates/source_module \
+  --rust-root <selected-target-crate-or-workspace> \
   --output-dir docs/source-module \
   --java-baseline <sha-or-tag> \
   --rust-baseline <sha> \
@@ -447,6 +439,11 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
   parity; compare per-case outputs, errors, state, side effects, and cleanup.
 - Do not substitute production-crate or binding-crate local tests for the
   required non-published `<project>-test` whole-project acceptance package.
+- Do not copy Maven/Gradle module boundaries one-to-one into Cargo packages
+  without a Rust publishing, dependency, target, macro/FFI, or lifecycle reason.
+- Do not default every migration workspace to `crates/`, and do not force every
+  workspace to remain root-flat. Select and record the topology from the
+  resulting Rust product's scale, families, repository noise, and compatibility.
 - Do not mark a row behavior-verified from file counts, parser acceptance, generic `is_ok()`/`is_err()`, or “at least one test per object”.
 - Do not let the four migration documents carry different baselines or contradictory completion states.
 - Do not keep a current document and a `-历史详细版`/nested duplicate. Merge
@@ -477,13 +474,15 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 ## Completion Criteria
 
 - Four current documents per source module share baselines, contract, and Rust SHA; no duplicate exists.
+- The roadmap records justified source-module-to-crate boundaries and a project-driven topology; actual manifests and member paths match it.
 - Every object has a deterministic final-two-segments path; `MISPLACED` remains
   incomplete until physically aligned.
 - Every Java object, method, overload, and parameter has a disposition.
 - Every source test/case has a lossless Rust implementation, and every source
   test asset has a byte-identical checked copy in the Rust repository.
 - Required whole-project acceptance package exists as `<project>-test`, is a
-  workspace member with `publish = false`, and is the recorded owner of the full
+  workspace member at the selected topology's appropriate path with
+  `publish = false`, and is the recorded owner of the full
   source-suite/differential command and artifact.
 - The complete Java and Rust suites pass and the full per-case differential
   result is 100% `MATCH`, with no harness failure or not-run case.

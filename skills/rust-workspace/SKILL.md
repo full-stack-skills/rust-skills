@@ -1,6 +1,6 @@
 ---
 name: rust-workspace
-description: Design Rust project topology — single-crate packages, multi-crate workspaces (virtual manifests, flat/grouped/nested layouts), workspace-level configuration (shared deps, lints, package metadata), dependency direction DAGs, and crate boundary decisions. Use when users ask how to split a project into crates, configure a workspace, avoid dependency cycles, refactor a mixed root-package workspace (rbatis-style), or decide between modules-in-one-crate vs separate crates. For in-crate src/ layout, see rust-module-layout.
+description: Design Rust project topology — single-crate packages, project-sized multi-crate workspaces (small root-flat, hybrid/domain-grouped, contained crates/, nested, or root-package layouts), workspace-level configuration, dependency DAGs, and crate-boundary decisions. Use when users ask how to split a project into crates, choose paths from the resulting project scale instead of copying a source-language module tree, configure a workspace, avoid dependency cycles, refactor a mixed root-package workspace, or decide between modules and crates. For in-crate src/ layout, see rust-module-layout.
 ---
 
 # Rust Workspace and Project Topology
@@ -13,7 +13,7 @@ This skill decides **how many crates a project should have and how they relate**
 
 ### ✅ Strengths
 1. Single-crate vs multi-crate workspace decision (decision tree with five concrete triggers)
-2. Four workspace layout patterns: flat `crates/`, grouped `crates/<category>/`, nested sub-workspaces, root package
+2. Project-driven workspace layouts: small root-flat, hybrid/domain-grouped, contained `crates/`, nested, and root-package
 3. Virtual manifest vs root package — trade-offs and migration
 4. Workspace-level shared configuration: `[workspace.package]`, `[workspace.dependencies]`, `[workspace.lints]`
 5. Dependency direction DAGs — types → core → sdk → server → binary
@@ -125,7 +125,7 @@ cargo new my-lib --lib        # Library project
 cargo init                    # Initialize current directory
 ```
 
-For multi-crate workspaces, prefer to create the root virtual manifest by hand (there is no `cargo workspace new`), then `cargo new --lib crates/<name>` for each member. For templates, use [`cargo-generate`](https://github.com/cargo-generate/cargo-generate).
+For multi-crate workspaces, create the root virtual manifest by hand (there is no `cargo workspace new`), choose the member topology from the decision model below, then run `cargo new --lib <selected-member-path>`. For a small root-flat workspace that may be `cargo new --lib my-core`; for a contained large workspace it may be `cargo new --lib crates/my-core`. For templates, use [`cargo-generate`](https://github.com/cargo-generate/cargo-generate).
 
 ---
 
@@ -160,7 +160,7 @@ If none of these apply, **prefer modules over crates**. Modules are cheaper (no 
 
 The default for small-to-medium projects. One `Cargo.toml`, one `src/`. Four variants: library only, binary only, library + binary (same package), or multi-binary (`src/bin/<name>.rs`). See `examples/single-crate.md` for all four skeletons.
 
-**When to graduate to a workspace**: when a second binary appears, or when the library grows large enough to want its own version trajectory separate from the binary.
+**When to graduate to a workspace**: when a binary or library needs an independent dependency/feature/target boundary, release trajectory, or build/test lifecycle. A second binary alone can remain under `src/bin/` in the same package.
 
 ## Multi-crate workspace — two flavors of root
 
@@ -168,8 +168,8 @@ Cargo supports two kinds of root `Cargo.toml`:
 
 | Flavor | What's in root | When to use |
 |--------|---------------|-------------|
-| **Virtual manifest** | `[workspace]` only — **no `[package]`** | **Default for new workspaces.** Clean root, no `src/` at the top level, all crates live under `crates/`. |
-| **Root package** | `[workspace]` **+** `[package]` + `src/` at root | Small (2-3 crate) workspaces where one crate is unambiguously primary; you accept the trade-offs below. |
+| **Virtual manifest** | `[workspace]` only — **no `[package]`** | **Default for new workspaces.** Clean root, no top-level `src/`; members may be root-flat, hybrid, or contained. |
+| **Root package** | `[workspace]` **+** `[package]` + `src/` at root | Small (2-3 package) workspaces where one package is unambiguously primary; you accept the trade-offs below. |
 
 The Cargo team and community (notably matklad's [Large Rust Workspaces](https://matklad.github.io/2021/08/22/large-rust-workspaces.html)) recommend **virtual manifests** for any non-trivial workspace:
 
@@ -177,37 +177,39 @@ The Cargo team and community (notably matklad's [Large Rust Workspaces](https://
 2. **Command ergonomics** — with a root package, `cargo build` at the root builds *only* the root package; `--workspace` is needed for everything. Virtual manifests build all members by default.
 3. **Publishing friction** — root package + members leads to confusing `cargo publish` ordering.
 
-## Four layout patterns
+## Project-driven layout patterns
 
 | Pattern | Layout | When | Used by |
 |---------|--------|------|---------|
-| **A. Flat `crates/`** | `crates/<name>/` (one level) | **Default** for most projects; up to ~20 crates | tokio, bevy, rust-analyzer |
-| **B. Grouped `crates/<category>/`** | `crates/libs/*`, `crates/bins/*`, `crates/plugins/*` | 20+ crates with clear categorical buckets | large monorepos, plugin systems |
-| **C. Nested sub-workspaces** | `vendor/<sub>/` with own `[workspace]` | Git submodule isolation (rare) | projects with vendored upstream workspaces |
-| **D. Root package** | `[package]` at root + `crates/` | 2-3 crate workspaces with clear primary crate | small libs with a companion CLI |
+| **A. Root-flat virtual** | `<member>/` beside root `Cargo.toml` | **Default for small cohesive workspaces**, usually 2-8 packages/members | [Tokio](https://github.com/tokio-rs/tokio), [Serde](https://github.com/serde-rs/serde), [Clap](https://github.com/clap-rs/clap) |
+| **B. Hybrid/domain-grouped** | core members at root plus `support/*`, `examples/*`, or another real family | Growing workspaces with stable families or noisy adapters/examples | framework and migration workspaces |
+| **C. Contained/grouped** | `crates/<member>/` or `crates/<category>/*` | Large workspaces, multi-language repositories, or roots that need a Rust container | [Bevy](https://github.com/bevyengine/bevy)-style large repositories |
+| **D. Nested sub-workspaces** | `vendor/<sub>/` with own `[workspace]` | Git submodule or vendored-workspace isolation (rare) | vendored upstream workspaces |
+| **E. Root package** | `[package]` at root plus sibling/contained members | 2-3 packages with one genuinely primary crate | library plus companion CLI |
 
-Full copy-paste skeletons for each pattern: `references/workspace-layouts.md` and `examples/<pattern>-workspace.md`.
+Workspace member count is a **signal, not a law**. Decide package/crate boundaries first, then consider repository root noise, independent publishing, adapter/plugin families, targets, examples/tests, other languages, and established paths. As a review trigger: 2-8 cohesive packages normally stay root-flat; around 8-20 compare root-flat with a hybrid; 20+ commonly benefits from grouping or `crates/`. Never create one Cargo package per Maven/Gradle module without a Rust boundary reason.
 
-### Pattern A skeleton (the default)
+Full skeletons and the decision matrix: `references/workspace-layouts.md`.
+
+### Pattern A skeleton — small workspace default
 
 ```text
 my-project/
-├── Cargo.toml                      # virtual: [workspace] members = ["crates/*"]
-└── crates/
-    ├── core/                       # library
-    │   ├── Cargo.toml              # [package] + version.workspace = true
-    │   └── src/lib.rs
-    ├── net/                        # library
-    │   └── ...
-    └── cli/                        # binary
-        └── src/main.rs
+├── Cargo.toml                      # virtual: [workspace]
+├── my-core/                        # library
+│   ├── Cargo.toml
+│   └── src/lib.rs
+├── my-net/                         # library
+│   └── ...
+└── my-cli/                         # binary
+    └── src/main.rs
 ```
 
 ```toml
 # root Cargo.toml — virtual manifest
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = ["my-core", "my-net", "my-cli"]
 
 [workspace.package]
 edition = "2024"
@@ -216,11 +218,11 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }   # pin once
-my-core = { path = "crates/core" }                  # internal deps here
+my-core = { path = "my-core" }                      # internal deps here
 ```
 
 ```toml
-# crates/net/Cargo.toml
+# my-net/Cargo.toml
 [package]
 name = "my-net"
 version.workspace = true               # inherits from [workspace.package]
@@ -350,7 +352,7 @@ If `my-types` shows up as depending on anything non-`std`, the direction is wron
 
 [`sa-token-rs`](https://github.com/dromara/sa-token-rs) is a real-world Rust port of the Java Sa-Token permission framework — an exemplar of every pattern this skill teaches. Virtual manifest, 11 crates, clean 5-layer DAG, `crates/<category>/` grouping, full `[workspace.*]` inheritance.
 
-### Layout (Pattern A + B hybrid)
+### Layout (contained + domain-grouped hybrid)
 
 ```text
 sa-token-rs/
@@ -363,10 +365,10 @@ sa-token-rs/
     ├── sa-token-dao-memory/            # Layer 2: memory DAO (core only)
     ├── sa-token-dao-redis/             # Layer 4: redis DAO (facade + core)
     ├── sa-token-axum/                  # Layer 4: axum adapter (facade + core)
-    ├── sa-token-plugin/                # Pattern B grouping
+    ├── sa-token-plugin/                # domain grouping inside container
     │   ├── sa-token-jwt/               # Layer 4: JWT plugin
     │   └── sa-token-sign/              # Layer 4: signature plugin
-    ├── sa-token-demo/                  # Pattern B grouping
+    ├── sa-token-demo/                  # domain grouping inside container
     │   └── sa-token-demo-axum/         # Layer 5: binary example
     └── sa-token-test/                  # Layer 5: integration tests
 ```
@@ -388,7 +390,7 @@ L5  sa-token-demo-axum   sa-token-test   (binaries + tests)
 ### Why it's exemplary
 
 1. **Virtual manifest** — no root `[package]`; `cargo build` builds all 11 by default.
-2. **Pattern A + B hybrid** — flat `crates/sa-token-*` for leaves, `crates/sa-token-plugin/` and `crates/sa-token-demo/` for grouped sub-crates.
+2. **Contained + domain-grouped hybrid** — `crates/sa-token-*` for leaves, with plugin and demo families grouped beneath `crates/`.
 3. **Full `[workspace.*]` inheritance** — `version`, `edition = "2024"`, `rust-version = "1.85"`, `license`, `repository`, `[workspace.lints]` (`unsafe_code = "forbid"`, `missing_docs = "warn"`, `clippy::pedantic = "warn"`), and `[workspace.dependencies]` for internal + external deps.
 4. **Feature-gated optional dep** — `sa-token` exposes `redis = ["dep:sa-token-dao-redis"]`.
 5. **Clean DAG** — core has zero internal deps; facade aggregates; adapters/plugins/DAOs sit on top; demos/tests consume everything.
@@ -417,9 +419,9 @@ For batch version bumps and publishes across all members, install [`cargo-worksp
 
 ## Workflow
 
-1. **Decide project type** — single-crate (Section 8.1) or multi-crate workspace (Section 8.2)? Use the decision tree. When in doubt, start single-crate and graduate to a workspace when a real need appears (independent reuse, version divergence, dep isolation).
-2. **For workspaces: choose a layout** — Pattern A (flat `crates/`) is the default. Use Pattern B (grouped) only if you have 20+ crates. Avoid Pattern D (root package) for new workspaces.
-3. **Decide crate boundaries** — split only when at least one of the five conditions in the decision tree holds. Otherwise, use modules within a single crate (see `rust-module-layout`).
+1. **Decide project type and crate boundaries** — start single-crate; split only for independent reuse/versioning, dependency or target isolation, or a distinct lifecycle. Otherwise use modules.
+2. **Inventory topology signals** — resulting package count, publish units, adapter/plugin families, examples/tests, repository root noise, languages, and compatibility-sensitive existing paths.
+3. **Choose a layout** — small cohesive workspace: root-flat; growing workspace with real families: hybrid/domain-grouped; large or multi-language workspace: contained/grouped. Treat counts as review triggers, not hard thresholds.
 4. **Pin shared metadata and deps at workspace level** — `[workspace.package]`, `[workspace.dependencies]`, `[workspace.lints]`. Members opt in with `.workspace = true`.
 5. **Verify dependency direction** — `cargo tree --invert --package my-core` must show only higher-level crates depending on lower-level ones. No reverse edges, no cycles.
 6. **Select naming conventions** — snake_case crate names, kebab-case in `Cargo.toml` `name`. Use full words; avoid 2-letter abbreviations (see `rust-module-layout`'s naming reference).
@@ -435,7 +437,7 @@ For batch version bumps and publishes across all members, install [`cargo-worksp
 6. Use of the `#[path]` attribute bypasses filesystem conventions — module paths no longer follow default file tree structures after application.
 7. **A virtual manifest cannot contain `[dependencies]` or `[package]`.** If you see `failed to parse manifest at ... missing field package`, you've mixed virtual and root-package syntax. Either remove `[package]` (virtual) or add it (root package) — don't half-do both.
 8. **`cargo build` at a root-package workspace only builds the root.** Use `--workspace` to build everything. With a virtual manifest, `cargo build` already builds all members — fewer surprises.
-9. **`members = ["crates/*"]` globs match one level only.** For `crates/libs/core/`, use `members = ["crates/libs/*"]` (one glob per category) or list paths explicitly.
+9. **Workspace globs match one level only.** `members = ["crates/*"]` does not match `crates/libs/core/`; use `crates/libs/*` or explicit paths. Root-flat members can use explicit names or a carefully scoped glob, but never `members = ["*"]` because it captures non-package directories.
 10. **Workspace-internal `path` deps still need versions for publish.** `my-core = { path = "../core", version = "0.1.0" }` — without `version`, `cargo publish` rejects it. Use `[workspace.dependencies]` to keep the version in one place.
 11. **Bumping a workspace-shared dep requires editing only the root `Cargo.toml`.** Don't re-pin it in member crates — that defeats the purpose and creates drift.
 12. **Renaming a published crate is a breaking change.** Add a deprecated alias crate (`pub use my_new_name::*;`) under the old name for one release cycle before removing it.
@@ -444,7 +446,7 @@ For batch version bumps and publishes across all members, install [`cargo-worksp
 
 - [Layout Examples](examples/examples.md) — basic module layouts
 - [Concept Quick Reference](references/references.md)
-- [Workspace Layouts (4 patterns)](references/workspace-layouts.md) — flat, grouped, nested, root-package; with copy-paste skeletons
+- [Workspace Layouts](references/workspace-layouts.md) — project-sized root-flat, hybrid, contained, nested, and root-package skeletons
 - [Virtual vs Root Manifest](references/virtual-vs-root-manifest.md) — the decision in depth, with command-ergonomics comparison
 - [Mixed Root Package Anti-Pattern](references/mixed-root-package-antipattern.md) — full diagnosis + migration path for rbatis-style layouts
 - [Workspace Dependencies](references/workspace-dependencies.md) — `[workspace.package]` / `[workspace.dependencies]` / `[workspace.lints]` in depth
@@ -452,7 +454,7 @@ For batch version bumps and publishes across all members, install [`cargo-worksp
 - [`sa-token-rs` Case Study](references/sa-token-rs-case-study.md) — real-world 11-crate virtual workspace with 5-layer DAG, full member-by-member breakdown, DAG verification, and publishing implications
 - [Production-grade workspace boundaries](references/production-workspace-boundaries.md): When splitting protocols, domains, platforms, transports, SDKs, adapters, and binaries, read the relevant sections.
 - `examples/golden-layout/`: single-crate CI compilation example
-- `examples/golden-workspace/`: multi-crate virtual workspace example with three crates and a facade
+- `examples/golden-workspace/`: small root-flat virtual workspace example with three crates
 
 ## Official References
 
