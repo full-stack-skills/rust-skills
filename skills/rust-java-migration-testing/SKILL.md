@@ -421,6 +421,7 @@ Report separately:
 ## On-demand resources
 
 - [Migration verification SOP](references/migration-verification-sop.md)
+- [Directory parity verification and post-migration checks](references/directory-parity-verification.md)
 - [Cross-language migration profile](references/cross-language-migration-profile.md)
 - [Test categories](references/test-categories.md)
 - [Test-value rubric](references/test-value-rubric.md)

@@ -231,8 +231,9 @@ Read [Component replacement decision SOP](references/component-replacement-sop.m
 
 ### 6. Complete the declared batch in one semantic implementation pass
 
-Read [Layout and migration rules](references/layout-and-governance.md) and
-[Semantic mappings](references/semantic-mappings.md) before changing code. Then
+Read [Layout and migration rules](references/layout-and-governance.md),
+[Directory path alignment patterns and error catalog](references/directory-path-alignment.md),
+and [Semantic mappings](references/semantic-mappings.md) before changing code. Then
 execute the entire frozen batch without object-level acceptance pauses:
 
 1. Establish the target module tree, shared errors, traits, registries, adapters,
