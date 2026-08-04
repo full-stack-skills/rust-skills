@@ -12,6 +12,41 @@ fixture/data/script byte-for-byte into the target repository, and make both
 implementations produce the same per-case observable result. Build three explicit
 test ledgers in this order:
 
+## ⚠️ 迁移验证规范（必须遵守）
+
+以下规范是从真实大规模迁移项目（EasyExcel 323 个 Java 类）中提炼的强制性验证规则。
+**违反任何一条都会导致虚假完成声明**：
+
+### 目录路径核对（迁移后第一步）
+- **必须运行精确路径核对脚本**验证 Rust 文件路径与 Java 包路径 1:1 对应。
+  脚本见 [Directory parity verification](references/directory-parity-verification.md)。
+- **323/323 = 100% 精确匹配**才算路径完全对齐。任何 `MISPLACED`（文件名匹配
+  但路径不同）都是未完成状态。
+- **xtask migration audit 测试**必须验证 `file-map.csv` 中每条 `rust_file`
+  路径在磁盘上存在——任何缺失即为测试失败。
+
+### 编译错误检测（6 类）
+- **E0583 file not found for module**：搬移后 `mod.rs` 未更新——最常见。
+- **E0761 file for module found at both**：同名 `.rs` + `/mod.rs` 冲突。
+- **E0405 cannot find trait**：文件改名后 glob 重导出断裂。
+- **E0425 cannot find type**：类型搬到新目录但重导出路径未更新。
+- **E0659 ambiguous**：`pub use bigdecimal::BigDecimal` 歧义——用 `::` 前缀。
+- **fixture 路径断裂**：`include_str!` 相对路径失效。
+
+### 回归测试检查清单（8 项逐项验证）
+| # | 检查项 | 通过标准 |
+|---|---|---|
+| 1 | `cargo check --workspace --all-features --all-targets` | 0 error |
+| 2 | `cargo fmt --all -- --check` | 0 diff |
+| 3 | `cargo clippy --workspace --all-features --all-targets -- -D warnings` | 0 warning |
+| 4 | `cargo test --workspace --all-features` | 0 failed |
+| 5 | Golden 测试（Java 语义对拍） | 全部 MATCH |
+| 6 | Python 路径核对脚本 | 100% 精确匹配 |
+| 7 | xtask migration audit | 0 missing |
+| 8 | `cargo llvm-cov --workspace --all-features` | ≥ 95% |
+
+**详细验证方法**见 [Directory parity verification](references/directory-parity-verification.md)。
+
 1. `SOURCE_PARITY` — map every source test/case and every source test asset; no
    missing, blocked, or not-applicable row permits a completion claim.
 2. `RUST_OBLIGATION` — test risks introduced by the Rust implementation and replacement components.

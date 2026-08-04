@@ -7,6 +7,46 @@ description: Plan, execute, audit, and verify behavior-preserving migrations fro
 
 Migrate contracts and observable behavior, not Java syntax. Preserve the Java project's public concepts and source traceability while selecting Rust-native ownership, error, concurrency, async, serialization, and framework mechanisms.
 
+## ⚠️ 迁移规范（必须遵守）
+
+以下规范是从真实大规模迁移项目（EasyExcel 323 个 Java 类）中提炼的强制性规则。
+**违反任何一条都会导致路径漂移、语义丢失或编译错误**：
+
+### 目录结构规范
+- **Rust 目录 = Java 包路径去除顶级包名前缀**。`com.alibaba.excel.analysis.v03`
+  对应 `analysis/v03/`，不是 `core/analysis/v03/` 或扁平的 `analysis_v03/`。
+- **禁止路径扁平化**。Java `metadata/data/CellExtra.java` →
+  `metadata/data/cell_extra.rs`，不能省略 `data/` 子目录。
+- **禁止跨包放置**。Java 在 `context` 包下的文件必须在 Rust `context/` 目录，
+  不能放到 `event/` 或其他功能相近的目录。
+- **禁止双重嵌套**。`write/write/excel_builder.rs` 是错误的——应为
+  `write/excel_builder.rs`。
+- **同名子包不同父包必须保持层级**。`read/metadata/` ≠ `write/metadata/` ≠
+  `metadata/`，各自独立。
+
+### 文件命名规范
+- **文件名 = Java 类名 PascalCase → snake_case**。`XlsListSheetListener.java`
+  → `xls_list_sheet_listener.rs`。
+- **类型名保持 PascalCase 不变**。`XlsListSheetListener` → `XlsListSheetListener`。
+- **禁止加 Rust 特有后缀**。`Converter.java` → `converter.rs`，不能改为
+  `converter_trait.rs`。
+- **camelCase 转换陷阱**：`URLImageConverter` → `url_image_converter`
+  （不是 `u_r_l_image_converter`）。连续大写字母视为一个词。
+
+### 文件内容规范
+- **一个 .rs 文件对应一个 Java 对象**（类/接口/枚举/record）。
+- **`mod.rs` 和 `lib.rs` 只做 mod 声明 + pub use 重导出**，禁止定义类型。
+- **搬移文件后必须更新父目录的 `mod.rs`**——否则 E0583 编译错误。
+- **外部 crate 重导出用 `::` 前缀**避免歧义：`pub use ::bigdecimal::BigDecimal`
+  而非 `pub use bigdecimal::BigDecimal`。
+
+### fixtures 规范
+- **测试数据（.b64/.gz/.json fixtures）不应在 `src/` 目录**。应放在
+  `<project>-test/tests/fixtures/` 下，通过 `include_str!` 相对路径引用。
+
+**详细规则与错误模式**见 [Directory path alignment](references/directory-path-alignment.md)。
+**每次文件搬移后必须运行核对脚本**验证 1:1 路径匹配（脚本在该文档中）。
+
 ## Scope and Routing
 
 Use this skill for full-project migrations, one Maven/Gradle module, parity audits, migration planning, or continuation of an existing Rust port.
