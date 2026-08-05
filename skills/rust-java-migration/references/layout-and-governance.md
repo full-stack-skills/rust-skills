@@ -41,15 +41,22 @@ crate's `src/`**. It does not dictate the workspace member directory.
 - Keep `lib.rs` and `mod.rs` limited to module declarations, visibility, documentation, and re-exports.
 - Keep runtime compatibility facades thin. Put real object behavior in the corresponding object files.
 
-## File-size and test-separation contract
+## File-size and test-organization contract
 
 Count physical lines in every authored `.rs` file, including production,
-integration tests, examples, benches, and test-support code. The hard maximum is
-200 lines per file; generated, vendored, and build-output trees are outside this
-authored-code gate. Do not game the limit by compressing unrelated statements,
-removing useful comments, or moving all behavior into a generic `compat.rs`.
+integration tests, examples, benches, and test-support code. Rust itself defines
+no universal file-length maximum, so use a project guardrail: up to 500 lines is
+normal, 501–800 lines requires a cohesion review, and more than 800 lines blocks
+completion. Generated, vendored, and build-output trees are outside this gate.
+Do not game it by compressing unrelated statements, removing useful comments,
+or moving all behavior into a generic `compat.rs`.
 
-When a migrated Java object needs more than 200 lines, keep its primary type in
+After documenting a 501–800-line file's cohesion review, pass its safe
+repository-relative path through `--reviewed-large-file`. This suppresses only
+that review warning when `--fail-on-warning` is enabled; it cannot exempt a file
+above 800 lines.
+
+When a reviewed object mixes responsibilities, keep its primary type in
 the deterministic `<object>.rs` file and split coherent implementation families
 into subordinate files, for example:
 
@@ -68,12 +75,17 @@ by behavior, protocol, error handling, conversion, or lifecycle—not arbitrary
 line ranges. Keep fields and invariants protected; use child modules or explicit
 private APIs without widening visibility merely to enable the split.
 
-Keep tests physically separate from production logic. Production `src/**/*.rs`
-must not contain `#[cfg(test)] mod tests`, `#[test]` functions, test-only helpers,
-fixtures, or assertions. Put black-box and subsystem tests under `tests/`, with
-shared support under `tests/common/` or a dedicated non-published test/testkit
-crate. Test private behavior through public or `pub(crate)` boundaries chosen for
-the design; do not expose internals solely for a test.
+Enable `clippy::too_many_lines` and treat its default 100-line function/method
+threshold as a review signal, not an automatic demand to fragment cohesive
+algorithms. Refactor when a routine mixes orchestration, conversion, validation,
+I/O, or lifecycle responsibilities.
+
+Follow Rust's test organization. Focused unit tests may live in a
+`#[cfg(test)] mod tests` beside the module so private behavior can be tested
+without widening visibility. Put public-boundary, cross-module, cross-crate,
+differential, host, load, and whole-project tests under `tests/`, with shared
+integration support under `tests/common/mod.rs` or a dedicated non-published
+test/testkit crate. Keep bulky fixtures out of production modules.
 
 ## Execution granularity
 
@@ -211,7 +223,14 @@ Before editing an existing Rust port:
 - source-documented objects, methods, parameters, returns, exceptions, or
   semantic inline comments omitted from Rust;
 - generic filler comments that do not preserve the Java contract.
-- any authored `.rs` file above 200 physical lines;
-- inline tests or test-only helpers inside production `src/` files.
+- any authored `.rs` file above 800 physical lines;
+- any 501–800-line file or 100+-line function with no recorded cohesion review;
+- integration, differential, host, load, or whole-project suites embedded in a production module.
+
+## Upstream Rust guidance
+
+- [Rust Style Guide](https://doc.rust-lang.org/style-guide/) — formatting, including the 100-character line-width convention; it does not define a file-length maximum.
+- [Clippy lint configuration](https://doc.rust-lang.org/clippy/lint_configuration.html#too-many-lines-threshold) — the default `too_many_lines` function/method threshold is 100.
+- [The Rust Book: Test organization](https://doc.rust-lang.org/book/ch11-03-test-organization.html) — unit tests may be colocated under `#[cfg(test)]`; integration tests live in `tests/`.
 
 Treat the static audit script as a detector, then confirm every finding from source and tests.

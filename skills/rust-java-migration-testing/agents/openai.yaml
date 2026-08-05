@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration Testing"
   short_description: "Prove lossless source-test and result parity"
-  default_prompt: "Use $rust-java-migration-testing to migrate every source test and asset without loss, keep each .rs file at 200 lines or fewer, keep tests outside production src, and require complete per-case Java/Rust MATCH evidence."
+  default_prompt: "Use $rust-java-migration-testing to migrate every source test and asset without loss, review .rs files above 500 lines, block those above 800, organize unit and integration tests idiomatically, and require complete per-case Java/Rust MATCH evidence."

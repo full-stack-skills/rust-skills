@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration-testing
-description: Design, implement, audit, and report lossless Java-to-Rust migration tests without promoting green tests into false completion claims. Use when porting 100% of JUnit tests and concrete parameterized/dynamic cases, SHA-256-verifying source fixtures/resources/scripts/data, requiring complete per-case golden or live differential MATCH results, validating object/test ledgers, splitting oversized Rust test files, removing inline tests from production src, adding Rust-specific obligations, comparing coverage, or building property, fuzz, mutation, concurrency, lifecycle, adapter, host, load, security, and rollback evidence. Enforces a 200-line maximum for every authored .rs file and physical production/test separation.
+description: Design, implement, audit, and report lossless Java-to-Rust migration tests without promoting green tests into false completion claims. Use when porting 100% of JUnit tests and concrete parameterized/dynamic cases, SHA-256-verifying source fixtures/resources/scripts/data, requiring complete per-case golden or live differential MATCH results, validating object/test ledgers, reviewing oversized Rust test files, organizing inline unit versus integration tests, adding Rust-specific obligations, comparing coverage, or building property, fuzz, mutation, concurrency, lifecycle, adapter, host, load, security, and rollback evidence. Enforces a 500-line cohesion-review threshold, an 800-line authored-file blocker, and idiomatic Rust test placement.
 ---
 
 # Java-to-Rust Migration Testing
@@ -16,8 +16,8 @@ test ledgers in this order:
 
 - Require exact Java/Rust path parity; every `MISPLACED` or missing `file-map.csv` target blocks completion.
 - Treat E0583/E0761/E0405/E0425/E0659 and broken fixture paths as structural failures after file moves.
-- Keep every authored `.rs` file—including tests, helpers, examples, and benches—at 200 physical lines or fewer; split large test suites by contract or behavior family.
-- Keep production `src/` free of `#[cfg(test)]`, `#[test]`, test-only helpers, fixtures, and assertions. Put them in independent `tests/` files or a non-published test/testkit crate.
+- Treat up to 500 physical lines as normal, review authored `.rs` files from 501–800 lines for cohesion, and block files above 800 lines; split suites by contract or behavior family rather than arbitrary ranges.
+- Allow focused unit tests in `#[cfg(test)]` modules beside their implementation. Put public-boundary, cross-module, differential, host, load, and whole-project tests in `tests/` or a non-published test/testkit crate.
 - Run path audit, fmt, default/all-feature check, Clippy, complete tests, golden/live differential, migration audit, and the project coverage gate without using any one result as parity proof.
 
 Read [Directory parity verification](references/directory-parity-verification.md) and [Migration verification SOP](references/migration-verification-sop.md).
@@ -157,8 +157,9 @@ manifest row, checks target test files, hashes exact asset copies, and refuses a
 completion gate for any object, test, asset, run, or differential gap. Additional
 non-standard asset roots must be passed with repeated
 `--java-test-assets-root`. The script validates recorded preservation evidence;
-it cannot infer semantic mappings or authorize deletion. It also blocks files
-over 200 physical lines and test code found in production `src/`.
+it cannot infer semantic mappings or authorize deletion. It warns on authored
+files above 500 physical lines and blocks those above 800; inline unit tests are
+valid Rust organization and are not reported as structural violations.
 
 ### 3. Implement the `SOURCE_PARITY` ledger
 
@@ -218,10 +219,12 @@ object. A test that reaches a re-export, compatibility facade, or merged type
 does not cure `MISPLACED`/`MISSING`. Tests validate semantics only after the
 layout and object boundary are factually present.
 
-Keep each test `.rs` file at 200 physical lines or fewer. Split by contract,
-behavior family, fixture family, adapter, or verification layer while preserving
-every source case ID and assertion. Shared test support belongs in
-`tests/common/` or a dedicated testkit crate, never in production `src/`.
+Treat 500 physical lines as the suite-cohesion review threshold and 800 as the
+authored-file blocker. Split by contract, behavior family, fixture family,
+adapter, or verification layer while preserving every source case ID and
+assertion. Keep compact private-behavior unit tests in `#[cfg(test)]` modules;
+put reusable integration support in `tests/common/` or a dedicated testkit crate.
+Enable `clippy::too_many_lines` to review functions over its 100-line default.
 
 ### 4. Implement the `RUST_OBLIGATION` ledger
 
@@ -413,8 +416,9 @@ Report separately:
 - Do not hardcode `<project>-test` under `crates/` or at repository root without
   checking the migration roadmap's project-driven workspace topology.
 - Do not write tests solely to increase coverage or file count.
-- Do not keep any authored `.rs` file above 200 physical lines or compress code to evade the limit.
-- Do not place tests or test-only helpers in production `src/`; keep test code in independent `tests/` files or test/testkit crates.
+- Do not keep an authored `.rs` file above 800 physical lines; review every file above 500 and split weakly cohesive suites.
+- Do not compress code, remove useful comments, or split arbitrary line ranges to evade a size gate.
+- Do not place integration, differential, host, load, or whole-project suites in production modules; focused inline unit tests remain valid.
 - Do not call parse success semantic equivalence.
 - Do not accept generic `is_err()` when the error contract is observable.
 - Do not auto-delete tests from names, body length, or heuristics.
@@ -471,7 +475,8 @@ Report separately:
 - Every high-risk contract has an oracle, evidence label, and result.
 - Applicable Rust ownership, async, error, serialization, feature, adapter, and unsafe obligations are tested.
 - Added tests name a distinct risk or plausible defect.
-- Every authored `.rs` file is at most 200 physical lines, test suites are split by coherent contract, and production `src/` contains no test code.
+- Every authored `.rs` file is at most 800 physical lines; files above 500 and functions above the Clippy 100-line signal have recorded cohesion reviews.
+- Focused unit tests may be colocated in `#[cfg(test)]` modules; integration, differential, host, load, and whole-project suites live under `tests/` or a non-published test package.
 - Coverage scopes are comparable and any numeric gate is reported as a signal, not parity proof.
 - Stubs, warnings, flaky/skipped tests, missing platforms, real-host gaps, and unverified boundaries remain visible.
 - A module completion claim is emitted only when its object ledger, source-test

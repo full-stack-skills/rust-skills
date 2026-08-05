@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to project-shaped Rust Cargo workspaces, including derived crate boundaries, scale-appropriate topology, 100% lossless source-test/case migration, byte-identical test assets, and complete per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, runtime-behavior, oversized Rust-file, or inline-test level; producing migration documents; continuing an incomplete port; or repairing workspace drift. Enforces source-authoritative inventories, Rust-native APIs, a 200-line maximum for every authored .rs file, physical production/test separation, strict non-completion states, frozen baselines, and unified verification.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to project-shaped Rust Cargo workspaces, including derived crate boundaries, scale-appropriate topology, 100% lossless source-test/case migration, byte-identical test assets, and complete per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, runtime-behavior, oversized Rust-file, or test-organization level; producing migration documents; continuing an incomplete port; or repairing workspace drift. Enforces source-authoritative inventories, Rust-native APIs, a 500-line cohesion-review threshold and 800-line authored-file blocker, idiomatic unit/integration test placement, strict non-completion states, frozen baselines, and unified verification.
 ---
 
 # Java to Rust Migration
@@ -11,10 +11,10 @@ Migrate contracts and observable behavior, not Java syntax. Preserve the Java pr
 
 - Derive the Rust directory from the Java package after the declared package root; preserve meaningful nested packages and never flatten, cross-place, or double-nest them.
 - Convert the Java object name to acronym-aware `snake_case.rs`; keep the Rust type in `PascalCase` and do not add suffixes such as `_trait`.
-- Keep one Java object as one Rust object boundary. Every authored `.rs` file, including tests, examples, and benches, must contain at most 200 physical lines.
-- When one object exceeds 200 lines, retain one primary object file and split its implementation by responsibility into subordinate files that contain no second migrated object. Record the split in the object and name-consistency documents.
+- Keep one Java object as one Rust object boundary. Rust defines no universal file-length limit: treat up to 500 physical lines as normal, review 501–800 lines for cohesion, and block authored `.rs` files above 800 lines.
+- Split only when a file mixes responsibilities. Retain one primary object file and use subordinate files for coherent implementation families without introducing a second migrated object; record every split or reviewed exception.
 - Keep `lib.rs` and `mod.rs` to declarations and re-exports. Update parent modules after moves and qualify ambiguous external re-exports with `::`.
-- Keep all test functions, test-only helpers, and fixtures outside production `src/`; put Rust tests under a separate `tests/` tree and source fixtures under `<project>-test/tests/fixtures/`.
+- Keep focused private-behavior unit tests in `#[cfg(test)]` modules when useful. Put public-boundary, cross-module, differential, host, and whole-project tests under `tests/` or a non-published `<project>-test` package; keep source fixtures under `<project>-test/tests/fixtures/`.
 
 Read [Directory path alignment](references/directory-path-alignment.md) and [Layout and governance](references/layout-and-governance.md), then run the layout audit after moves.
 
@@ -112,8 +112,10 @@ python3 "$SKILL_DIR/scripts/audit_migration_layout.py" \
 The script calculates expected paths and distinguishes missing from misplaced
 objects. It also detects non-snake-case paths, multi-object files, facade
 definitions, wildcard imports, stub macros/panics, empty function bodies, and
-missing Chinese source comments. Any strict blocker keeps migration completion
-blocked; a clean scan still does not prove Java/Rust semantic parity.
+missing Chinese source comments. Record an approved 501–800-line cohesion review
+with repeated `--reviewed-large-file path/to/file.rs`; this never exempts a file
+above 800 lines. Any strict blocker keeps migration completion blocked; a clean
+scan still does not prove Java/Rust semantic parity.
 
 ### 3. Create four documents for every source module
 
@@ -292,8 +294,9 @@ not optional cleanup.
   `propertyeditors/PatternEditor.java` → `propertyeditors/pattern_editor.rs`.
 - Keep `lib.rs` and `mod.rs` as declarations and re-exports only.
 - Keep one Java class/interface/enum/record per Rust file; an inner builder tightly owned by the primary type may remain with it.
-- Keep every `.rs` file at 200 physical lines or fewer. Split an oversized object into one primary file plus responsibility-focused subordinate implementation files; no split file may introduce another migrated object.
-- Keep production logic in `src/` and all test functions, test-only helpers, fixtures, and assertions in separate `tests/` files. Do not use inline `#[cfg(test)] mod tests` in production files.
+- Treat 500 physical lines as a cohesion-review threshold and 800 as the authored-file blocker. Split by responsibility rather than line ranges; no subordinate file may introduce another migrated object.
+- Enable `clippy::too_many_lines` as a function/method review signal at its 100-line default; refactor long routines when they combine distinct responsibilities.
+- Use Rust's idiomatic test organization: colocate focused unit tests in `#[cfg(test)]` modules, and place public-boundary, cross-module, differential, host, and whole-project tests in `tests/` or a test/testkit package.
 - Record every intentional rename in both object and name-consistency documents.
 
 Rust has no method overloading. Keep one canonical snake_case name only when the signatures have one semantic operation. Give additional variants stable semantic suffixes such as `_with_charset`, `_into`, or `_from_reader`; record the exact Java signature mapped to each Rust function. Never collapse overloads that differ in defaults, validation, side effects, or error behavior.
@@ -428,8 +431,9 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - Do not delete or simplify working migrated behavior to make counts align.
 - Do not use wildcard imports in production migration code.
 - Do not silently merge several Java objects into one Rust file.
-- Do not keep any authored `.rs` file above 200 physical lines; split by responsibility before completion.
-- Do not place `#[cfg(test)]` modules, `#[test]` functions, test-only helpers, fixtures, or assertions in production `src/` files.
+- Do not keep an authored `.rs` file above 800 physical lines; review every file above 500 and split it when cohesion is weak.
+- Do not mechanically compress code, remove useful comments, or split arbitrary line ranges merely to satisfy a size gate.
+- Do not embed integration, differential, host, load, or whole-project acceptance suites in production modules; inline `#[cfg(test)]` unit tests remain valid for focused module-private behavior.
 - Do not replace overloaded behavior with one lossy convenience function.
 - Do not create `get_*` methods solely to mirror JavaBean spelling when an idiomatic Rust method plus an explicit compatibility adapter preserves the contract.
 - Do not treat an idiomatic Rust getter/setter as sufficient when scripts or dynamic member access still require Java field/getter/setter resolution.
@@ -472,7 +476,8 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - `<project>-test` is a workspace member at the selected path with `publish = false` and owns the full source-suite/differential command and artifact.
 - Complete Java/Rust suites pass and full per-case differential is 100% `MATCH`, with no harness failure or not-run case.
 - Every dependency reuse, platform exclusion, blocker, exception, and Rust extension has precise evidence and honest denominator treatment.
-- Every authored `.rs` file is at most 200 physical lines; oversized objects are split without mixing Java object boundaries, and production `src/` contains no test code.
+- Every authored `.rs` file is at most 800 physical lines; files above 500 and functions above the Clippy 100-line signal have recorded cohesion reviews, and any split preserves Java object boundaries.
+- Unit tests are colocated only when they exercise focused module behavior; integration, differential, host, load, and whole-project suites live under `tests/` or the non-published test package.
 - Production Rust files satisfy layout, documentation, import, and no-stub rules.
 - Every source-documented object, member, parameter, return, exception, metadata tag, and semantic inline comment has a traceable Rust counterpart.
 - The complete declared batch was implemented before any acceptance gate ran.

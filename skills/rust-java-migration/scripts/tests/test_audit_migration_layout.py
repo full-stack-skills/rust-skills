@@ -116,7 +116,7 @@ class LayoutAuditTest(unittest.TestCase):
             self.assertIn("stub_logic", result.stdout)
             self.assertIn("migration_completion_blocked=true", result.stdout)
 
-    def test_oversized_files_and_inline_tests_block_completion(self) -> None:
+    def test_file_size_uses_soft_and_hard_thresholds(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             rust_root = Path(temporary) / "crate"
             source = rust_root / "src"
@@ -124,22 +124,71 @@ class LayoutAuditTest(unittest.TestCase):
             source.mkdir(parents=True)
             integration.mkdir(parents=True)
             (source / "service.rs").write_text(
-                "pub struct Service;\n#[cfg(test)]\nmod tests {}\n",
+                "pub struct Service;\n#[cfg(test)]\nmod tests { #[test] fn works() {} }\n",
                 encoding="utf-8",
             )
-            (integration / "oversized.rs").write_text(
-                "\n".join(f"// line {index}" for index in range(201)) + "\n",
+            (integration / "review.rs").write_text(
+                "\n".join(f"// line {index}" for index in range(501)) + "\n",
                 encoding="utf-8",
             )
-            result = subprocess.run(
+            review_result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--rust-root", str(rust_root)],
                 check=False,
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(result.returncode, 1)
-            self.assertIn("test_code_in_production_source", result.stdout)
-            self.assertIn("rust_file_over_200_lines", result.stdout)
+            self.assertEqual(review_result.returncode, 0, review_result.stdout)
+            self.assertIn("rust_file_over_500_lines", review_result.stdout)
+            self.assertNotIn("test_code_in_production_source", review_result.stdout)
+
+            unreviewed_strict_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--rust-root",
+                    str(rust_root),
+                    "--fail-on-warning",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(unreviewed_strict_result.returncode, 1)
+
+            strict_review_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--rust-root",
+                    str(rust_root),
+                    "--fail-on-warning",
+                    "--reviewed-large-file",
+                    "tests/review.rs",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(
+                strict_review_result.returncode,
+                0,
+                strict_review_result.stdout,
+            )
+            self.assertIn("allowed: tests/review.rs", strict_review_result.stdout)
+
+            (integration / "blocked.rs").write_text(
+                "\n".join(f"// line {index}" for index in range(801)) + "\n",
+                encoding="utf-8",
+            )
+            blocked_result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--rust-root", str(rust_root)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(blocked_result.returncode, 1)
+            self.assertIn("rust_file_over_800_lines", blocked_result.stdout)
+            self.assertIn("migration_completion_blocked=true", blocked_result.stdout)
 
 
 if __name__ == "__main__":

@@ -103,11 +103,8 @@ DEFAULT_TEST_ASSET_MARKERS = (
     ("test", "resources"),
     ("tests", "resources"),
 )
-MAX_RUST_FILE_LINES = 200
-RUST_TEST_CODE_ATTRIBUTE = re.compile(
-    r"#\s*\[\s*(?:cfg\s*\(\s*test\s*\)|"
-    r"(?:tokio::|async_std::|actix_web::)?test(?:\s*\([^]]*\))?)\s*\]"
-)
+SOFT_RUST_FILE_LINES = 500
+HARD_RUST_FILE_LINES = 800
 
 
 @dataclass
@@ -161,28 +158,39 @@ def source_files(root: Path, suffix: str) -> Iterable[Path]:
     """Yield source files deterministically while excluding build outputs."""
     for path in sorted(root.rglob(f"*{suffix}")):
         parts = set(path.parts)
-        if parts.intersection({"target", "build", ".gradle", ".git", ".codegraph"}):
+        if parts.intersection(
+            {"target", "build", "vendor", "generated", ".gradle", ".git", ".codegraph"}
+        ):
             continue
         yield path
 
 
 def rust_layout_errors(rust_root: Path) -> list[str]:
-    """Return strict size and production/test separation violations."""
+    """Return hard authored-file size violations."""
     errors: list[str] = []
     for path in source_files(rust_root, ".rs"):
         text = path.read_text(encoding="utf-8", errors="replace")
         location = relative(path, rust_root)
         line_count = len(text.splitlines())
-        if line_count > MAX_RUST_FILE_LINES:
+        if line_count > HARD_RUST_FILE_LINES:
             errors.append(
-                f"{location}: Rust source has {line_count} lines; maximum is 200"
-            )
-        relative_parts = path.relative_to(rust_root).parts
-        if "src" in relative_parts and RUST_TEST_CODE_ATTRIBUTE.search(text):
-            errors.append(
-                f"{location}: test code must be moved from src/ to a separate tests/ tree"
+                f"{location}: Rust source has {line_count} lines; hard maximum is 800"
             )
     return errors
+
+
+def rust_layout_warnings(rust_root: Path) -> list[str]:
+    """Return files that need a cohesion review before completion."""
+    warnings: list[str] = []
+    for path in source_files(rust_root, ".rs"):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        line_count = len(text.splitlines())
+        if SOFT_RUST_FILE_LINES < line_count <= HARD_RUST_FILE_LINES:
+            warnings.append(
+                f"{relative(path, rust_root)}: Rust source has {line_count} lines; "
+                "review cohesion and split only when responsibilities are mixed"
+            )
+    return warnings
 
 
 def sha256_file(path: Path) -> str:
@@ -1011,6 +1019,7 @@ def main() -> None:
         java_assets,
     )
     parity.errors.extend(rust_layout_errors(args.rust_root))
+    parity.warnings.extend(rust_layout_warnings(args.rust_root))
     ledger: ObjectLedgerSummary | None = None
     if args.object_ledger is not None:
         if not args.object_ledger.is_file():
