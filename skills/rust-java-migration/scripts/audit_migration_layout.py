@@ -20,6 +20,8 @@ SKIP_PARTS = {
     "examples",
     "benches",
 }
+BUILD_OUTPUT_PARTS = {".git", "target", "vendor", "generated"}
+MAX_RUST_FILE_LINES = 200
 WILDCARD_IMPORT = re.compile(r"^\s*(?:pub\s+)?use\s+[^;]*::\*\s*;", re.MULTILINE)
 STUB_MACRO = re.compile(r"\b(todo|unimplemented)!\s*\(")
 STUB_PANIC = re.compile(
@@ -48,6 +50,10 @@ PUBLIC_TYPE_DEFINITION = re.compile(
     re.MULTILINE,
 )
 CHINESE = re.compile(r"[\u3400-\u9fff]")
+TEST_CODE_ATTRIBUTE = re.compile(
+    r"#\s*\[\s*(?:cfg\s*\(\s*test\s*\)|"
+    r"(?:tokio::|async_std::|actix_web::)?test(?:\s*\([^]]*\))?)\s*\]"
+)
 
 
 @dataclass(frozen=True)
@@ -126,6 +132,47 @@ def rust_files(root: Path) -> list[Path]:
             continue
         files.append(path)
     return sorted(files)
+
+
+def all_rust_files(root: Path) -> list[Path]:
+    """Return authored Rust files, including tests, examples, and benches."""
+    return sorted(
+        path
+        for path in root.rglob("*.rs")
+        if not set(path.relative_to(root).parts).intersection(BUILD_OUTPUT_PARTS)
+    )
+
+
+def audit_global_file_constraints(root: Path, path: Path) -> list[Finding]:
+    """Enforce the cross-cutting file-size and test-separation rules."""
+    relative = path.relative_to(root)
+    relative_text = relative.as_posix()
+    text = path.read_text(encoding="utf-8")
+    findings: list[Finding] = []
+    line_count = len(text.splitlines())
+    if line_count > MAX_RUST_FILE_LINES:
+        findings.append(
+            Finding(
+                "error",
+                "rust_file_over_200_lines",
+                relative_text,
+                MAX_RUST_FILE_LINES + 1,
+                f"Rust source has {line_count} lines; split it to at most 200 lines per .rs file",
+            )
+        )
+    if "src" in relative.parts:
+        match = TEST_CODE_ATTRIBUTE.search(text)
+        if match is not None:
+            findings.append(
+                Finding(
+                    "error",
+                    "test_code_in_production_source",
+                    relative_text,
+                    line_number(text, match.start()),
+                    "test code must live in a separate tests/ tree, not a production src/ file",
+                )
+            )
+    return findings
 
 
 def java_object_files(root: Path) -> list[Path]:
@@ -328,8 +375,22 @@ def main() -> int:
             )
             return 2
 
+    authored_files = all_rust_files(root)
     files = rust_files(root)
     findings: list[Finding] = []
+    for path in authored_files:
+        try:
+            findings.extend(audit_global_file_constraints(root, path))
+        except UnicodeDecodeError:
+            findings.append(
+                Finding(
+                    "error",
+                    "invalid_utf8",
+                    path.relative_to(root).as_posix(),
+                    1,
+                    "Rust source is not valid UTF-8",
+                )
+            )
     for path in files:
         try:
             findings.extend(
@@ -400,11 +461,13 @@ def main() -> int:
         "wildcard_import",
         "non_snake_case_directory",
         "non_snake_case_file",
+        "rust_file_over_200_lines",
+        "test_code_in_production_source",
     }
     strict_blockers = [item for item in findings if item.rule in strict_blocker_rules]
     summary = {
         "root": str(root),
-        "files_scanned": len(files),
+        "files_scanned": len(authored_files),
         "java_package_root": str(java_package_root) if java_package_root else None,
         "java_objects_scanned": len(java_files),
         "retain_segments": args.retain_segments,
@@ -422,7 +485,7 @@ def main() -> int:
         print(json.dumps(summary, ensure_ascii=False, indent=2))
     else:
         print(
-            f"scanned={len(files)} errors={len(errors)} warnings={len(warnings)} "
+            f"scanned={len(authored_files)} errors={len(errors)} warnings={len(warnings)} "
             f"acknowledged={summary['allowed_findings']} "
             f"strict_blockers={len(strict_blockers)} "
             f"migration_completion_blocked={str(bool(strict_blockers)).lower()} "

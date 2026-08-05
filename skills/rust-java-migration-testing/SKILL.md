@@ -1,6 +1,6 @@
 ---
 name: rust-java-migration-testing
-description: Design, implement, audit, and report lossless Java-to-Rust migration tests without promoting green tests into false completion claims. Use when porting 100% of JUnit tests and concrete parameterized/dynamic cases to Rust, copying and SHA-256-verifying every source fixture/resource/script/data file, requiring complete Java/Rust per-case golden or live differential MATCH results, validating object and source-test ledgers, adding Rust-specific obligations, comparing coverage without gaming, or building property, fuzz, mutation, concurrency, lifecycle, adapter, host, load, security, and rollback evidence. Keeps every object, source-test, asset, harness, mismatch, or not-run gap incomplete even when Cargo tests pass.
+description: Design, implement, audit, and report lossless Java-to-Rust migration tests without promoting green tests into false completion claims. Use when porting 100% of JUnit tests and concrete parameterized/dynamic cases, SHA-256-verifying source fixtures/resources/scripts/data, requiring complete per-case golden or live differential MATCH results, validating object/test ledgers, splitting oversized Rust test files, removing inline tests from production src, adding Rust-specific obligations, comparing coverage, or building property, fuzz, mutation, concurrency, lifecycle, adapter, host, load, security, and rollback evidence. Enforces a 200-line maximum for every authored .rs file and physical production/test separation.
 ---
 
 # Java-to-Rust Migration Testing
@@ -12,40 +12,15 @@ fixture/data/script byte-for-byte into the target repository, and make both
 implementations produce the same per-case observable result. Build three explicit
 test ledgers in this order:
 
-## ⚠️ 迁移验证规范（必须遵守）
+## Mandatory verification structure
 
-以下规范是从真实大规模迁移项目（EasyExcel 323 个 Java 类）中提炼的强制性验证规则。
-**违反任何一条都会导致虚假完成声明**：
+- Require exact Java/Rust path parity; every `MISPLACED` or missing `file-map.csv` target blocks completion.
+- Treat E0583/E0761/E0405/E0425/E0659 and broken fixture paths as structural failures after file moves.
+- Keep every authored `.rs` file—including tests, helpers, examples, and benches—at 200 physical lines or fewer; split large test suites by contract or behavior family.
+- Keep production `src/` free of `#[cfg(test)]`, `#[test]`, test-only helpers, fixtures, and assertions. Put them in independent `tests/` files or a non-published test/testkit crate.
+- Run path audit, fmt, default/all-feature check, Clippy, complete tests, golden/live differential, migration audit, and the project coverage gate without using any one result as parity proof.
 
-### 目录路径核对（迁移后第一步）
-- **必须运行精确路径核对脚本**验证 Rust 文件路径与 Java 包路径 1:1 对应。
-  脚本见 [Directory parity verification](references/directory-parity-verification.md)。
-- **323/323 = 100% 精确匹配**才算路径完全对齐。任何 `MISPLACED`（文件名匹配
-  但路径不同）都是未完成状态。
-- **xtask migration audit 测试**必须验证 `file-map.csv` 中每条 `rust_file`
-  路径在磁盘上存在——任何缺失即为测试失败。
-
-### 编译错误检测（6 类）
-- **E0583 file not found for module**：搬移后 `mod.rs` 未更新——最常见。
-- **E0761 file for module found at both**：同名 `.rs` + `/mod.rs` 冲突。
-- **E0405 cannot find trait**：文件改名后 glob 重导出断裂。
-- **E0425 cannot find type**：类型搬到新目录但重导出路径未更新。
-- **E0659 ambiguous**：`pub use bigdecimal::BigDecimal` 歧义——用 `::` 前缀。
-- **fixture 路径断裂**：`include_str!` 相对路径失效。
-
-### 回归测试检查清单（8 项逐项验证）
-| # | 检查项 | 通过标准 |
-|---|---|---|
-| 1 | `cargo check --workspace --all-features --all-targets` | 0 error |
-| 2 | `cargo fmt --all -- --check` | 0 diff |
-| 3 | `cargo clippy --workspace --all-features --all-targets -- -D warnings` | 0 warning |
-| 4 | `cargo test --workspace --all-features` | 0 failed |
-| 5 | Golden 测试（Java 语义对拍） | 全部 MATCH |
-| 6 | Python 路径核对脚本 | 100% 精确匹配 |
-| 7 | xtask migration audit | 0 missing |
-| 8 | `cargo llvm-cov --workspace --all-features` | ≥ 95% |
-
-**详细验证方法**见 [Directory parity verification](references/directory-parity-verification.md)。
+Read [Directory parity verification](references/directory-parity-verification.md) and [Migration verification SOP](references/migration-verification-sop.md).
 
 1. `SOURCE_PARITY` — map every source test/case and every source test asset; no
    missing, blocked, or not-applicable row permits a completion claim.
@@ -182,7 +157,8 @@ manifest row, checks target test files, hashes exact asset copies, and refuses a
 completion gate for any object, test, asset, run, or differential gap. Additional
 non-standard asset roots must be passed with repeated
 `--java-test-assets-root`. The script validates recorded preservation evidence;
-it cannot infer semantic mappings or authorize deletion.
+it cannot infer semantic mappings or authorize deletion. It also blocks files
+over 200 physical lines and test code found in production `src/`.
 
 ### 3. Implement the `SOURCE_PARITY` ledger
 
@@ -241,6 +217,11 @@ Do not use one test per object as a substitute for one real file per source
 object. A test that reaches a re-export, compatibility facade, or merged type
 does not cure `MISPLACED`/`MISSING`. Tests validate semantics only after the
 layout and object boundary are factually present.
+
+Keep each test `.rs` file at 200 physical lines or fewer. Split by contract,
+behavior family, fixture family, adapter, or verification layer while preserving
+every source case ID and assertion. Shared test support belongs in
+`tests/common/` or a dedicated testkit crate, never in production `src/`.
 
 ### 4. Implement the `RUST_OBLIGATION` ledger
 
@@ -432,6 +413,8 @@ Report separately:
 - Do not hardcode `<project>-test` under `crates/` or at repository root without
   checking the migration roadmap's project-driven workspace topology.
 - Do not write tests solely to increase coverage or file count.
+- Do not keep any authored `.rs` file above 200 physical lines or compress code to evade the limit.
+- Do not place tests or test-only helpers in production `src/`; keep test code in independent `tests/` files or test/testkit crates.
 - Do not call parse success semantic equivalence.
 - Do not accept generic `is_err()` when the error contract is observable.
 - Do not auto-delete tests from names, body length, or heuristics.
@@ -488,6 +471,7 @@ Report separately:
 - Every high-risk contract has an oracle, evidence label, and result.
 - Applicable Rust ownership, async, error, serialization, feature, adapter, and unsafe obligations are tested.
 - Added tests name a distinct risk or plausible defect.
+- Every authored `.rs` file is at most 200 physical lines, test suites are split by coherent contract, and production `src/` contains no test code.
 - Coverage scopes are comparable and any numeric gate is reported as a signal, not parity proof.
 - Stubs, warnings, flaky/skipped tests, missing platforms, real-host gaps, and unverified boundaries remain visible.
 - A module completion claim is emitted only when its object ledger, source-test

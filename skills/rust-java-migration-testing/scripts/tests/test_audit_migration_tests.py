@@ -374,6 +374,24 @@ fn returns_value() {
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Source-test and asset parity manifest passed", result.stdout)
 
+    def test_rust_file_size_and_test_separation_are_strict(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            rust_root = Path(temporary) / "rust"
+            (rust_root / "src").mkdir(parents=True)
+            (rust_root / "tests").mkdir(parents=True)
+            (rust_root / "src/lib.rs").write_text(
+                "pub fn value() -> usize { 1 }\n#[cfg(test)]\nmod tests {}\n",
+                encoding="utf-8",
+            )
+            (rust_root / "tests/large.rs").write_text(
+                "\n".join(f"// line {index}" for index in range(201)) + "\n",
+                encoding="utf-8",
+            )
+            errors = AUDIT.rust_layout_errors(rust_root)
+
+        self.assertTrue(any("maximum is 200" in error for error in errors))
+        self.assertTrue(any("moved from src/" in error for error in errors))
+
 
 if __name__ == "__main__":
     unittest.main()

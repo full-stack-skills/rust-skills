@@ -1,51 +1,22 @@
 ---
 name: rust-java-migration
-description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to project-shaped Rust Cargo workspaces, including derived crate boundaries, scale-appropriate root-flat/hybrid/grouped topology, 100% lossless source-test/case migration, byte-identical copied test assets, and complete Java/Rust per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, or runtime-behavior level; selecting dependencies; producing migration documents; continuing an incomplete port; or repairing workspace drift. Enforces source-authoritative inventories, Rust-native APIs with explicit compatibility adapters, strict non-completion states, frozen baselines, and unified verification.
+description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to project-shaped Rust Cargo workspaces, including derived crate boundaries, scale-appropriate topology, 100% lossless source-test/case migration, byte-identical test assets, and complete per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, runtime-behavior, oversized Rust-file, or inline-test level; producing migration documents; continuing an incomplete port; or repairing workspace drift. Enforces source-authoritative inventories, Rust-native APIs, a 200-line maximum for every authored .rs file, physical production/test separation, strict non-completion states, frozen baselines, and unified verification.
 ---
 
 # Java to Rust Migration
 
 Migrate contracts and observable behavior, not Java syntax. Preserve the Java project's public concepts and source traceability while selecting Rust-native ownership, error, concurrency, async, serialization, and framework mechanisms.
 
-## ⚠️ 迁移规范（必须遵守）
+## Mandatory migration layout
 
-以下规范是从真实大规模迁移项目（EasyExcel 323 个 Java 类）中提炼的强制性规则。
-**违反任何一条都会导致路径漂移、语义丢失或编译错误**：
+- Derive the Rust directory from the Java package after the declared package root; preserve meaningful nested packages and never flatten, cross-place, or double-nest them.
+- Convert the Java object name to acronym-aware `snake_case.rs`; keep the Rust type in `PascalCase` and do not add suffixes such as `_trait`.
+- Keep one Java object as one Rust object boundary. Every authored `.rs` file, including tests, examples, and benches, must contain at most 200 physical lines.
+- When one object exceeds 200 lines, retain one primary object file and split its implementation by responsibility into subordinate files that contain no second migrated object. Record the split in the object and name-consistency documents.
+- Keep `lib.rs` and `mod.rs` to declarations and re-exports. Update parent modules after moves and qualify ambiguous external re-exports with `::`.
+- Keep all test functions, test-only helpers, and fixtures outside production `src/`; put Rust tests under a separate `tests/` tree and source fixtures under `<project>-test/tests/fixtures/`.
 
-### 目录结构规范
-- **Rust 目录 = Java 包路径去除顶级包名前缀**。`com.alibaba.excel.analysis.v03`
-  对应 `analysis/v03/`，不是 `core/analysis/v03/` 或扁平的 `analysis_v03/`。
-- **禁止路径扁平化**。Java `metadata/data/CellExtra.java` →
-  `metadata/data/cell_extra.rs`，不能省略 `data/` 子目录。
-- **禁止跨包放置**。Java 在 `context` 包下的文件必须在 Rust `context/` 目录，
-  不能放到 `event/` 或其他功能相近的目录。
-- **禁止双重嵌套**。`write/write/excel_builder.rs` 是错误的——应为
-  `write/excel_builder.rs`。
-- **同名子包不同父包必须保持层级**。`read/metadata/` ≠ `write/metadata/` ≠
-  `metadata/`，各自独立。
-
-### 文件命名规范
-- **文件名 = Java 类名 PascalCase → snake_case**。`XlsListSheetListener.java`
-  → `xls_list_sheet_listener.rs`。
-- **类型名保持 PascalCase 不变**。`XlsListSheetListener` → `XlsListSheetListener`。
-- **禁止加 Rust 特有后缀**。`Converter.java` → `converter.rs`，不能改为
-  `converter_trait.rs`。
-- **camelCase 转换陷阱**：`URLImageConverter` → `url_image_converter`
-  （不是 `u_r_l_image_converter`）。连续大写字母视为一个词。
-
-### 文件内容规范
-- **一个 .rs 文件对应一个 Java 对象**（类/接口/枚举/record）。
-- **`mod.rs` 和 `lib.rs` 只做 mod 声明 + pub use 重导出**，禁止定义类型。
-- **搬移文件后必须更新父目录的 `mod.rs`**——否则 E0583 编译错误。
-- **外部 crate 重导出用 `::` 前缀**避免歧义：`pub use ::bigdecimal::BigDecimal`
-  而非 `pub use bigdecimal::BigDecimal`。
-
-### fixtures 规范
-- **测试数据（.b64/.gz/.json fixtures）不应在 `src/` 目录**。应放在
-  `<project>-test/tests/fixtures/` 下，通过 `include_str!` 相对路径引用。
-
-**详细规则与错误模式**见 [Directory path alignment](references/directory-path-alignment.md)。
-**每次文件搬移后必须运行核对脚本**验证 1:1 路径匹配（脚本在该文档中）。
+Read [Directory path alignment](references/directory-path-alignment.md) and [Layout and governance](references/layout-and-governance.md), then run the layout audit after moves.
 
 ## Scope and Routing
 
@@ -321,6 +292,8 @@ not optional cleanup.
   `propertyeditors/PatternEditor.java` → `propertyeditors/pattern_editor.rs`.
 - Keep `lib.rs` and `mod.rs` as declarations and re-exports only.
 - Keep one Java class/interface/enum/record per Rust file; an inner builder tightly owned by the primary type may remain with it.
+- Keep every `.rs` file at 200 physical lines or fewer. Split an oversized object into one primary file plus responsibility-focused subordinate implementation files; no split file may introduce another migrated object.
+- Keep production logic in `src/` and all test functions, test-only helpers, fixtures, and assertions in separate `tests/` files. Do not use inline `#[cfg(test)] mod tests` in production files.
 - Record every intentional rename in both object and name-consistency documents.
 
 Rust has no method overloading. Keep one canonical snake_case name only when the signatures have one semantic operation. Give additional variants stable semantic suffixes such as `_with_charset`, `_into`, or `_from_reader`; record the exact Java signature mapped to each Rust function. Never collapse overloads that differ in defaults, validation, side effects, or error behavior.
@@ -455,58 +428,35 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 - Do not delete or simplify working migrated behavior to make counts align.
 - Do not use wildcard imports in production migration code.
 - Do not silently merge several Java objects into one Rust file.
+- Do not keep any authored `.rs` file above 200 physical lines; split by responsibility before completion.
+- Do not place `#[cfg(test)]` modules, `#[test]` functions, test-only helpers, fixtures, or assertions in production `src/` files.
 - Do not replace overloaded behavior with one lossy convenience function.
-- Do not create `get_*` methods solely to mirror JavaBean spelling when an
-  idiomatic Rust method plus an explicit compatibility adapter preserves the
-  contract.
-- Do not treat an idiomatic Rust getter/setter as sufficient when scripts or
-  dynamic member access still require Java field/getter/setter resolution.
+- Do not create `get_*` methods solely to mirror JavaBean spelling when an idiomatic Rust method plus an explicit compatibility adapter preserves the contract.
+- Do not treat an idiomatic Rust getter/setter as sufficient when scripts or dynamic member access still require Java field/getter/setter resolution.
 - Do not call a declared dependency, successful compile, or isolated POC a verified component replacement.
-- Do not use a replacement dependency's package/file layout as the target object
-  inventory; source Java objects and the deterministic path rule remain authoritative.
-- Do not mark a semantically similar dependency as `DEPENDENCY_REUSED` without
-  pinned crate/commit, exact source symbol, adapter evidence, and local integration tests.
-- Do not use `PLATFORM_NA` for work that is merely difficult or missing; require
-  JVM/bytecode/class-loader/platform-specific evidence.
+- Do not use a replacement dependency's package/file layout as the target object inventory; source Java objects and the deterministic path rule remain authoritative.
+- Do not mark a semantically similar dependency as `DEPENDENCY_REUSED` without pinned crate/commit, exact source symbol, adapter evidence, and local integration tests.
+- Do not use `PLATFORM_NA` for work that is merely difficult or missing; require JVM/bytecode/class-loader/platform-specific evidence.
 - Do not promote a component copied from a research list or local convention document to “selected” without current hard-filter and contract evidence.
 - Do not call a Rust test copied from a Java test a differential test unless both implementations or Java-produced golden artifacts participate.
-- Do not declare source-test parity from approved dispositions alone. Every
-  source case must have a lossless target implementation and a golden/live
-  `MATCH`; `MISSING`, `BLOCKED`, and `NOT_APPLICABLE` block a 100% migration claim.
-- Do not modify copied source fixtures, scripts, corpora, golden files, or test
-  data in place. Verify every source/target asset pair by SHA-256 and keep
-  target-specific generated data separate.
-- Do not treat two independently green suites or equal test totals as behavioral
-  parity; compare per-case outputs, errors, state, side effects, and cleanup.
-- Do not substitute production-crate or binding-crate local tests for the
-  required non-published `<project>-test` whole-project acceptance package.
-- Do not copy Maven/Gradle module boundaries one-to-one into Cargo packages
-  without a Rust publishing, dependency, target, macro/FFI, or lifecycle reason.
-- Do not default every migration workspace to `crates/`, and do not force every
-  workspace to remain root-flat. Select and record the topology from the
-  resulting Rust product's scale, families, repository noise, and compatibility.
+- Do not declare source-test parity from dispositions alone. Every source case needs a lossless target and golden/live `MATCH`; `MISSING`, `BLOCKED`, and `NOT_APPLICABLE` block completion.
+- Do not modify copied source fixtures, scripts, corpora, golden files, or test data in place. Verify source/target SHA-256 and keep generated derivatives separate.
+- Do not treat independently green suites or equal test totals as parity; compare per-case outputs, errors, state, side effects, and cleanup.
+- Do not substitute production/binding-crate local tests for the non-published `<project>-test` whole-project acceptance package.
+- Do not copy Maven/Gradle modules one-to-one into Cargo packages without a Rust publishing, dependency, target, macro/FFI, or lifecycle reason.
+- Do not force every workspace into `crates/` or root-flat; record topology from product scale, families, repository noise, and compatibility.
 - Do not mark a row behavior-verified from file counts, parser acceptance, generic `is_ok()`/`is_err()`, or “at least one test per object”.
 - Do not let the four migration documents carry different baselines or contradictory completion states.
-- Do not keep a current document and a `-历史详细版`/nested duplicate. Merge
-  useful history into the current document after the generated fact region.
-- Do not replace or delete the generated current-fact region while merging old
-  documentation, and do not let regeneration discard the merged appendix.
+- Do not keep a current document and a `-历史详细版`/nested duplicate; merge useful history after the generated fact region.
+- Do not replace the generated current-fact region or let regeneration discard the merged appendix.
 - Do not claim real testing when only mocks, compilation, or static inspection ran.
 - Do not edit reference source repositories while extracting patterns.
-- Do not alternate migration, comparison, and testing for each object, file, or
-  method.
-- Do not run object-scoped acceptance during the semantic implementation pass;
-  finish the frozen batch before consolidated audit and unified verification.
-- Do not convert recovery commits or local edit milestones into completion
-  checkpoints.
-- Do not omit an existing Java object, constructor, method, parameter, return,
-  exception, lifecycle, thread-safety, deprecation, or semantic inline comment.
-- Do not replace specific source documentation with generic prose such as
-  “processes the request” or claim comment parity from `cargo doc` alone.
-- Do not write `对应 Java` in parameter, return, error-variant, field, or inline
-  comments. Limit optional source anchors to the migrated Rust type and
-  constructor/method documentation; keep detailed correspondence in the four
-  migration documents.
+- Do not alternate migration, comparison, and testing for each object, file, or method.
+- Do not run object-scoped acceptance during implementation; finish the frozen batch before consolidated audit and unified verification.
+- Do not convert recovery commits or local edit milestones into completion checkpoints.
+- Do not omit an existing Java object, constructor, method, parameter, return, exception, lifecycle, thread-safety, deprecation, or semantic inline comment.
+- Do not replace source documentation with generic prose or claim comment parity from `cargo doc` alone.
+- Do not write `对应 Java` in parameter, return, error-variant, field, or inline comments. Limit optional anchors to Rust type and constructor/method docs; keep detailed correspondence in the four documents.
 - Do not rename Java-mirror SCREAMING_SNAKE enum variants or delete Java-mirror scaffolding types to silence `non_camel_case_types`/`dead_code`; use `#[allow(...)]` + comment and keep the Java inventory intact.
 - Do not declare a workspace clean from the default-features gate alone; `--all-features` must also reach zero warnings, and do not silently lower `rust-version` to match an old local rustc — run the pinned toolchain via `rustup run <ver> cargo ...`.
 - Do not edit a path dependency while cleaning a dependent crate; attribute each warning to its owning crate's `-->` path first.
@@ -516,25 +466,17 @@ Include exact commands, SHAs, test counts, failures, exceptions, and unverified 
 
 - Four current documents per source module share baselines, contract, and Rust SHA; no duplicate exists.
 - The roadmap records justified source-module-to-crate boundaries and a project-driven topology; actual manifests and member paths match it.
-- Every object has a deterministic final-two-segments path; `MISPLACED` remains
-  incomplete until physically aligned.
+- Every object has a deterministic final-two-segments path; `MISPLACED` remains incomplete until physically aligned.
 - Every Java object, method, overload, and parameter has a disposition.
-- Every source test/case has a lossless Rust implementation, and every source
-  test asset has a byte-identical checked copy in the Rust repository.
-- Required whole-project acceptance package exists as `<project>-test`, is a
-  workspace member at the selected topology's appropriate path with
-  `publish = false`, and is the recorded owner of the full
-  source-suite/differential command and artifact.
-- The complete Java and Rust suites pass and the full per-case differential
-  result is 100% `MATCH`, with no harness failure or not-run case.
-- Every dependency reuse, platform exclusion, blocker, exception, and Rust
-  extension has precise evidence and is excluded from misleading denominators.
+- Every source test/case has a lossless Rust implementation and every source asset has a byte-identical checked copy.
+- `<project>-test` is a workspace member at the selected path with `publish = false` and owns the full source-suite/differential command and artifact.
+- Complete Java/Rust suites pass and full per-case differential is 100% `MATCH`, with no harness failure or not-run case.
+- Every dependency reuse, platform exclusion, blocker, exception, and Rust extension has precise evidence and honest denominator treatment.
+- Every authored `.rs` file is at most 200 physical lines; oversized objects are split without mixing Java object boundaries, and production `src/` contains no test code.
 - Production Rust files satisfy layout, documentation, import, and no-stub rules.
-- Every source-documented object, member, parameter, return, exception, metadata
-  tag, and semantic inline comment has a traceable Rust documentation counterpart.
+- Every source-documented object, member, parameter, return, exception, metadata tag, and semantic inline comment has a traceable Rust counterpart.
 - The complete declared batch was implemented before any acceptance gate ran.
-- One consolidated post-implementation parity audit covers the full frozen
-  denominator; no object-by-object verification loop was used.
+- One consolidated post-implementation parity audit covers the full frozen denominator; no object-by-object verification loop was used.
 - High-value call chains have source-linked semantic mappings.
 - Applicable differential, replay, concurrency, load, fuzz, host, and rollback gates have evidence or explicit open gaps.
 - Final reporting separates structural, implementation, behavioral, integration, and production-readiness claims.

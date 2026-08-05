@@ -116,6 +116,31 @@ class LayoutAuditTest(unittest.TestCase):
             self.assertIn("stub_logic", result.stdout)
             self.assertIn("migration_completion_blocked=true", result.stdout)
 
+    def test_oversized_files_and_inline_tests_block_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            rust_root = Path(temporary) / "crate"
+            source = rust_root / "src"
+            integration = rust_root / "tests"
+            source.mkdir(parents=True)
+            integration.mkdir(parents=True)
+            (source / "service.rs").write_text(
+                "pub struct Service;\n#[cfg(test)]\nmod tests {}\n",
+                encoding="utf-8",
+            )
+            (integration / "oversized.rs").write_text(
+                "\n".join(f"// line {index}" for index in range(201)) + "\n",
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--rust-root", str(rust_root)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("test_code_in_production_source", result.stdout)
+            self.assertIn("rust_file_over_200_lines", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

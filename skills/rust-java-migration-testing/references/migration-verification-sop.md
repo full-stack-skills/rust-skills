@@ -98,6 +98,22 @@ Keep responsibilities separate:
 | binding/adapter local tests | conversion, ABI/FFI, packaging, native host surface | engine plus every host workflow |
 | `<project>-test` | complete source suite/assets, public cross-crate workflows, golden/live diff, aggregate artifacts | production implementation code |
 
+## Rust file-size and test-location gate
+
+Apply a hard maximum of 200 physical lines to every authored `.rs` file,
+including integration tests, test helpers, examples, benches, and testkit source.
+Generated, vendored, and build-output trees are excluded. Split large suites by
+source contract, behavior family, fixture family, adapter, or verification layer;
+retain the original source case IDs in the parity manifest so splitting never
+loses traceability.
+
+Keep test code physically separate from production logic. Do not put
+`#[cfg(test)] mod tests`, `#[test]` functions, test-only helpers, fixtures, or
+assertions in production `src/`. Use `tests/<contract>.rs`, `tests/common/`, or a
+dedicated non-published test/testkit crate. A test crate may place reusable
+harness implementation in its own `src/`, but its executable assertions and
+test entry points still belong under `tests/`.
+
 Use public production APIs from the test package. Do not move missing product
 logic into the test harness. Keep reusable runners in `src/lib.rs` or a testkit
 module, integration entry points under `tests/`, immutable source assets under a

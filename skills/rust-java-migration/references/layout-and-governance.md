@@ -41,6 +41,40 @@ crate's `src/`**. It does not dictate the workspace member directory.
 - Keep `lib.rs` and `mod.rs` limited to module declarations, visibility, documentation, and re-exports.
 - Keep runtime compatibility facades thin. Put real object behavior in the corresponding object files.
 
+## File-size and test-separation contract
+
+Count physical lines in every authored `.rs` file, including production,
+integration tests, examples, benches, and test-support code. The hard maximum is
+200 lines per file; generated, vendored, and build-output trees are outside this
+authored-code gate. Do not game the limit by compressing unrelated statements,
+removing useful comments, or moving all behavior into a generic `compat.rs`.
+
+When a migrated Java object needs more than 200 lines, keep its primary type in
+the deterministic `<object>.rs` file and split coherent implementation families
+into subordinate files, for example:
+
+```text
+src/factory/config/
+├── bean_definition.rs
+└── bean_definition/
+    ├── conversion.rs
+    ├── validation.rs
+    └── lifecycle.rs
+```
+
+Every subordinate file still corresponds only to `BeanDefinition`, defines no
+second migrated public object, and remains traceable in the object ledger. Split
+by behavior, protocol, error handling, conversion, or lifecycle—not arbitrary
+line ranges. Keep fields and invariants protected; use child modules or explicit
+private APIs without widening visibility merely to enable the split.
+
+Keep tests physically separate from production logic. Production `src/**/*.rs`
+must not contain `#[cfg(test)] mod tests`, `#[test]` functions, test-only helpers,
+fixtures, or assertions. Put black-box and subsystem tests under `tests/`, with
+shared support under `tests/common/` or a dedicated non-published test/testkit
+crate. Test private behavior through public or `pub(crate)` boundaries chosen for
+the design; do not expose internals solely for a test.
+
 ## Execution granularity
 
 - Treat the complete declared source module as the default implementation batch.
@@ -177,5 +211,7 @@ Before editing an existing Rust port:
 - source-documented objects, methods, parameters, returns, exceptions, or
   semantic inline comments omitted from Rust;
 - generic filler comments that do not preserve the Java contract.
+- any authored `.rs` file above 200 physical lines;
+- inline tests or test-only helpers inside production `src/` files.
 
 Treat the static audit script as a detector, then confirm every finding from source and tests.

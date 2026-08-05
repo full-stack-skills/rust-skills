@@ -1,4 +1,4 @@
 interface:
   display_name: "Rust Java Migration Testing"
   short_description: "Prove lossless source-test and result parity"
-  default_prompt: "Use $rust-java-migration-testing to place a non-published <project>-test package according to the recorded workspace topology, make it own whole-project acceptance, migrate 100% of source tests/assets without loss, verify byte-identical fixtures and complete per-case Java/Rust MATCH results, then add Rust-specific tests."
+  default_prompt: "Use $rust-java-migration-testing to migrate every source test and asset without loss, keep each .rs file at 200 lines or fewer, keep tests outside production src, and require complete per-case Java/Rust MATCH evidence."
