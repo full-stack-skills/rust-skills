@@ -1,5 +1,6 @@
 ---
 name: rust-stable
+license: Apache-2.0
 description: Implement and explain stable Rust language semantics with explicit toolchain and MSRV checks — ownership, borrowing, lifetimes, move semantics, traits, generics, associated types, pattern matching, closures, error propagation, and Edition differences. Use as the core Rust language skill when users ask for Rust syntax, compiler-error fixes, ownership/borrowing diagnoses, or version-sensitive stable code; hand std API selection (which collection, which smart pointer, which string type) to rust-stdlib, "how do I write X" pattern questions to rust-by-example, and specialized domains to their dedicated skills.
 ---
 

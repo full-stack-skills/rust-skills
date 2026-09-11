@@ -1,5 +1,6 @@
 ---
 name: rust-lombok-macros
+license: Apache-2.0
 description: Use, migrate, and review lombok-macros derives that generate Rust getters, mutable getters, setters, constructors, Debug, and Debug-backed Display implementations. Use when users explicitly mention lombok-macros or Java Lombok, want to remove repetitive accessor or constructor methods, configure generated visibility or conversions, redact fields from Debug, or review generated APIs. Prefer DTOs and data carriers; reject generation that bypasses domain invariants, exposes mutable internals, panics on Option or Result access, or turns Debug into a public display contract.
 ---
 

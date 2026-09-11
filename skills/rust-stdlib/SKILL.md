@@ -1,5 +1,6 @@
 ---
 name: rust-stdlib
+license: Apache-2.0
 description: Select and compose Rust standard-library APIs — collections (HashMap/BTreeMap/Vec/VecDeque/LinkedList/BinaryHeap), smart pointers (Box/Rc/Arc/RefCell/Mutex/OnceLock/LazyLock), string types (String/&str/OsString/PathBuf/Cow), interior mutability (Cell/RefCell/OnceCell/OnceLock), I/O streams (Read/Write/BufRead), iterators, Option/Result combinators, threads and mpsc channels, time (Duration/Instant/SystemTime), paths, env, process, fs, net, and module selection decisions. Use when users ask "which std type should I use", compare collection/pointer/string alternatives, design Option/Result chains, choose Cell vs RefCell vs Mutex, work with std threads/channels, or pick the right std module for a task; hand async runtime to rust-concurrency, language semantics to rust-stable, and application-layer concerns to domain skills.
 ---
 

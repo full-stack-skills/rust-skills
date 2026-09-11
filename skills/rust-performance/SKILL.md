@@ -1,5 +1,6 @@
 ---
 name: rust-performance
+license: Apache-2.0
 description: Measure, profile, optimize, and regression-test Rust performance across latency, throughput, CPU, allocations, memory, binary size, and compile time using representative workloads, Criterion, iai-callgrind, cargo-flamegraph, samply, DHAT, heap or pprof tools, cargo-bloat, cargo-llvm-lines, and build timings. Use when users report slow Rust code, high memory or CPU, large binaries, noisy benchmarks, tail-latency regressions, or need performance budgets and evidence-backed optimization.
 ---
 

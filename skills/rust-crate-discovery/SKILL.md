@@ -1,5 +1,6 @@
 ---
 name: rust-crate-discovery
+license: Apache-2.0
 description: Discover, evaluate, score, and compare Rust crates for adoption — search crates.io, fetch metadata from 4 sources (crates.io API, docs.rs, GitHub API, RustSec advisory DB), apply a weighted 0-100 scoring model across adoption/maintenance/documentation/maturity/community/license, flag red concerns (unmaintained, advisories, no docs, single-maintainer), and recommend the best fit. Use when users ask "which crate should I use for X", "is this crate maintained/safe/popular", "compare these 3 crates", or need to pick a dependency before adoption; hand post-adoption governance (cargo-deny, license policy, advisory response) to rust-dependencies, semver and breaking-change classification to rust-semver, and manifest mechanics to rust-cargo-build.
 ---
 

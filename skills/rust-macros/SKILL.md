@@ -1,5 +1,6 @@
 ---
 name: rust-macros
+license: Apache-2.0
 description: Design, name, implement, debug, test, and review Rust declarative and procedural macros, including macro_rules matchers and repetition, hygiene, $crate paths, derive, attribute and function-like macros, proc-macro crate naming, syn parsing, quote generation, diagnostics, cargo-expand, doctests, and trybuild. Use when users need compile-time code generation, a Rust DSL, or guidance choosing -derive versus -macros; keep ordinary trait, generic, or handwritten APIs outside macros unless generation has a clear maintenance benefit.
 ---
 

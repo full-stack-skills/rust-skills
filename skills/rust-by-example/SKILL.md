@@ -1,5 +1,6 @@
 ---
 name: rust-by-example
+license: Apache-2.0
 description: Show Rust patterns through short compilable examples — type conversions (From/Into/TryFrom/as/Deref), flow control (if let/while let/match/loop), functions and closures (Fn/FnMut/FnOnce, captures), modules (mod/use/pub/super/self), generics and traits (bounds/associated types/trait objects), error handling (?/Result/thiserror/anyhow), attributes (derive/cfg/inline/allow), unsafe (raw pointers/unions/ABI), procedural macros (derive/attribute/function-like), and inline asm. Use when users ask "how do I write X in Rust", need a concrete pattern with copy-pasteable code, or are migrating from Java/Python/Go/C++ and want the Rust equivalent; hand architecture decisions to rust-api-design/rust-workspace, std API selection to rust-stdlib, and async runtime to rust-concurrency.
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: rust-cargo-build
+license: Apache-2.0
 description: Configure, operate, diagnose, and automate Cargo for Rust packages and workspaces. Cover manifests and targets, commands, dependency resolution and features, profiles, build scripts, configuration and environment variables, caches and build diagnostics, cross-compilation, registries, packaging, publishing, metadata, CI reproducibility, and stable-versus-nightly feature gates. Use for Cargo.toml, Cargo.lock, .cargo/config.toml, cargo build/check/run/tree/metadata/package/publish, resolver or feature problems, build output and performance, private registries, and beginner Cargo workflows. Route crate selection and supply-chain audits to rust-dependencies, workspace topology to rust-workspace, test design to rust-testing, documentation design to rust-documentation, lint policy to rust-style-clippy, and API compatibility decisions to rust-semver.
 ---
 

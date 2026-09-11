@@ -1,5 +1,6 @@
 ---
 name: rust-concurrency
+license: Apache-2.0
 description: Design, implement, diagnose, and test Rust concurrency and parallelism with threads, Send and Sync, locks, atomics, channels, Tokio, Rayon, Crossbeam, bounded backpressure, actor ownership, task supervision, graceful shutdown, runtime diagnostics, and Loom model tests. Use when users ask about shared state, deadlocks, async tasks, CPU parallelism, high concurrency, daemon resource budgets, slow consumers, worker pools, lock-free structures, or concurrent correctness.
 ---
 

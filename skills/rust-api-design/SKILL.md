@@ -1,5 +1,6 @@
 ---
 name: rust-api-design
+license: Apache-2.0
 description: Design Rust library APIs that follow the Rust API Guidelines — naming (C-CASE, C-CONV, C-GETTER), interop traits (C-COMMON-TRAITS, C-CONVERT, C-ITER, C-SERDE), predictability (C-INTUITIVE, C-CONST), flexibility (C-GENERIC, C-NEWTYPE, C-EXT), type safety (C-BOOL, C-NONZERO, C-WRAPPER, C-STR), dependability (C-PANIC, C-UNWRAP), debuggability (C-DEBUG), and future-proofing (C-SEALED, C-STRUCT-FIELD, C-NON-EXHAUSTIVE). Use when users design a public crate API, choose between generics/concrete/newtype, decide trait bounds, hide implementation, avoid breakage, or ask "what is idiomatic Rust API design"; hand semver and publish workflow to rust-semver, lint config to rust-style-clippy, and in-crate layout to rust-module-layout.
 ---
 

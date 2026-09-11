@@ -1,5 +1,6 @@
 ---
 name: rust-code-review
+license: Apache-2.0
 description: Review Rust changes for correctness, memory and thread safety, error semantics, unnecessary allocation or cloning, lock scope, API compatibility, test gaps, documentation, and dependency risk, applying the Rust API Guidelines checklist (C-PANIC, C-UNWRAP, C-TRANSMUTE, C-BOOL, C-NEWTYPE, C-COMMON-TRAITS, C-CONVERT, C-SEALED, C-NON-EXHAUSTIVE). Use when reviewing Rust diffs, pull requests, libraries, unsafe boundaries, or production incidents; report actionable findings by severity before summaries, route automated formatting or lint policy to rust-style-clippy, and route API shape decisions (trait sealing, error taxonomy, newtype design, builder patterns) to rust-api-design.
 ---
 

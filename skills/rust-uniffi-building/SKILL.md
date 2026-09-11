@@ -1,5 +1,6 @@
 ---
 name: rust-uniffi-building
+license: Apache-2.0
 description: Build, generate, test, package, and troubleshoot shared Rust components and cross-platform bindings with Mozilla UniFFI. Use automatically when users want to write business logic once in Rust and call or reuse it from Swift, iOS, macOS, Kotlin, Android, JVM, Python, Ruby, JavaScript, browsers, desktop apps, or multiple platforms—even when they do not mention UniFFI; when they ask to bridge, expose, connect, or share Rust with Swift/Kotlin/Android/iOS; or when they need procedural-macro versus UDL selection, records, enums, errors, objects, traits, callbacks, custom types, uniffi.toml, uniffi-bindgen, async exports, generated-binding diagnostics, native-library loading, packaging, ABI, or upgrades. Verify that the locked UniFFI release supports each requested target; route hand-written C ABI work to rust-unsafe-ffi.
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: rust-web
+license: Apache-2.0
 description: Design, implement, test, and operate production Rust server-side HTTP services, including axum, Actix Web, routing, extractors, application state, error mapping, middleware order, timeouts, body limits, observability, graceful shutdown, and database boundaries. Use when users ask for Rust REST APIs, web handlers, middleware, server lifecycle, HTTP contracts, or production web-service architecture; hand security controls to rust-web-security.
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: rust-module-layout
+license: Apache-2.0
 description: Design and enforce the internal layout of a single Rust crate — lib.rs/main.rs as a thin index, semantically named directory modules, `mod` declarations, `pub` visibility, and targeted re-exports. Use when users ask how to organize src/, write lib.rs, split a growing crate into subdirectories, choose between `foo.rs` and `foo/mod.rs`, name modules, avoid flat lib.rs "index plus glob re-export" anti-patterns, or migrate Java-style or Python-style flat projects to idiomatic Rust module trees.
 ---
 

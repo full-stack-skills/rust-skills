@@ -1,5 +1,6 @@
 ---
 name: rust-embedded
+license: Apache-2.0
 description: Design, implement, review, and validate embedded Rust firmware, including no_std, targets, runtime and startup, embedded-hal drivers, interrupts, DMA, shared state, async executors, hardware mocks, cross-compilation, flashing, and hardware acceptance evidence. Use when users ask about MCU firmware, portable drivers, HAL versions, bare-metal targets, interrupts, Embassy, RTIC, probe-rs, or embedded testing.
 ---
 

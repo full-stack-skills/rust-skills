@@ -1,5 +1,6 @@
 ---
 name: rust-http-client
+license: Apache-2.0
 description: Design, implement, test, and operate resilient Rust outbound HTTP clients with reqwest, hyper, Tower middleware, connection pooling, DNS, proxies, TLS, redirects, deadlines, retries, rate and concurrency limits, streaming bodies, cancellation, SSRF controls, and mock or real-server contract tests. Use when users ask to call REST APIs, download or upload data, configure an HTTP client, diagnose connection failures, or harden service-to-service requests; keep inbound servers in rust-web.
 ---
 

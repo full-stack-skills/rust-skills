@@ -1,5 +1,6 @@
 ---
 name: rust-dependencies
+license: Apache-2.0
 description: Manage Rust dependency governance at scale — version requirement strategy, crate and source selection, feature minimization, transitive dependency analysis, cargo-deny license/ban/advisory/source policy, cargo-audit, cargo-outdated, Renovate/Dependabot automation, dependency update cadence, cycle diagnosis, and supply-chain security. Use for dependency strategy, crate approval, license compliance, advisories, allowed sources, automated updates, or dependency-graph governance; hand Cargo manifest and registry configuration, lockfile mechanics, resolvers, and Cargo command behavior to rust-cargo-build, semver compatibility decisions to rust-semver, and lint policy to rust-style-clippy.
 ---
 

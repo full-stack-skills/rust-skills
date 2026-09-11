@@ -1,5 +1,6 @@
 ---
 name: rust-testing
+license: Apache-2.0
 description: Design, implement, and validate Rust tests, including unit, integration, doctest, compile-fail, property, fuzz, benchmark, coverage, async, concurrency, process, daemon, IPC, terminal, platform, and hardware-facing test strategies. Use when users ask for Rust test architecture, flaky-test diagnosis, coverage gates, benchmarks, trybuild, cargo-nextest, real-process tests, or failure-path verification.
 ---
 

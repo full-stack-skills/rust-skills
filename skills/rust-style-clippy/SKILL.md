@@ -1,5 +1,6 @@
 ---
 name: rust-style-clippy
+license: Apache-2.0
 description: Apply and diagnose Rust style, rustfmt, Clippy, compiler diagnostics, Edition migrations, lint policy, idiomatic control flow, error handling, allocation behavior, production Rust conventions, and the Rust API Guidelines ↔ Clippy lint mapping. Use when users ask to format or lint Rust, fix warning or error codes, migrate editions, review unwrap or clone usage, improve idioms, map a C-* API guideline rule to the enforcing Clippy lint, or establish CI quality gates. Route API shape decisions (naming conventions, type/trait design, module layout, full C-* guideline review) to the rust-api-design skill.
 ---
 

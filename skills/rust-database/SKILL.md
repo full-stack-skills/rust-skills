@@ -1,5 +1,6 @@
 ---
 name: rust-database
+license: Apache-2.0
 description: Design, implement, migrate, test, and operate Rust database access, including SQLx, Diesel, SeaORM, schema evolution, transaction boundaries, connection pools, retries, type mapping, concurrency control, and real-database verification. Use when users ask about Rust SQL or ORM code, migrations, transactions, PostgreSQL or MySQL integration, connection pools, query safety, or database production readiness.
 ---
 

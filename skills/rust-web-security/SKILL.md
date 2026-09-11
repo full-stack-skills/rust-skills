@@ -1,5 +1,6 @@
 ---
 name: rust-web-security
+license: Apache-2.0
 description: Threat-model, implement, review, and test Rust web security, including authentication, object and tenant authorization, sessions, cookies, JWT and OIDC validation, CSRF, CORS, SSRF, input limits, secrets, cryptographic dependency boundaries, audit logging, and negative security tests. Use when users ask to secure or audit Rust web services, tokens, browser transport, multi-tenant access, secret handling, or security incident fixes.
 ---
 

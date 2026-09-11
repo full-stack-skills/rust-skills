@@ -1,5 +1,6 @@
 ---
 name: rust-observability
+license: Apache-2.0
 description: Instrument, operate, and review Rust applications with tracing spans and events, structured logs, metrics, OpenTelemetry context propagation, Prometheus export, sampling, correlation, redaction, cardinality control, tokio-console diagnostics, and graceful telemetry shutdown. Use when users ask for logging, distributed traces, service metrics, request correlation, async task diagnosis, SLO evidence, or production observability architecture.
 ---
 

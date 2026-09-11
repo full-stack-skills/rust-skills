@@ -1,5 +1,6 @@
 ---
 name: rust-documentation
+license: Apache-2.0
 description: Design, write, build, test, and publish Rust documentation with rustdoc, cargo doc, doctests, intra-doc links, crate-level guides, examples, README synchronization, mdBook, docs.rs metadata, link checking, documentation CI, and the Rust API Guidelines Documentation chapter (C-DOC, C-LINK, C-META, C-EXAMPLE). Use when users ask for Rust API docs, a project book, runnable examples, docs.rs readiness, missing-doc policy, API guideline compliance, documentation architecture, or stale documentation repair.
 ---
 

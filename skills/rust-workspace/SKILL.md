@@ -1,5 +1,6 @@
 ---
 name: rust-workspace
+license: Apache-2.0
 description: Design Rust project topology — single-crate packages, project-sized multi-crate workspaces (small root-flat, hybrid/domain-grouped, contained crates/, nested, or root-package layouts), workspace-level configuration, dependency DAGs, and crate-boundary decisions. Use when users ask how to split a project into crates, choose paths from the resulting project scale instead of copying a source-language module tree, configure a workspace, avoid dependency cycles, refactor a mixed root-package workspace, or decide between modules and crates. For in-crate src/ layout, see rust-module-layout.
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: rust-semver
+license: Apache-2.0
 description: Manage Rust crate semantic versioning — what counts as a public API (visible items + reachable through re-exports), pre-1.0 rules (0.x.y compatibility), breaking change detection via cargo-semver-checks (270+ lints), workspace lockstep publishing with cargo-workspaces, yank/deprecate workflows, RustSec advisories, and the semver implications of `#[non_exhaustive]`, sealed traits, hidden modules, feature flags, and trait impl additions. Use when users ask whether a change is breaking, want to publish a new version safely, run cargo-semver-checks, coordinate multi-crate workspace releases, or handle a yanked/advisory situation; hand Cargo manifest mechanics to rust-cargo-build, API design choices to rust-api-design, and CI config to rust-style-clippy.
 ---
 

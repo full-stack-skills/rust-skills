@@ -1,5 +1,6 @@
 ---
 name: rust-java-migration
+license: Apache-2.0
 description: Plan, execute, audit, and verify behavior-preserving migrations from Java Maven or Gradle projects to project-shaped Rust Cargo workspaces, including derived crate boundaries, scale-appropriate topology, 100% lossless source-test/case migration, byte-identical test assets, and complete per-case differential parity. Use when comparing repositories at module, package, object, file, method, parameter, documentation, example, test, fixture/data, dependency-reuse, JavaBean/script-property, concurrency, runtime-behavior, oversized Rust-file, or test-organization level; producing migration documents; continuing an incomplete port; or repairing workspace drift. Enforces source-authoritative inventories, Rust-native APIs, a 500-line cohesion-review threshold and 800-line authored-file blocker, idiomatic unit/integration test placement, strict non-completion states, frozen baselines, and unified verification.
 ---
 

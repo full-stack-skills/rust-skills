@@ -1,5 +1,6 @@
 ---
 name: rust-cli
+license: Apache-2.0
 description: Design, implement, test, and release production Rust command-line applications, including command contracts, subcommands, configuration precedence, stdin/stdout/stderr, exit codes, file safety, daemon IPC, terminal handling, packaging, and process-level tests. Use when users ask for a Rust CLI, command parser, clap integration, Unix-style pipelines, daemon clients, PTY/TUI behavior, shell completion, or CLI release engineering.
 ---
 

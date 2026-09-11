@@ -1,5 +1,6 @@
 ---
 name: rust-unsafe-ffi
+license: Apache-2.0
 description: Design, implement, audit, and test unsafe Rust and foreign-function boundaries, including raw pointers, validity and aliasing invariants, MaybeUninit, layout, Pin, manual Send and Sync, allocators, C ABI declarations, callbacks, ownership transfer, unwinding, and Edition 2024 unsafe syntax. Use when safe Rust cannot express the required memory or ABI operation; require minimal unsafe blocks, explicit safety contracts, safe wrappers, Miri where applicable, and real platform integration tests.
 ---
 

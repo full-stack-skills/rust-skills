@@ -1,5 +1,6 @@
 ---
 name: rust-java-migration-testing
+license: Apache-2.0
 description: Design, implement, audit, and report lossless Java-to-Rust migration tests without promoting green tests into false completion claims. Use when porting 100% of JUnit tests and concrete parameterized/dynamic cases, SHA-256-verifying source fixtures/resources/scripts/data, requiring complete per-case golden or live differential MATCH results, validating object/test ledgers, reviewing oversized Rust test files, organizing inline unit versus integration tests, adding Rust-specific obligations, comparing coverage, or building property, fuzz, mutation, concurrency, lifecycle, adapter, host, load, security, and rollback evidence. Enforces a 500-line cohesion-review threshold, an 800-line authored-file blocker, and idiomatic Rust test placement.
 ---
 
