@@ -126,7 +126,6 @@ Servers
 ### Agent and local tooling ###
 .claude
 .claude/
-openspec
 AGENTS.md
 CLAUDE.md
 .agentscope/
